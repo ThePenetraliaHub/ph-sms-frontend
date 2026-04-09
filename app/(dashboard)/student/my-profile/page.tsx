@@ -12,6 +12,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Step, StepNavigation } from "@/components/ui/step-navigation";
 import SecurityAccess from "@/components/dashboard-pages/student/settings/views/SecurityAccess";
 import PasswordChange from "@/components/general/shared-modals/password-change";
+import { useChangePasswordMutation } from "@/services/auth/auth";
+import { toast } from "sonner";
 
 type StepId =
   | "personal-profile"
@@ -50,15 +52,33 @@ export default function MyProfilePage() {
   const [modalStepsId, setModalStepsId] =
     useState<ModalStepId>("verify-password");
   const [openModal, setOpenModal] = useState<boolean>(false);
+  const [passwordErr, setPasswordErr] = useState<string>();
   const [passwordHandler, setPasswordHandler] = useState<PasswordHandler>({
     oldPass: "",
     newPass: "",
     confirmPass: "",
   });
+  const [changePassword, { isLoading }] = useChangePasswordMutation();
 
   //view change handler
   const handleStepChange = (stepId: string) => {
     setCurrentStep(stepId as StepId);
+  };
+
+  const showPasswordChangeModal = () => {
+    setModalStepsId("verify-password");
+    if (
+      passwordHandler.oldPass ||
+      passwordHandler.newPass ||
+      passwordHandler.confirmPass
+    ) {
+      setPasswordHandler({
+        oldPass: "",
+        newPass: "",
+        confirmPass: "",
+      });
+    }
+    setOpenModal(true);
   };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -79,14 +99,42 @@ export default function MyProfilePage() {
     setModalStepsId("change-password");
   };
 
-  const handlePasswordUpdate = (e: FormEvent<HTMLFormElement>) => {
+  const handlePasswordUpdate = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(passwordHandler.newPass);
-    console.log(passwordHandler.confirmPass);
     //validate
+    if (
+      !passwordHandler.oldPass ||
+      !passwordHandler.newPass ||
+      !passwordHandler.confirmPass
+    ) {
+      setPasswordErr("One or more field(s) missing");
+      return;
+    }
+
+    if (passwordHandler.confirmPass !== passwordHandler.newPass) {
+      setPasswordErr("Password mismatched");
+      return;
+    }
+
+    if (passwordErr) setPasswordErr(undefined);
+
     //call endpoint
     //notify
-    setOpenModal(false);
+    try {
+      const res = await changePassword({
+        old_password: passwordHandler.oldPass,
+        new_password: passwordHandler.newPass,
+        confirm_password: passwordHandler.confirmPass,
+      }).unwrap();
+      toast.success(
+        res.message ? res.message : "Password Changed Successfully ✅",
+      );
+      setModalStepsId("verify-password");
+      setOpenModal(false);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      console.log(err);
+    }
   };
 
   const renderContent = () => {
@@ -94,7 +142,7 @@ export default function MyProfilePage() {
       case "personal-profile":
         return <PersonalProfileViews />;
       case "security-access":
-        return <SecurityAccess setOpenModal={setOpenModal} />;
+        return <SecurityAccess setOpenModal={showPasswordChangeModal} />;
       case "notification-preferences":
         return <NotificationPreferences />;
       default:
@@ -135,6 +183,8 @@ export default function MyProfilePage() {
       </div>
       {/* modal */}
       <PasswordChange
+        isLoading={isLoading}
+        errorText={passwordErr}
         modalStepsId={modalStepsId}
         handlePasswordUpdate={handlePasswordUpdate}
         handlePasswordVerification={handlePasswordVerification}

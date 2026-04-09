@@ -6,6 +6,8 @@ import type {
   GoogleLoginRequest,
   ForgetPasswordRequest,
   ForgetPasswordResponse,
+  ChangePasswordResponse,
+  ChangePasswordPayload,
 } from "./auth-type";
 
 export type {
@@ -54,15 +56,25 @@ export const authApi = baseApi.injectEndpoints({
     }),
 
     changePassword: build.mutation<
-      ForgetPasswordResponse,
-      { token: string; newPassword: string }
+      ChangePasswordResponse,
+      ChangePasswordPayload
     >({
-      query: ({ token, newPassword }) => ({
-        url: `/auth/change-password?token=${token}`,
-        method: "POST",
-        body: { newPassword },
+      query: (body) => ({
+        url: "/change-password",
+        method: "PUT",
+        body,
       }),
     }),
+    // changePassword: build.mutation<
+    //   ForgetPasswordResponse,
+    //   { token: string; newPassword: string }
+    // >({
+    //   query: ({ token, newPassword }) => ({
+    //     url: `/auth/change-password?token=${token}`,
+    //     method: "POST",
+    //     body: { newPassword },
+    //   }),
+    // }),
   }),
 });
 
@@ -71,4 +83,5 @@ export const {
   useGetProfileQuery,
   useGoogleLoginMutation,
   useForgetPasswordMutation,
+  useChangePasswordMutation,
 } = authApi;

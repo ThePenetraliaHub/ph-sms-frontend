@@ -17,6 +17,8 @@ interface PasswordChangeProps {
   handlePasswordUpdate: (e: FormEvent<HTMLFormElement>) => void;
   handlePasswordVerification: (e: FormEvent<HTMLFormElement>) => void;
   modalStepsId: ModalStepId;
+  errorText?: string | undefined;
+  isLoading?: boolean;
 }
 
 export default function PasswordChange({
@@ -27,6 +29,8 @@ export default function PasswordChange({
   handlePasswordUpdate,
   handlePasswordVerification,
   modalStepsId,
+  errorText,
+  isLoading,
 }: PasswordChangeProps) {
   return (
     <ModalContainer
@@ -59,6 +63,11 @@ export default function PasswordChange({
           onSubmit={handlePasswordUpdate}
           className="mt-3 flex flex-col gap-y-7 items-center"
         >
+          {errorText && (
+            <div className="py-2 px-4 text-destructive bg-destructive/10 text-sm w-full border border-destructive rounded-sm">
+              <p>{errorText}</p>
+            </div>
+          )}
           <div className="flex flex-col gap-y-3 w-full">
             <Label htmlFor="password">Enter New Password</Label>
             <Input
@@ -81,7 +90,12 @@ export default function PasswordChange({
               onChange={handleChange}
             />
           </div>
-          <Button className="h-12 w-1/2 lg:w-[394px]">Update Password</Button>
+          <Button
+            disabled={isLoading}
+            className="h-12 w-1/2 lg:w-[394px] disabled:cursor-not-allowed"
+          >
+            {isLoading ? "Updating..." : "Update Password"}
+          </Button>
         </form>
       )}
     </ModalContainer>

@@ -84,3 +84,10 @@ export interface ChangePasswordPayload {
   confirm_password: string;
   new_password: string;
 }
+
+export interface ChangePasswordResponse {
+  status: boolean;
+  status_code: number;
+  message: string;
+  data: string | null;
+}

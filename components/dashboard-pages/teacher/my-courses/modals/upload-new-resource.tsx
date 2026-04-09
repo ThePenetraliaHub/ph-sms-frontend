@@ -6,7 +6,7 @@ import { ModalContainer } from "@/components/ui/modal-container";
 import { SelectItem } from "@/components/ui/select";
 import React, { useState } from "react";
 
-interface PasswordChangeProps {
+interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -17,10 +17,7 @@ type ResourceForm = {
   unitAssigned: string;
 };
 
-export default function UploadNewResource({
-  onOpenChange,
-  open,
-}: PasswordChangeProps) {
+export default function UploadNewResource({ onOpenChange, open }: Props) {
   //dummy ops
   const courseOptions = [
     {

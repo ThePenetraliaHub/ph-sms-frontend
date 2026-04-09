@@ -10,14 +10,24 @@ import {
   useGetTeacherCoursesQuery,
 } from "@/services/teacherCourses";
 import {
-  Upload02Icon,
-  Edit01Icon,
-  Folder02Icon,
+  Upload05Icon,
+  AssignmentsIcon,
+  LibrariesIcon,
 } from "@hugeicons/core-free-icons";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import UploadNewResource from "@/components/dashboard-pages/teacher/my-courses/modals/upload-new-resource";
 import { useRouter } from "next/navigation";
+import ViewAssignmentSubmissions from "@/components/dashboard-pages/teacher/my-courses/modals/view-assignment-submissions";
+import ScoreInputGrid from "@/components/dashboard-pages/teacher/my-courses/modals/score-input-grid";
+
+export type AssignmentSubmission = {
+  id: string;
+  name: string;
+  subject: string;
+  submitted: string;
+  marks: string;
+};
 
 const mockCourses: TeacherCourse[] = [
   {
@@ -54,7 +64,13 @@ export default function MyCoursesPage() {
   const { push } = useRouter();
   const { data, isLoading, isError } = useGetTeacherCoursesQuery();
   const appError = useAppSelector((state) => state.error.lastError);
-  const [openModal, setOpenModal] = useState<boolean>(false);
+  const [openNewResourceModal, setOpenNewResourceModal] =
+    useState<boolean>(false);
+  const [openViewAssModal, setOpenViewAssModal] = useState<boolean>(false);
+  const [openScoreInputModal, setOpenScoreInputModal] =
+    useState<boolean>(false);
+  const [selectedAssignment, setSelectedAssignment] =
+    useState<AssignmentSubmission>();
 
   const tableData = (data ?? mockCourses) || [];
 
@@ -111,6 +127,12 @@ export default function MyCoursesPage() {
     },
   ];
 
+  useEffect(() => {
+    if (!selectedAssignment) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setOpenScoreInputModal(true);
+  }, [selectedAssignment]);
+
   return (
     <div className="space-y-4">
       {appError && (
@@ -159,15 +181,15 @@ export default function MyCoursesPage() {
           <QuickActionCard
             title="Upload New Resource"
             description="A modal to upload a file (PDF, Video, PPT) and tag it to a specific course and unit."
-            icon={Upload02Icon}
+            icon={Upload05Icon}
             // onClick={() => console.log("Upload New Resource")}
-            onClick={() => setOpenModal(true)}
+            onClick={() => setOpenNewResourceModal(true)}
             className="border-b"
           />
           <QuickActionCard
             title="Create New Assignment/Quiz"
             description="Create a new digital task and assign it."
-            icon={Edit01Icon}
+            icon={AssignmentsIcon}
             // onClick={() => console.log("Create New Assignment/Quiz")}
             onClick={() => push("/teacher/my-courses/create-new-questions")}
             className="border-b"
@@ -175,15 +197,15 @@ export default function MyCoursesPage() {
           <QuickActionCard
             title="View My Content Library"
             description="Links to a personal repository of all files the teacher has uploaded, allowing reuse across different courses."
-            icon={Folder02Icon}
+            icon={LibrariesIcon}
             onClick={() => push("/teacher/my-courses/content-library")}
             className="border-b"
           />
           <QuickActionCard
             title="View Assignment Submissions"
             description="This screen lists all student assignments and quizzes that require the teacher's attention."
-            icon={Folder02Icon}
-            onClick={() => console.log("View Assignment Submissions")}
+            icon={AssignmentsIcon}
+            onClick={() => setOpenViewAssModal(true)}
           />
         </CardContent>
       </Card>
@@ -204,7 +226,7 @@ export default function MyCoursesPage() {
               <DataTable
                 columns={columns}
                 data={tableData}
-                showActionsColumn={false}
+                showActionsColumn={true}
                 emptyMessage={
                   isError
                     ? "Unable to load courses at the moment."
@@ -217,7 +239,25 @@ export default function MyCoursesPage() {
       </Card>
 
       {/* upload new resource modal */}
-      <UploadNewResource open={openModal} onOpenChange={setOpenModal} />
+      <UploadNewResource
+        open={openNewResourceModal}
+        onOpenChange={setOpenNewResourceModal}
+      />
+      {/* view assignment submissions modal */}
+      <ViewAssignmentSubmissions
+        open={openViewAssModal}
+        onOpenChange={setOpenViewAssModal}
+        setSelectedAssignment={setSelectedAssignment}
+      />
+
+      {/* score input modal */}
+      {selectedAssignment && (
+        <ScoreInputGrid
+          selectedAssignment={selectedAssignment}
+          open={openScoreInputModal}
+          onOpenChange={setOpenScoreInputModal}
+        />
+      )}
     </div>
   );
 }

@@ -12,7 +12,7 @@ import { CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { EyeOff, Eye } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import { Dispatch, SetStateAction, useState } from "react";
+import { useState } from "react";
 
 interface showPasswords {
   currPassword: boolean;
@@ -20,7 +20,7 @@ interface showPasswords {
 }
 
 interface Props {
-  setOpenModal: Dispatch<SetStateAction<boolean>>;
+  setOpenModal: () => void;
 }
 
 export default function SecurityAccess({ setOpenModal }: Props) {
@@ -80,7 +80,7 @@ export default function SecurityAccess({ setOpenModal }: Props) {
         {/* effect change button */}
         <div className="w-full flex justify-end">
           <Button
-            onClick={() => setOpenModal(true)}
+            onClick={setOpenModal}
             className="w-fit h-10 px-5 mt-3"
             variant={"default"}
           >
