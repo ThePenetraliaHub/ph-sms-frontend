@@ -8,7 +8,6 @@ import { WalletBalanceCard } from "@/components/dashboard-pages/student/dashboar
 import { UpcomingEventsCard } from "@/components/dashboard-pages/student/dashboard/upcoming-events-card";
 import { StudentNoticeBoardCard } from "@/components/dashboard-pages/student/dashboard/notice-board-card";
 import { PersonalTaskList } from "@/components/dashboard-pages/student/dashboard/personal-task-list";
-import { useGetAssignmentsQuery } from "@/services/shared";
 import { useGetNotificationsQuery } from "@/services/shared";
 import { useGetUpcomingEventsQuery } from "@/services/schedules/schedules";
 import { useGetAllStudentsQuery } from "@/services/stakeholders/stakeholders";
@@ -31,10 +30,6 @@ export default function StudentDashboard() {
     );
   }, [user?.id, studentsResponse?.data]);
 
-  const { data: assignmentsData } = useGetAssignmentsQuery(
-    user?.id ? { studentId: user.id, limit: 5 } : undefined,
-    { skip: !user?.id },
-  );
   const { data: notificationsData } = useGetNotificationsQuery(
     { per_page: 5 },
     { skip: !user?.id },
@@ -46,15 +41,6 @@ export default function StudentDashboard() {
   const { data: walletData } = useGetWalletBalanceQuery(user?.id ?? undefined, {
     skip: !user?.id,
   });
-
-  const upcomingAssignments =
-    assignmentsData?.data?.filter((assignment) => {
-      if (!assignment.dueDate) return false;
-      const dueDate = new Date(assignment.dueDate);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      return dueDate >= today;
-    }) ?? [];
 
   const upcomingEvents = useMemo(
     () =>
@@ -133,14 +119,8 @@ export default function StudentDashboard() {
         <div className="relative">
           <MetricCard
             title="Assignments Due"
-            value={`${upcomingAssignments.length} ${
-              upcomingAssignments.length === 1 ? "Assignment" : "Assignments"
-            }`}
-            subtitle={
-              upcomingAssignments.length > 0
-                ? "Check your assignments"
-                : "No upcoming assignments"
-            }
+            value={`0`}
+            subtitle={"Something should be here"}
             trend={"up"}
           />
         </div>

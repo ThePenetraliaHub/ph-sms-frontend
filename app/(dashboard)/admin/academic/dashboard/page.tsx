@@ -17,6 +17,8 @@ import {
 } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 
+import { selectClasses } from "@/store/slices/schoolSlice";
+import { useAppSelector } from "@/store/hooks";
 import { useGetResultMetricsQuery } from "@/services/results/results";
 import {
   useGetStudentMetricsQuery,
@@ -65,12 +67,6 @@ const quickActions = [
   },
 ];
 
-const classOptions = [
-  { value: "all", label: "All Classes" },
-  { value: "jss", label: "JSS" },
-  { value: "sss", label: "SSS" },
-];
-
 const yearOptions = [
   { value: "2025-2026", label: "2025/2026 Year" },
   { value: "2024-2025", label: "2024/2025 Year" },
@@ -79,16 +75,19 @@ const yearOptions = [
 
 export default function AcademicManagementPage() {
   const router = useRouter();
+
   const today = format(new Date(), "yyyy-MM-dd");
   const thirtyDaysLater = format(
     new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     "yyyy-MM-dd",
   );
 
-  const [selectedClass, setSelectedClass] = useState("all");
-  const [selectedYear, setSelectedYear] = useState("2025-2026");
-  const [assignDutyModalOpen, setAssignDutyModalOpen] = useState(false);
+  const [selectedClass, setSelectedClass] = useState<string>("");
+  const [selectedYear, setSelectedYear] = useState<string>("2025-2026");
+  const [assignDutyModalOpen, setAssignDutyModalOpen] =
+    useState<boolean>(false);
 
+  const classes = useAppSelector(selectClasses);
   const { data: resultMetricsResponse } = useGetResultMetricsQuery();
   const resultMetrics = resultMetricsResponse?.data;
   const { data: studentMetricsResponse } = useGetStudentMetricsQuery();
@@ -99,7 +98,6 @@ export default function AcademicManagementPage() {
   });
 
   const staffUtilization = staffUtilizationResponse?.data?.breakdown ?? [];
-
   const studentMetrics = studentMetricsResponse?.data;
 
   const gradeDistribution = useMemo(() => {
@@ -205,9 +203,9 @@ export default function AcademicManagementPage() {
                   onValueChange={setSelectedClass}
                   placeholder="All Classes"
                 >
-                  {classOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                  {classes.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
                     </SelectItem>
                   ))}
                 </SelectField>

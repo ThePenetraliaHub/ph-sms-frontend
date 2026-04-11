@@ -6,20 +6,6 @@ export {
   useDeleteGradeMutation,
 } from "./grades/grades";
 
-export {
-  useGetAssignmentsQuery,
-  useGetAssignmentByIdQuery,
-  useCreateAssignmentMutation,
-  useUpdateAssignmentMutation,
-  useDeleteAssignmentMutation,
-} from "./assignments/assignments";
-
-export type {
-  Assignment,
-  CreateAssignmentRequest,
-  UpdateAssignmentRequest,
-} from "./assignments/assignments-type";
-
 export { useGetNoticesQuery, useGetNoticeByIdQuery } from "./notices/notices";
 export type {
   Notice,

@@ -26,7 +26,10 @@ function filterByRole(
 export function useUnreadNoticeCount(): number {
   const user = useAppSelector(selectUser);
   const role = (user?.role ?? "admin") as UserRole;
-  const { data } = useGetNotificationsQuery({ per_page: 500 });
+  const { data } = useGetNotificationsQuery(
+    { per_page: 500 },
+    { skip: !user?.id },
+  );
 
   return useMemo(() => {
     const list = data?.data ?? [];

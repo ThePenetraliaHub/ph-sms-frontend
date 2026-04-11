@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ export default function SignInPage() {
 
   const [login, { isLoading: isLoginLoading }] = useLoginMutation();
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
@@ -52,8 +52,6 @@ export default function SignInPage() {
       const result = await login({ email, password }).unwrap();
       const loginResponse = result.data;
 
-      console.log("Result ", result);
-
       if (!result?.data) {
         throw new Error("Invalid response from server");
       }
@@ -73,8 +71,15 @@ export default function SignInPage() {
         }),
       );
 
-      // Small delay to ensure state is updated before navigation
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await fetch("/api/auth/session", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: result.data.access_token,
+          user: result.data.user,
+        }),
+      });
 
       if (
         loginResponse.user.role === "admin" &&

@@ -17,8 +17,15 @@ import {
 } from "@hugeicons/core-free-icons";
 import { useRouter } from "next/navigation";
 import { BreaksSpecialPeriodsModal } from "@/components/dashboard-pages/admin/finance/components/breaks-special-periods-modal";
-import { useGetSchoolsQuery } from "@/services/schools/schools";
-import type { Break, School } from "@/services/schools/schools-type";
+
+import {
+  selectCurrentSchool,
+  selectClasses,
+  selectSchoolDays,
+  selectTerm,
+} from "@/store/slices/schoolSlice";
+import { useAppSelector } from "@/store/hooks";
+import type { Break } from "@/services/schools/schools-type";
 import { toast } from "sonner";
 
 type StepId = "scope" | "time-slot";
@@ -84,74 +91,49 @@ function timeRangeTo24h(timeRange: {
   };
 }
 
-const schoolGradeOptions = [
-  { value: "jss-1", label: "JSS 1" },
-  { value: "jss-2", label: "JSS 2" },
-  { value: "jss-3", label: "JSS 3" },
-  { value: "ss-1", label: "SS 1" },
-  { value: "ss-2", label: "SS 2" },
-  { value: "ss-3", label: "SS 3" },
-];
-
-const academicTermOptions = [
-  { value: "first-term", label: "First Term" },
-  { value: "second-term", label: "Second Term" },
-  { value: "third-term", label: "Third Term" },
-];
-
-const schoolDaysOptions = [
-  { value: "monday", label: "Monday" },
-  { value: "tuesday", label: "Tuesday" },
-  { value: "wednesday", label: "Wednesday" },
-  { value: "thursday", label: "Thursday" },
-  { value: "friday", label: "Friday" },
-];
-
 export default function CreateTimetablePage() {
   const router = useRouter();
+
   const [activeStep, setActiveStep] = useState<StepId>("scope");
   const [formData, setFormData] = useState<TimetableForm>(initialData);
   const [breakModalOpen, setBreakModalOpen] = useState(false);
 
-  const { data: schoolsResponse } = useGetSchoolsQuery({ _all: true });
-  const schoolsList: School[] = Array.isArray(
-    (schoolsResponse as { data?: unknown })?.data,
-  )
-    ? (schoolsResponse as { data: School[] }).data
-    : [];
-  const school = schoolsList.find((s) => s.id === formData.schoolId) ?? null;
+  const currentAcademicTerm = useAppSelector(selectTerm);
+  const currentSchool = useAppSelector(selectCurrentSchool);
+  const schoolDays = useAppSelector(selectSchoolDays);
+  const classes = useAppSelector(selectClasses);
   const isSubmitting = false;
   const updateTimetable = async (_args?: unknown) => ({
     unwrap: async () => {},
   });
 
-  const lastPrefilledSchoolId = useRef<string | null>(null);
+  const prefilled = useRef(false);
   useEffect(() => {
-    if (!school) return;
-    if (lastPrefilledSchoolId.current === school.id) return;
-    lastPrefilledSchoolId.current = school.id;
+    if (!currentSchool || prefilled.current) return;
+    prefilled.current = true;
     setFormData((prev) => ({
       ...prev,
-      timetableName: school.timetable_name ?? prev.timetableName,
+      schoolId: currentSchool.id,
+      timetableName: currentSchool.timetable_name ?? prev.timetableName,
       applicableSchoolGrade:
-        school.applicable_school_grade ?? prev.applicableSchoolGrade,
-      academicTerm: school.academic_term ?? prev.academicTerm,
-      schoolDays: Array.isArray(school.school_days)
-        ? school.school_days
+        currentSchool.applicable_school_grade ?? prev.applicableSchoolGrade,
+      academicTerm: currentSchool.academic_term ?? prev.academicTerm,
+      schoolDays: Array.isArray(currentSchool.school_days)
+        ? currentSchool.school_days
         : prev.schoolDays,
       numberOfPeriodsPerDay:
-        school.no_of_periods_per_day != null
-          ? String(school.no_of_periods_per_day)
+        currentSchool.no_of_periods_per_day != null
+          ? String(currentSchool.no_of_periods_per_day)
           : prev.numberOfPeriodsPerDay,
       defaultPeriodDuration:
-        school.default_period_duration != null
-          ? String(school.default_period_duration)
+        currentSchool.default_period_duration != null
+          ? String(currentSchool.default_period_duration)
           : prev.defaultPeriodDuration,
-      breakPeriods: Array.isArray(school.break_periods)
-        ? (school.break_periods as Break[])
+      breakPeriods: Array.isArray(currentSchool.break_periods)
+        ? (currentSchool.break_periods as Break[])
         : prev.breakPeriods,
     }));
-  }, [school, formData.schoolId]);
+  }, [currentSchool]);
 
   const handleStepChange = (stepId: string) => {
     setActiveStep(stepId as StepId);
@@ -244,21 +226,11 @@ export default function CreateTimetablePage() {
               Define Timetable Scope
             </h3>
 
-            <SelectField
+            <InputField
               label="School"
-              value={formData.schoolId}
-              onValueChange={(value) => {
-                lastPrefilledSchoolId.current = null;
-                setFormData((prev) => ({ ...prev, schoolId: value }));
-              }}
-              placeholder="Select a school"
-            >
-              {schoolsList.map((s) => (
-                <SelectItem key={s.id} value={s.id}>
-                  {s.name}
-                </SelectItem>
-              ))}
-            </SelectField>
+              value={currentSchool?.name ?? ""}
+              disabled
+            />
 
             <InputField
               label="Timetable Name"
@@ -281,32 +253,21 @@ export default function CreateTimetablePage() {
                   applicableSchoolGrade: value,
                 }))
               }
-              placeholder="E.g., JSS1, JSS2, JSS3, etc."
+              placeholder="All Classes"
             >
-              {schoolGradeOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+              {classes.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
                 </SelectItem>
               ))}
             </SelectField>
 
-            <SelectField
+            <InputField
               label="Academic Term"
-              value={formData.academicTerm}
-              onValueChange={(value) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  academicTerm: value,
-                }))
-              }
-              placeholder="E.g., First Term, Second Term"
-            >
-              {academicTermOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectField>
+              value={currentAcademicTerm?.name ?? ""}
+              disabled
+              onChange={() => {}}
+            />
 
             <div className="flex justify-end gap-3 pt-4">
               <Button variant="outline" onClick={handleCancel}>
@@ -327,18 +288,18 @@ export default function CreateTimetablePage() {
             <div className="space-y-2">
               <Label className="text-sm font-medium">School Days</Label>
               <div className="flex flex-wrap gap-4">
-                {schoolDaysOptions.map((day) => (
-                  <div key={day.value} className="flex items-center gap-2">
+                {schoolDays?.map((day, index) => (
+                  <div key={index} className="flex items-center gap-2">
                     <Checkbox
-                      id={day.value}
-                      checked={formData.schoolDays.includes(day.value)}
-                      onCheckedChange={() => handleDayToggle(day.value)}
+                      id={day}
+                      checked={formData.schoolDays.includes(day)}
+                      onCheckedChange={() => handleDayToggle(day)}
                     />
                     <Label
-                      htmlFor={day.value}
+                      htmlFor={day}
                       className="text-sm font-normal cursor-pointer"
                     >
-                      {day.label}
+                      {day}
                     </Label>
                   </div>
                 ))}

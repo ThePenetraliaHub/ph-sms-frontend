@@ -45,138 +45,6 @@ export default function BulkInvoicesPage() {
     totalAmount: 2452000,
   });
 
-  const [recipients] = useState([
-    {
-      id: "1",
-      name: "Chinedu Nwokodi",
-      studentId: "nwokodi.m178023",
-      gradeClass: "JS 3",
-      invoiceValue: 350000,
-      discountApplied: "Nil",
-    },
-    {
-      id: "2",
-      name: "Adebisi Deborah",
-      studentId: "adebisi.m178024",
-      gradeClass: "JS 3",
-      invoiceValue: 350000,
-      discountApplied: "10%",
-      discountAmount: 35000,
-      discountPercentage: 10,
-    },
-    {
-      id: "3",
-      name: "Dauda Ahfiz",
-      studentId: "ahfiz.m178025",
-      gradeClass: "JS 3",
-      invoiceValue: 350000,
-      discountApplied: "10% Sibling",
-      discountAmount: 35000,
-      discountPercentage: 10,
-    },
-    {
-      id: "4",
-      name: "Sarah Collins",
-      studentId: "collins.m178026",
-      gradeClass: "JS 3",
-      invoiceValue: 350000,
-      discountApplied: "10% Sibling",
-      discountAmount: 35000,
-      discountPercentage: 10,
-    },
-    {
-      id: "5",
-      name: "John Terjini",
-      studentId: "terjini.m178027",
-      gradeClass: "JS 3",
-      invoiceValue: 350000,
-      discountApplied: "Nil",
-    },
-    {
-      id: "6",
-      name: "Chinedu Nwokodi",
-      studentId: "nwokodi.m178023",
-      gradeClass: "JS 3",
-      invoiceValue: 350000,
-      discountApplied: "Nil",
-    },
-    {
-      id: "7",
-      name: "Adebisi Deborah",
-      studentId: "adebisi.m178024",
-      gradeClass: "JS 3",
-      invoiceValue: 350000,
-      discountApplied: "Nil",
-    },
-    {
-      id: "8",
-      name: "Dauda Ahfiz",
-      studentId: "ahfiz.m178025",
-      gradeClass: "JS 3",
-      invoiceValue: 350000,
-      discountApplied: "Nil",
-    },
-  ]);
-
-  const [excludedStudents] = useState([
-    {
-      id: "1",
-      name: "Chinedu Nwakodi",
-      studentId: "mwokodi.m178023",
-      gradeClass: "JS 3",
-      exclusionReason: "Academic Year",
-    },
-    {
-      id: "2",
-      name: "Adebisi Deborah",
-      studentId: "adebisi.m178024",
-      gradeClass: "JS 3",
-      exclusionReason: "One Term Scholarship",
-    },
-    {
-      id: "3",
-      name: "Dauda Ahfiz",
-      studentId: "ahfiz.m178025",
-      gradeClass: "JS 3",
-      exclusionReason: "One Term Scholarship",
-    },
-    {
-      id: "4",
-      name: "Sarah Collins",
-      studentId: "collins.m178026",
-      gradeClass: "JS 3",
-      exclusionReason: "One Term Scholarship",
-    },
-    {
-      id: "5",
-      name: "John Terjiri",
-      studentId: "terjiri.m178027",
-      gradeClass: "JS 3",
-      exclusionReason: "Academic Year",
-    },
-    {
-      id: "6",
-      name: "Chinedu Nwakodi",
-      studentId: "mwokodi.m178023",
-      gradeClass: "JS 3",
-      exclusionReason: "Academic Year",
-    },
-    {
-      id: "7",
-      name: "Adebisi Deborah",
-      studentId: "adebisi.m178024",
-      gradeClass: "JS 3",
-      exclusionReason: "Academic Year",
-    },
-    {
-      id: "8",
-      name: "Dauda Ahfiz",
-      studentId: "ahfiz.m178025",
-      gradeClass: "JS 3",
-      exclusionReason: "Academic Year",
-    },
-  ]);
-
   const handleStepChange = (stepId: string) => {
     setActiveStep(stepId as StepId);
   };
@@ -223,8 +91,8 @@ export default function BulkInvoicesPage() {
             totalAmount={previewData.totalAmount}
             onBack={handleBack}
             onNext={handleNext}
-            recipients={recipients}
-            excludedStudents={excludedStudents}
+            recipients={[]}
+            excludedStudents={[]}
           />
         );
       case "finalize":

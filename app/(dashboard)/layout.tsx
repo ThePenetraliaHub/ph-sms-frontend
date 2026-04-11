@@ -11,11 +11,8 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { store } from "@/store";
-import {
-  selectIsAuthenticated,
-  selectUser,
-  rehydrateAuth,
-} from "@/store/slices/authSlice";
+import { selectUser, rehydrateAuth } from "@/store/slices/authSlice";
+import { useGetSchoolByIdQuery } from "@/services/schools/schools";
 
 function getRoleFromPath(pathname: string): UserRole {
   if (pathname.startsWith("/admin") || pathname === "/dashboard")
@@ -53,16 +50,26 @@ export default function DashboardLayout({
   const router = useRouter();
   const dispatch = useAppDispatch();
 
+  const [rehydrated, setRehydrated] = useState(false);
+
   useEffect(() => {
-    dispatch(rehydrateAuth());
+    dispatch(rehydrateAuth()).finally(() => setRehydrated(true));
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (!rehydrated) return;
     const { isAuthenticated: auth } = store.getState().auth;
     if (!auth && !pathname.includes("/signin")) {
       router.push("/signin");
     }
-  }, [dispatch, pathname, router]);
+  }, [rehydrated, pathname, router]);
 
-  const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const authUser = useAppSelector(selectUser);
+
+  // Fetched current school once. Reused in the app
+  useGetSchoolByIdQuery(authUser?.school_id ?? "", {
+    skip: !authUser?.school_id,
+  });
 
   const roleFromPath = getRoleFromPath(pathname);
   const role = getEffectiveRole(authUser, roleFromPath);
@@ -72,14 +79,6 @@ export default function DashboardLayout({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const path = matchMenuItemByPath(pathname, role);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || pathname.includes("/signin")) return;
-    const { isAuthenticated: auth } = store.getState().auth;
-    if (!auth) {
-      router.push("/signin");
-    }
-  }, [isAuthenticated, router, pathname]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -93,6 +92,8 @@ export default function DashboardLayout({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  if (!rehydrated) return null;
 
   return (
     <div className="flex h-screen overflow-hidden bg-main-bg">

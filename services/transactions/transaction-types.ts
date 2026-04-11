@@ -1,21 +1,20 @@
 import { User } from "../users/users-type";
 import { School } from "../schools/schools-type";
-import { Pagination, Currency } from "@/common/types";
+import { Currency } from "@/common/types";
+import { Stakeholders } from "../stakeholders/stakeholder-types";
 import {
   PaymentMethod,
   PaymentType,
   TransactionType,
   PaymentGateway,
 } from "../shared-types";
-import type { ApiResponse, BaseQueryParams } from "../shared-types";
+import type {
+  ApiResponse,
+  ApiListResponse,
+  BaseQueryParams,
+} from "../shared-types";
 
-export interface TransactionResponse {
-  status: boolean;
-  status_code: number;
-  message: "Successful" | string;
-  data: Transaction[];
-  pagination?: Pagination;
-}
+export type TransactionListResponse = ApiListResponse<Transaction>;
 
 type TransactionCategory = "salaries" | string;
 type TransactionStatus = "completed" | "pending" | string;
@@ -64,6 +63,23 @@ export interface CreateTransactions {
   amount: number;
 }
 
+export interface CreateBulkInvoicePayload {
+  grade_class: string;
+  start_invoice_number: string;
+  academic_term: string;
+  amount: number;
+  note: string;
+  payment_deadline: string;
+  notify_parents: boolean;
+}
+
+export interface CreateBulkInvoiceData {
+  preview_id: string;
+  total_invoices: number;
+  total_amount: number;
+  recipients: Stakeholders[];
+}
+
 export interface UpdateTransactions {
   receiver_id: string;
   school_id: string;
@@ -102,6 +118,7 @@ export interface TransferMoney {
   amount: number;
 }
 
+export type CreateBulkInvoiceResponse = ApiResponse<CreateBulkInvoiceData>;
 export type TransactionSingleResponse = ApiResponse<Transaction>;
 
 export interface BudgetSummary {
@@ -131,9 +148,4 @@ export interface InitializePaymentData extends Transaction {
   access_code: string;
 }
 
-export interface InitializePaymentResponse {
-  status: boolean;
-  status_code: number;
-  message: string;
-  data: InitializePaymentData;
-}
+export type InitializePaymentResponse = ApiResponse<InitializePaymentData>;

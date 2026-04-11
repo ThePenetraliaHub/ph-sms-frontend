@@ -5,11 +5,7 @@ import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable, TableColumn } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
-import {
-  useGetPersonalTasksQuery,
-  useUpdatePersonalTaskMutation,
-} from "@/services/personal-tasks/personal-tasks";
-import type { PersonalTask } from "@/services/personal-tasks/personal-tasks-type";
+
 import { toast } from "sonner";
 
 interface PersonalTaskListProps {
@@ -17,35 +13,7 @@ interface PersonalTaskListProps {
 }
 
 export function PersonalTaskList({ studentId }: PersonalTaskListProps) {
-  const { data, isLoading, isError } = useGetPersonalTasksQuery(
-    studentId ? { user_id: studentId } : undefined,
-  );
-
-  const [updateTask] = useUpdatePersonalTaskMutation();
-
-  const tasks = useMemo(() => {
-    const list = data?.data ?? [];
-    return list.map((t: PersonalTask) => ({
-      id: t.id,
-      taskName: t.task_name,
-      taskType: t.task_type.charAt(0).toUpperCase() + t.task_type.slice(1),
-      deadline: t.deadline ? format(new Date(t.deadline), "LLL. d, yyyy") : "—",
-      status: t.status === "completed" ? "Completed" : "Pending",
-      _raw: t,
-    }));
-  }, [data?.data]);
-
-  const handleMarkCompleted = async (row: { _raw: PersonalTask }) => {
-    try {
-      await updateTask({
-        id: row._raw.id,
-        data: { status: "completed" },
-      }).unwrap();
-      toast.success("Task marked as completed");
-    } catch {
-      toast.error("Failed to update task");
-    }
-  };
+  const handleMarkCompleted = async () => {};
 
   const columns: TableColumn<{
     id: string;
@@ -53,7 +21,7 @@ export function PersonalTaskList({ studentId }: PersonalTaskListProps) {
     taskType: string;
     deadline: string;
     status: string;
-    _raw: PersonalTask;
+    _raw: any;
   }>[] = [
     {
       key: "taskName",
@@ -87,7 +55,7 @@ export function PersonalTaskList({ studentId }: PersonalTaskListProps) {
             <Button
               variant="link"
               className="h-auto p-0 text-main-blue"
-              onClick={() => handleMarkCompleted(row)}
+              onClick={() => handleMarkCompleted()}
             >
               Mark Completed
             </Button>
@@ -98,7 +66,7 @@ export function PersonalTaskList({ studentId }: PersonalTaskListProps) {
     },
   ];
 
-  if (isLoading) {
+  if (false) {
     return (
       <Card>
         <CardHeader>
@@ -115,7 +83,7 @@ export function PersonalTaskList({ studentId }: PersonalTaskListProps) {
     );
   }
 
-  if (isError) {
+  if (false) {
     return (
       <Card>
         <CardHeader>
@@ -143,7 +111,7 @@ export function PersonalTaskList({ studentId }: PersonalTaskListProps) {
         <div className="border rounded-lg overflow-hidden">
           <DataTable
             columns={columns}
-            data={tasks}
+            data={[]}
             showActionsColumn={false}
             emptyMessage="No personal tasks yet. Create one to get started."
           />

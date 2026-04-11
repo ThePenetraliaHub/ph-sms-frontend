@@ -1,7 +1,7 @@
 import { baseApi } from "../baseApi";
 import type {
   Transaction,
-  TransactionResponse,
+  TransactionListResponse,
   TransactionSingleResponse,
   TransactionsQueryParams,
   CreateTransactions,
@@ -11,6 +11,8 @@ import type {
   VerifyTransaction,
   TransferMoney,
   BudgetSummary,
+  CreateBulkInvoicePayload,
+  CreateBulkInvoiceResponse,
 } from "./transaction-types";
 import { calculateBudgetSummary } from "./transaction-selectors";
 import type { ApiResponse, ApiDeleteResponse } from "../shared-types";
@@ -21,7 +23,7 @@ export const transactionsApi = baseApi.injectEndpoints({
   overrideExisting: true,
   endpoints: (build) => ({
     getTransactions: build.query<
-      TransactionResponse,
+      TransactionListResponse,
       TransactionsQueryParams | void
     >({
       query: (params) => ({ url: BASE, params: params ?? {} }),
@@ -37,7 +39,7 @@ export const transactionsApi = baseApi.injectEndpoints({
           : [{ type: "Transaction", id: "LIST" }],
     }),
 
-    getAllTransactions: build.query<TransactionResponse, void>({
+    getAllTransactions: build.query<TransactionListResponse, void>({
       query: () => ({ url: BASE }),
       providesTags: (result) =>
         result?.data
@@ -130,9 +132,20 @@ export const transactionsApi = baseApi.injectEndpoints({
 
     getBudgetSummary: build.query<BudgetSummary, void>({
       query: () => ({ url: BASE }),
-      transformResponse: (response: TransactionResponse): BudgetSummary =>
+      transformResponse: (response: TransactionListResponse): BudgetSummary =>
         calculateBudgetSummary(response.data ?? []),
       providesTags: [{ type: "Transaction", id: "LIST" }],
+    }),
+
+    createBulkInvoice: build.mutation<
+      CreateBulkInvoiceResponse,
+      CreateBulkInvoicePayload
+    >({
+      query: (body) => ({
+        url: `${BASE}/invoice/bulk`,
+        method: "POST",
+        body,
+      }),
     }),
   }),
 });
@@ -148,4 +161,5 @@ export const {
   useVerifyPaymentMutation,
   useTransferMoneyMutation,
   useGetBudgetSummaryQuery,
+  useCreateBulkInvoiceMutation,
 } = transactionsApi;
