@@ -63,7 +63,7 @@ export function DiscountPolicyModal({
       }
       size="2xl"
     >
-      <div className="border rounded-lg overflow-x-auto max-h-[60vh] w-[52.5%]">
+      <div className="border rounded-lg overflow-x-auto max-h-[60vh]">
         <DataTable
           columns={columns}
           data={policySections}

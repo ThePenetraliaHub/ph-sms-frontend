@@ -44,7 +44,7 @@ const defaultInvoices: Invoice[] = [
 export function OutstandingFeesModal({
   open,
   onOpenChange,
-  totalOutstanding = "₦ 250,000.00",
+  totalOutstanding = "₦ 500,000.00",
   invoices = defaultInvoices,
 }: OutstandingFeesModalProps) {
   const [selectedInvoices, setSelectedInvoices] = useState<Set<string>>(

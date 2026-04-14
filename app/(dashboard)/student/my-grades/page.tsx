@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable, TableColumn } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { useGetGradesQuery } from "@/services/shared";
-import { useGetCoursesQuery } from "@/services/shared";
+// import { useGetCoursesQuery } from "@/services/shared";
 import type { Grade } from "@/services/grades/grades-type";
 
 interface SubjectPerformance {

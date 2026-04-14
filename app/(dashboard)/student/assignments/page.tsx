@@ -207,7 +207,7 @@ export default function AssignmentsPage() {
         )}
         {true && (
           <NewGradeCard
-            assignmentName={`wewewe Scored`}
+            assignmentName={`Value Scored from a Course taken`}
             grade={"Something should be here"}
             assignment={[] as any}
             onAction={() => {

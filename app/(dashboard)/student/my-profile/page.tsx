@@ -93,9 +93,6 @@ export default function MyProfilePage() {
 
   const handlePasswordVerification = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(passwordHandler.oldPass);
-    //validate
-    //call-endpoint
     setModalStepsId("change-password");
   };
 
