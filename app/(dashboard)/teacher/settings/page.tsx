@@ -5,7 +5,7 @@ import {
   Notification01FreeIcons,
   SecurityLockFreeIcons,
 } from "@hugeicons/core-free-icons";
-import { useState, ChangeEvent, FormEvent } from "react";
+import { useState } from "react";
 import NotificationPreferences from "@/components/dashboard-pages/teacher/settings/views/notifiation-preferences";
 import PersonalProfile from "@/components/dashboard-pages/teacher/settings/views/personal-profile";
 import SecurityAccess from "@/components/dashboard-pages/teacher/settings/views/security-access";
@@ -50,43 +50,10 @@ export default function SettingsPage() {
   const [modalStepsId, setModalStepsId] =
     useState<ModalStepId>("verify-password");
   const [openModal, setOpenModal] = useState<boolean>(false);
-  const [passwordHandler, setPasswordHandler] = useState<PasswordHandler>({
-    oldPass: "",
-    newPass: "",
-    confirmPass: "",
-  });
 
   //view change handler
   const handleStepChange = (stepId: string) => {
     setCurrentStep(stepId as StepId);
-  };
-
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setPasswordHandler((prevState) => {
-      return {
-        ...prevState,
-        [name]: value,
-      };
-    });
-  };
-
-  const handlePasswordVerification = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    console.log(passwordHandler.oldPass);
-    //validate
-    //call-endpoint
-    setModalStepsId("change-password");
-  };
-
-  const handlePasswordUpdate = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    console.log(passwordHandler.newPass);
-    console.log(passwordHandler.confirmPass);
-    //validate
-    //call endpoint
-    //notify
-    setOpenModal(false);
   };
 
   const renderContent = () => {
@@ -136,10 +103,7 @@ export default function SettingsPage() {
       {/* modal */}
       <PasswordChange
         modalStepsId={modalStepsId}
-        handlePasswordUpdate={handlePasswordUpdate}
-        handlePasswordVerification={handlePasswordVerification}
-        passwordHandler={passwordHandler}
-        handleChange={handleChange}
+        setModalStepsId={setModalStepsId}
         open={openModal}
         onOpenChange={setOpenModal}
       />
