@@ -65,7 +65,7 @@ const allStudents: Student[] = [
     id: "5",
     name: "Uche Nwachukwu",
     studentId: "nwachukwu.m170844",
-    status: "Present",
+    status: "Absent",
     lastAssignmentScore: "92%",
     lastAssignmentName: "Unit 4 Quiz",
   },

@@ -9,8 +9,8 @@ import {
   TableAction,
 } from "@/components/ui/data-table";
 import { cn } from "@/lib/utils";
-import { useGetContentSubmissionsQuery } from "@/services/courses/courses";
-import type { ContentSubmission } from "@/services/courses/courses-type";
+// import { useGetContentSubmissionsQuery } from "@/services/courses/courses";
+// import type { ContentSubmission } from "@/services/courses/courses-type";
 
 interface ResourceRow {
   id: string;
@@ -56,19 +56,22 @@ function getStatusLabel(status: ResourceRow["status"]) {
 }
 
 export default function ContentLibraryPage() {
-  const { data: response, isLoading } = useGetContentSubmissionsQuery({
-    _all: true,
-  });
+  // const { data: response, isLoading } = useGetContentSubmissionsQuery({
+  //   _all: true,
+  // });
 
-  const list = useMemo(() => {
-    const d = response as
-      | { data?: ContentSubmission[] | { data?: ContentSubmission[] } }
-      | undefined;
-    if (!d?.data) return [];
-    return Array.isArray(d.data)
-      ? d.data
-      : ((d.data as { data?: ContentSubmission[] }).data ?? []);
-  }, [response]);
+  // const list = useMemo(() => {
+  //   const d = response as
+  //     | { data?: ContentSubmission[] | { data?: ContentSubmission[] } }
+  //     | undefined;
+  //   if (!d?.data) return [];
+  //   return Array.isArray(d.data)
+  //     ? d.data
+  //     : ((d.data as { data?: ContentSubmission[] }).data ?? []);
+  // }, [response]);
+
+  const list: ContentSubmission[] = [];
+  const isLoading = false;
 
   const tableData: ResourceRow[] = useMemo(
     () =>

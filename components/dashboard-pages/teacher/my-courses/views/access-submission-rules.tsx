@@ -7,7 +7,7 @@ export default function AccessSubmissionRules() {
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold text-gray-800">
-        Assignment Configuration
+        Access & Submission Rules
       </h2>
       <div className="space-y-6 w-full mt-5">
         {/* time limit */}

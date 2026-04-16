@@ -45,9 +45,7 @@ export default function ContentBuilder() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-gray-800">
-        Content Builder Interface
-      </h2>
+      <h2 className="text-xl font-semibold text-gray-800">Content Builder</h2>
       <div className="flex flex-col gap-y-4">
         <Label>Add questions from Question Bank</Label>
         <Button className="h-11" variant={"outline"}>
