@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Dispatch, SetStateAction } from "react";
+import { useMemo, useState, Dispatch, SetStateAction } from "react";
 import { ModalContainer } from "@/components/ui/modal-container";
 import { InputField } from "@/components/ui/input-field";
 import { SelectField } from "@/components/ui/input-field";
@@ -11,6 +11,13 @@ import { Input } from "@/components/ui/input";
 import DatePickerIcon from "@/components/ui/date-picker";
 import { Search } from "lucide-react";
 import { SelectItem } from "@/components/ui/select";
+
+import { useAppSelector } from "@/store/hooks";
+import { selectSchoolID } from "@/store/slices/schoolSlice";
+import { useCreateTransactionMutation } from "@/services/transactions/transactions";
+import { useGetAllStudentsQuery } from "@/services/stakeholders/stakeholders";
+import type { Stakeholders } from "@/services/stakeholders/stakeholder-types";
+import { toast } from "sonner";
 
 const initialData = {
   searchQuery: "",
@@ -23,6 +30,20 @@ const initialData = {
   isVerified: false,
   sendReceipt: false,
 };
+
+function getStudentDisplayName(s: Stakeholders): string {
+  const u = s.user;
+  if (!u) return "Unknown student";
+  return (
+    `${u.first_name || ""} ${u.last_name || ""}`.trim() || "Unknown student"
+  );
+}
+
+function formatStudentOption(s: Stakeholders): string {
+  const name = getStudentDisplayName(s);
+  const idLabel = s.admission_number?.trim() || s.id;
+  return `${name} · ${idLabel}`;
+}
 
 interface LogPaymentForm {
   searchQuery: string;
@@ -42,8 +63,58 @@ interface LogPaymentModalProps {
 }
 
 export function LogPaymentModal({ open, onOpenChange }: LogPaymentModalProps) {
+  const schoolID = useAppSelector(selectSchoolID);
   const [formData, setFormData] = useState<LogPaymentForm>(initialData);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [selectedStakeholderId, setSelectedStakeholderId] = useState<
+    string | null
+  >(null);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+
+  const { data: studentsResponse, isFetching: isLoadingStudents } =
+    useGetAllStudentsQuery(undefined, { skip: !open });
+
+  const [createTransaction, { isLoading }] = useCreateTransactionMutation();
+
+  const studentsInSchool = useMemo(() => {
+    const list = studentsResponse?.data ?? [];
+    if (!schoolID) return list;
+    return list.filter((s) => String(s.school_id) === String(schoolID));
+  }, [studentsResponse?.data, schoolID]);
+
+  const searchTrim = formData.searchQuery.trim();
+  const normalizedQuery = searchTrim.toLowerCase();
+
+  const matchingStudents = useMemo(() => {
+    if (!normalizedQuery) return [];
+    return studentsInSchool
+      .filter((s) => {
+        const name = getStudentDisplayName(s).toLowerCase();
+        const admission = (s.admission_number || "").toLowerCase();
+        const sid = s.id.toLowerCase();
+        return (
+          name.includes(normalizedQuery) ||
+          admission.includes(normalizedQuery) ||
+          sid.includes(normalizedQuery)
+        );
+      })
+      .slice(0, 25);
+  }, [studentsInSchool, normalizedQuery]);
+
+  const showLoadingDropdown =
+    suggestionsOpen && searchTrim.length > 0 && isLoadingStudents;
+
+  const showSuggestions =
+    suggestionsOpen &&
+    searchTrim.length > 0 &&
+    !isLoadingStudents &&
+    matchingStudents.length > 0;
+
+  const showNoResults =
+    suggestionsOpen &&
+    searchTrim.length > 0 &&
+    !isLoadingStudents &&
+    matchingStudents.length === 0;
 
   const handleDateChange: Dispatch<SetStateAction<Date | undefined>> = (
     date,
@@ -54,19 +125,53 @@ export function LogPaymentModal({ open, onOpenChange }: LogPaymentModalProps) {
     }));
   };
 
-  const handleSubmit = () => {
-    console.log("Log payment submitted", {
-      ...formData,
-    });
-    setFormData(initialData);
-    onOpenChange(false);
+  const selectStudent = (s: Stakeholders) => {
+    setSelectedStakeholderId(s.id);
+    setFormData((prev) => ({
+      ...prev,
+      searchQuery: formatStudentOption(s),
+      payerName: getStudentDisplayName(s),
+    }));
+    setSuggestionsOpen(false);
   };
 
-  const handleClose = (open: boolean) => {
-    if (!open) {
-      setFormData(initialData);
+  const handleSubmit = async () => {
+    if (!selectedStakeholderId) {
+      toast.error("Please select a student from the search results.");
+      return;
     }
-    onOpenChange(open);
+    const amount = parseFloat(formData.amountReceived);
+    if (Number.isNaN(amount) || amount <= 0) {
+      toast.error("Enter a valid amount.");
+      return;
+    }
+    if (!schoolID) {
+      toast.error("School context is missing.");
+      return;
+    }
+
+    const payload = {
+      school_id: schoolID,
+      stakeholder_id: selectedStakeholderId,
+      amount,
+    };
+
+    try {
+      await createTransaction(payload).unwrap();
+      toast.success("Payment logged successfully.");
+      setFormData(initialData);
+      setSelectedStakeholderId(null);
+      onOpenChange(false);
+    } catch (error) {}
+  };
+
+  const handleClose = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      setFormData(initialData);
+      setSelectedStakeholderId(null);
+      setSuggestionsOpen(false);
+    }
+    onOpenChange(nextOpen);
   };
 
   return (
@@ -84,18 +189,65 @@ export function LogPaymentModal({ open, onOpenChange }: LogPaymentModalProps) {
           <div className="relative">
             <Input
               id="search-account"
-              placeholder="Search by Student Name, Student ID, or Invoice Number"
+              placeholder="Search by student name or student ID"
               value={formData.searchQuery}
-              onChange={(e) =>
+              onChange={(e) => {
+                const v = e.target.value;
+                setSelectedStakeholderId(null);
                 setFormData((prev) => ({
                   ...prev,
-                  searchQuery: e.target.value,
-                }))
-              }
+                  searchQuery: v,
+                  payerName: "",
+                }));
+                setSuggestionsOpen(true);
+              }}
+              onFocus={() => setSuggestionsOpen(true)}
+              onBlur={() => {
+                window.setTimeout(() => setSuggestionsOpen(false), 150);
+              }}
+              autoComplete="off"
               className="pr-10"
             />
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+            {showLoadingDropdown && (
+              <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover px-3 py-2.5 text-sm text-muted-foreground shadow-md">
+                Loading students…
+              </div>
+            )}
+            {showSuggestions && (
+              <ul
+                className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-popover text-popover-foreground shadow-md"
+                role="listbox"
+              >
+                {matchingStudents.map((s) => (
+                  <li key={s.id} role="option">
+                    <button
+                      type="button"
+                      className="w-full px-3 py-2.5 text-left text-sm hover:bg-muted"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => selectStudent(s)}
+                    >
+                      <span className="font-medium text-foreground">
+                        {getStudentDisplayName(s)}
+                      </span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                        ID: {s.admission_number?.trim() || s.id}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {showNoResults && (
+              <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover px-3 py-2.5 text-sm text-muted-foreground shadow-md">
+                No students match this search.
+              </div>
+            )}
           </div>
+          <p className="text-xs text-muted-foreground">
+            Type a name, admission number, or stakeholder ID; pick a row from
+            the list.
+          </p>
         </div>
 
         <InputField
@@ -105,6 +257,7 @@ export function LogPaymentModal({ open, onOpenChange }: LogPaymentModalProps) {
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, payerName: e.target.value }))
           }
+          disabled
         />
 
         <DatePickerIcon
@@ -132,18 +285,6 @@ export function LogPaymentModal({ open, onOpenChange }: LogPaymentModalProps) {
         </SelectField>
 
         <InputField
-          label="Transaction Reference"
-          placeholder="placeholder"
-          value={formData.transactionRef}
-          onChange={(e) =>
-            setFormData((prev) => ({
-              ...prev,
-              transactionRef: e.target.value,
-            }))
-          }
-        />
-
-        <InputField
           label="Amount Received (₦)"
           placeholder="placeholder"
           type="number"
@@ -166,7 +307,7 @@ export function LogPaymentModal({ open, onOpenChange }: LogPaymentModalProps) {
                 Payment for an Outstanding Balance
               </Label>
               <p className="text-xs text-gray-600">
-                Payment for the student's current debt.
+                Payment for the student&apos;s current debt.
               </p>
             </div>
             <Checkbox
@@ -225,7 +366,9 @@ export function LogPaymentModal({ open, onOpenChange }: LogPaymentModalProps) {
           <Button variant="outline" onClick={() => handleClose(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>Log Payment</Button>
+          <Button onClick={handleSubmit}>
+            {isLoading ? "Loading..." : "Log Payment"}
+          </Button>
         </div>
       </div>
     </ModalContainer>

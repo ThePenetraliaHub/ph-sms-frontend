@@ -4,14 +4,9 @@ import { useAppSelector } from "@/store/hooks";
 import { selectUser } from "@/store/slices/authSlice";
 import { MetricCard } from "@/components/dashboard-pages/admin/admissions/components/metric-card";
 import { CourseCard } from "@/components/dashboard-pages/student/my-courses/course-card";
-import { useGetCoursesQuery } from "@/services/shared";
 
 export default function MyCoursesPage() {
   const user = useAppSelector(selectUser);
-  const { data: coursesData, isLoading } = useGetCoursesQuery({ limit: 100 });
-
-  const courses = coursesData?.data || [];
-  const totalCourses = courses.length;
 
   return (
     <div className="space-y-4">
@@ -29,7 +24,7 @@ export default function MyCoursesPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <MetricCard
           title="Total Enrolled Courses"
-          value={`${totalCourses} ${totalCourses === 1 ? "Subject" : "Subjects"}`}
+          value={`${0} ${1 === 1 ? "Subject" : "Subjects"}`}
           trend="up"
         />
         <MetricCard title="Average Course Progress" value="N/A" trend="up" />
@@ -37,9 +32,9 @@ export default function MyCoursesPage() {
       </div>
 
       {/* Course Cards Grid */}
-      {isLoading ? (
+      {false ? (
         <div className="text-center p-8 text-gray-500">Loading courses...</div>
-      ) : courses.length === 0 ? (
+      ) : [].length === 0 ? (
         <div className="text-center p-8 text-gray-500">No courses found</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -263,6 +263,7 @@ export const {
   useGetStudentMetricsQuery,
   useGetStaffUtilizationQuery,
   useGetStakeholderByIdQuery,
+  useLazyGetStakeholderByIdQuery,
   useGetStudentByIdQuery,
   useCreateStakeholderMutation,
   useAssignDutyMutation,

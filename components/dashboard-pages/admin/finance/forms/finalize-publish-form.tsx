@@ -11,7 +11,8 @@ interface FinalizePublishFormProps {
   totalAmount: number;
   onBack: () => void;
   onCancel: () => void;
-  onSubmit: () => void;
+  onSubmit: (params: { notifyParents: boolean }) => void | Promise<void>;
+  isSubmitting?: boolean;
 }
 
 export function FinalizePublishForm({
@@ -20,6 +21,7 @@ export function FinalizePublishForm({
   onBack,
   onCancel,
   onSubmit,
+  isSubmitting = false,
 }: FinalizePublishFormProps) {
   const [confirmationChecked, setConfirmationChecked] = useState(true);
   const [communicationChecked, setCommunicationChecked] = useState(true);
@@ -33,9 +35,9 @@ export function FinalizePublishForm({
     }).format(amount);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit();
+    await onSubmit({ notifyParents: communicationChecked });
   };
 
   return (
@@ -109,8 +111,12 @@ export function FinalizePublishForm({
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" className="w-60" disabled={!confirmationChecked}>
-          Generate & Send Invoices Now
+        <Button
+          type="submit"
+          className="w-60"
+          disabled={!confirmationChecked || isSubmitting}
+        >
+          {isSubmitting ? "Publishing…" : "Generate & Send Invoices Now"}
         </Button>
       </div>
     </form>

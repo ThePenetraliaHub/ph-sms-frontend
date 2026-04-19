@@ -60,6 +60,7 @@ export interface TransactionWallet {
 
 export interface CreateTransactions {
   school_id: string;
+  stakeholder_id: string;
   amount: number;
 }
 
@@ -116,6 +117,44 @@ export interface TransferMoney {
   account_number: string;
   bank_code: string;
   amount: number;
+}
+
+export type FeeAgeingStudentSnapshot = Stakeholders & {
+  days_overdue?: number;
+  overdue_amount?: number;
+  latest_payment?: string | null;
+};
+
+export interface TransactionFeeAgeingRow {
+  period_label: string;
+  outstanding_amount: number;
+  total_billed_amount: number;
+  students?: FeeAgeingStudentSnapshot[];
+}
+
+export interface TransactionMetrics {
+  counts: {
+    completed_transactions: number;
+    current_year_transactions: number;
+    expense_transactions: number;
+    income_transactions: number;
+    previous_year_transactions: number;
+    total_transactions: number;
+  };
+  net_available_cash: {
+    value: number;
+    previous_period_value: number;
+  };
+  total_outstanding_fees: {
+    value: number;
+    students_with_outstanding: number;
+  };
+  budget_adherence: {
+    actual_spend: number;
+    budget_total: number;
+    percentage: number;
+  };
+  fee_ageing: TransactionFeeAgeingRow[];
 }
 
 export type CreateBulkInvoiceResponse = ApiResponse<CreateBulkInvoiceData>;
