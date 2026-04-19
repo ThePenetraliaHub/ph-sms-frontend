@@ -120,7 +120,7 @@ export default function StudentDashboard() {
           <MetricCard
             title="Assignments Due"
             value={`0`}
-            subtitle={"Something should be here"}
+            subtitle={""}
             trend={"up"}
           />
         </div>
@@ -146,12 +146,9 @@ export default function StudentDashboard() {
         />
       </div>
 
-      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Upcoming Events */}
         <UpcomingEventsCard events={upcomingEvents} />
 
-        {/* Today on the Notice Board */}
         <StudentNoticeBoardCard
           notices={latestNotices.map((notice) => ({
             title: notice.title ?? "",
@@ -163,7 +160,6 @@ export default function StudentDashboard() {
         />
       </div>
 
-      {/* Personal Task List */}
       <PersonalTaskList />
     </div>
   );
