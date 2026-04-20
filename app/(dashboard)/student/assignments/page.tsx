@@ -14,10 +14,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Icon } from "@/components/general/huge-icon";
 import { Search01Icon, FilterIcon } from "@hugeicons/core-free-icons";
-
 import { useGetCbtExamsQuery } from "@/services/cbt-exams/cbt-exams";
 import type { CbtExam } from "@/services/cbt-exams/cbt-exam-types";
 import { format, isAfter, isPast, parseISO } from "date-fns";
+
 import type { Grade } from "@/services/grades/grades-type";
 
 function getCbtExamsList(data: unknown): CbtExam[] {
@@ -73,7 +73,7 @@ export default function AssignmentsPage() {
   }, [cbtExams]);
 
   const handleViewFeedback = (row: any) => {
-    // to be updated
+    // setSelectedAssignment({});
     setFeedbackModalOpen(true);
   };
 
@@ -82,7 +82,6 @@ export default function AssignmentsPage() {
   };
 
   const columns: TableColumn<any>[] = [
-    // to be updated
     {
       key: "assignmentName",
       title: "Assignment Name",
@@ -165,53 +164,36 @@ export default function AssignmentsPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <MetricCard
           title="Assignments/Quizzes Due Today"
-          value={"3"}
+          value={""}
           trend="up"
         />
         <MetricCard
           title="Assignments/Quizzes Due Tomorrow"
-          value={"5"}
+          value={""}
           trend="up"
         />
-        <MetricCard title="Overall Average Score" value={"85%"} trend="up" />
+        <MetricCard title="Overall Average Score" value={`0`} trend="up" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {nextUpcomingCbtExam && (
+        {true && (
           <UpcomingQuizCard
             quiz={
-              nextUpcomingCbtExam
-                ? {
-                    id: nextUpcomingCbtExam.id,
-                    title: nextUpcomingCbtExam.title ?? "Quiz",
-                    subject: nextUpcomingCbtExam.subject ?? undefined,
-                    schedule_date:
-                      nextUpcomingCbtExam.schedule_date ?? undefined,
-                    schedule_time:
-                      nextUpcomingCbtExam.schedule_time ?? undefined,
-                    duration: nextUpcomingCbtExam.duration ?? undefined,
-                  }
-                : true
-                  ? {
-                      id: "",
-                      title: "",
-                      subject: "",
-                      schedule_date: "",
-                      schedule_time: undefined,
-                      duration: undefined,
-                    }
-                  : null
+              nextUpcomingCbtExam && {
+                id: nextUpcomingCbtExam.id,
+                title: nextUpcomingCbtExam.title ?? "Quiz",
+                subject: nextUpcomingCbtExam.subject ?? undefined,
+                schedule_date: nextUpcomingCbtExam.schedule_date ?? undefined,
+                schedule_time: nextUpcomingCbtExam.schedule_time ?? undefined,
+                duration: nextUpcomingCbtExam.duration ?? undefined,
+              }
             }
-            onAction={() => {}}
-          />
-        )}
-        {true && (
-          <NewGradeCard
-            assignmentName={`wewewe Scored`}
-            grade={"Something should be here"}
-            assignment={[] as any}
             onAction={() => {
-              setFeedbackModalOpen(true);
+              // if (nextUpcomingCbtExam?.id) {
+              //   router.push(`/student/quiz/${nextUpcomingCbtExam.id}`);
+              // } else if (upcomingAssignments[0]?.id) {
+              //   router.push(`/student/quiz/${upcomingAssignments[0].id}`);
+              // }
             }}
           />
         )}
@@ -247,35 +229,10 @@ export default function AssignmentsPage() {
         </CardHeader>
         <CardContent>
           <div className="border rounded-lg overflow-hidden">
-            {false ? (
-              <div className="p-8 text-center text-gray-500">
-                Loading assignments...
-              </div>
-            ) : [].length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                No assignments found
-              </div>
-            ) : (
-              <DataTable
-                columns={columns}
-                data={[]}
-                showActionsColumn={false}
-              />
-            )}
+            <DataTable columns={columns} data={[]} showActionsColumn={false} />
           </div>
         </CardContent>
       </Card>
-
-      {true && (
-        <TeacherFeedbackModal
-          open={feedbackModalOpen}
-          onOpenChange={setFeedbackModalOpen}
-          assignmentName={"Assignment"}
-          finalScore={"23"}
-          teacherFeedback={""}
-          onAcknowledge={handleAcknowledge}
-        />
-      )}
     </div>
   );
 }
