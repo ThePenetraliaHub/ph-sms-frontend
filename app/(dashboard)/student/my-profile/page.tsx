@@ -1,17 +1,21 @@
 "use client";
 
+import { useAppSelector } from "@/store/hooks";
+import { selectUser } from "@/store/slices/authSlice";
 import {
   Profile02Icon,
   Notification01FreeIcons,
   SecurityLockFreeIcons,
 } from "@hugeicons/core-free-icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import NotificationPreferences from "@/components/dashboard-pages/student/settings/views/NotificationPreferences";
 import PersonalProfileViews from "@/components/dashboard-pages/student/settings/views/PersonalProfileViews";
 import { Card, CardContent } from "@/components/ui/card";
 import { Step, StepNavigation } from "@/components/ui/step-navigation";
 import SecurityAccess from "@/components/dashboard-pages/student/settings/views/SecurityAccess";
 import PasswordChange from "@/components/general/shared-modals/password-change";
+import { toast } from "sonner";
+import { useCreateAttachmentMutation } from "@/services/attachment/attachment";
 
 type StepId =
   | "personal-profile"
@@ -46,26 +50,77 @@ const steps: Step[] = [
 
 export default function MyProfilePage() {
   //view state handler
+  const [createAttachment, { isLoading }] = useCreateAttachmentMutation();
+  const user = useAppSelector(selectUser);
   const [currentStep, setCurrentStep] = useState<StepId>("personal-profile");
   const [modalStepsId, setModalStepsId] =
     useState<ModalStepId>("verify-password");
   const [openModal, setOpenModal] = useState<boolean>(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   //view change handler
   const handleStepChange = (stepId: string) => {
     setCurrentStep(stepId as StepId);
   };
 
+  //handle upload
+  const handleUpload = async () => {
+    const formData = new FormData();
+
+    formData.append("file", selectedFile as Blob);
+    formData.append("type", "image");
+
+    try {
+      const res = await createAttachment(formData).unwrap();
+      console.log(res);
+    } catch {
+      //base api catches error
+    }
+  };
+
+  //get image from device
+  const uploadImg = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+    if (!file) return;
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("File size exceeded.");
+      e.target.value = ""; // reset input
+      return;
+    }
+    setSelectedFile(file);
+    e.target.value = ""; //reset input
+  };
+
+  useEffect(() => {
+    if (!selectedFile) return;
+    handleUpload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFile]);
+
   const renderContent = () => {
     switch (currentStep) {
       case "personal-profile":
-        return <PersonalProfileViews />;
+        return (
+          <PersonalProfileViews
+            user={user}
+            loading={isLoading}
+            uploadImg={uploadImg}
+          />
+        );
       case "security-access":
         return <SecurityAccess setOpenModal={setOpenModal} />;
       case "notification-preferences":
         return <NotificationPreferences />;
       default:
-        return <PersonalProfileViews />;
+        return (
+          <PersonalProfileViews
+            user={user}
+            loading={isLoading}
+            uploadImg={uploadImg}
+          />
+        );
     }
   };
 

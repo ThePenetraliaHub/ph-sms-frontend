@@ -7,13 +7,25 @@ import {
   Table,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { ChangeEvent } from "react";
+import { AuthUser } from "@/services/auth/auth-type";
 
-export default function PersonalProfileViews() {
+interface Props {
+  uploadImg: (e: ChangeEvent<HTMLInputElement>) => void;
+  loading: boolean;
+  user: AuthUser | null;
+}
+
+export default function PersonalProfileViews({
+  uploadImg,
+  loading,
+  user,
+}: Props) {
   const personalProfileRows = [
     {
       field: "Display Name",
       //   content: stakeholder?.user?.phone_number || "—",
-      content: "Tunde Oluwole",
+      content: `${user?.last_name} ${user?.first_name}`,
     },
     {
       field: "Class / Student ID",
@@ -45,12 +57,25 @@ export default function PersonalProfileViews() {
           )}
         </div> */}
         <div className="w-30 h-30 rounded-full bg-gray-200 flex items-center justify-center">
-          <span className="text-4xl font-bold text-gray-400">S</span>
+          <span className="text-4xl font-bold text-gray-400">
+            {loading ? "-" : "S"}
+          </span>
         </div>
         <div>
-          <Button className="w-fit h-13" variant={"outline"}>
-            Change Profile Image
-          </Button>
+          <div className="relative w-fit">
+            <Button className="w-fit h-13" variant={"outline"}>
+              Change Profile Image
+            </Button>
+            {!loading && (
+              <input
+                className="absolute top-0 right-0 left-0 bottom-0 opacity-0"
+                type="file"
+                accept="image/*"
+                multiple={false}
+                onChange={uploadImg}
+              />
+            )}
+          </div>
           <p className="text-sm italic text-[#DC3545] mt-1">
             Profile change is subject to admin approval
           </p>

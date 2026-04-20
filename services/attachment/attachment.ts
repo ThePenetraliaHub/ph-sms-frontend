@@ -22,7 +22,7 @@ export const attachmentApi = baseApi.injectEndpoints({
       FormData | Record<string, unknown>
     >({
       query: (body) => ({ url: BASE, method: "POST", body }),
-      invalidatesTags: ["Attachment", "Stakeholder"],
+      invalidatesTags: ["Attachment", "Stakeholder", "Student"],
     }),
 
     updateAttachment: build.mutation<
