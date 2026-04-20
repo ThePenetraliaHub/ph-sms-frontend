@@ -8,87 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/general/huge-icon";
 import { Search01Icon, FilterIcon } from "@hugeicons/core-free-icons";
-import { useGetAssignmentsQuery } from "@/services/shared";
-import { useGetGradesQuery } from "@/services/shared";
 import { format, isPast, parseISO } from "date-fns";
-import type { Assignment } from "@/services/assignments/assignments-type";
 
 export default function AdminStudentAssignmentsPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: assignmentsData, isLoading: assignmentsLoading } =
-    useGetAssignmentsQuery(undefined, {
-      skip: false,
-    });
-
-  const assignments = useMemo(() => {
-    const list = assignmentsData?.data ?? [];
-    return list
-      .map((assignment) => {
-        const isDueDatePassed = assignment.dueDate
-          ? isPast(parseISO(assignment.dueDate))
-          : false;
-        const status = isDueDatePassed ? "Overdue" : "Pending";
-        return {
-          ...assignment,
-          assignmentName: assignment.title ?? "Untitled",
-          subject: assignment.courseName ?? "N/A",
-          totalMarks: assignment.maxScore
-            ? `${assignment.maxScore} Marks`
-            : "N/A",
-          dueDateTime: assignment.dueDate
-            ? format(parseISO(assignment.dueDate), "MMM d, yyyy; h:mm a")
-            : "N/A",
-          status,
-        };
-      })
-      .filter((assignment) => {
-        if (!searchQuery) return true;
-        const q = searchQuery.toLowerCase();
-        return (assignment.title ?? "").toLowerCase().includes(q);
-      });
-  }, [assignmentsData, searchQuery]);
-
-  const dueTodayCount = useMemo(
-    () =>
-      assignments.filter((a) => {
-        if (!a.dueDate) return false;
-        const due = parseISO(a.dueDate);
-        const today = new Date();
-        return (
-          due.getDate() === today.getDate() &&
-          due.getMonth() === today.getMonth() &&
-          due.getFullYear() === today.getFullYear()
-        );
-      }).length,
-    [assignments],
-  );
-
-  const dueTomorrowCount = useMemo(
-    () =>
-      assignments.filter((a) => {
-        if (!a.dueDate) return false;
-        const due = parseISO(a.dueDate);
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        return (
-          due.getDate() === tomorrow.getDate() &&
-          due.getMonth() === tomorrow.getMonth() &&
-          due.getFullYear() === tomorrow.getFullYear()
-        );
-      }).length,
-    [assignments],
-  );
-
-  const columns: TableColumn<
-    Assignment & {
-      assignmentName: string;
-      subject: string;
-      totalMarks: string;
-      dueDateTime: string;
-      status: string;
-    }
-  >[] = [
+  const columns: TableColumn<any>[] = [
     {
       key: "assignmentName",
       title: "Assignment Name",
@@ -137,16 +62,8 @@ export default function AdminStudentAssignmentsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <MetricCard
-          title="Due Today"
-          value={dueTodayCount.toString()}
-          trend="up"
-        />
-        <MetricCard
-          title="Due Tomorrow"
-          value={dueTomorrowCount.toString()}
-          trend="up"
-        />
+        <MetricCard title="Due Today" value={""} trend="up" />
+        <MetricCard title="Due Tomorrow" value={""} trend="up" />
       </div>
 
       <Card>
@@ -179,21 +96,7 @@ export default function AdminStudentAssignmentsPage() {
         </CardHeader>
         <CardContent>
           <div className="border rounded-lg overflow-hidden">
-            {assignmentsLoading ? (
-              <div className="p-8 text-center text-gray-500">
-                Loading assignments...
-              </div>
-            ) : assignments.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                No assignments found
-              </div>
-            ) : (
-              <DataTable
-                columns={columns}
-                data={[]}
-                showActionsColumn={false}
-              />
-            )}
+            <DataTable columns={columns} data={[]} showActionsColumn={false} />
           </div>
         </CardContent>
       </Card>

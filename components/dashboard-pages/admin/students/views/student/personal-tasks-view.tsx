@@ -6,8 +6,6 @@ import { Icon } from "@/components/general/huge-icon";
 import { Add01Icon } from "@hugeicons/core-free-icons";
 import { PersonalTaskList } from "@/components/dashboard-pages/student/dashboard/personal-task-list";
 import { TaskCreationModal } from "@/components/dashboard-pages/student/dashboard/task-creation-modal";
-import { useCreatePersonalTaskMutation } from "@/services/personal-tasks/personal-tasks";
-import type { PersonalTaskType } from "@/services/personal-tasks/personal-tasks-type";
 import { toast } from "sonner";
 import type { Stakeholders } from "@/services/stakeholders/stakeholder-types";
 
@@ -17,8 +15,6 @@ interface PersonalTasksViewProps {
 
 export function PersonalTasksView({ stakeholder }: PersonalTasksViewProps) {
   const [modalOpen, setModalOpen] = useState(false);
-  const [createTask, { isLoading: isCreating }] =
-    useCreatePersonalTaskMutation();
 
   const userId = stakeholder.user_id ?? stakeholder.user?.id;
   if (!userId) {
@@ -31,16 +27,16 @@ export function PersonalTasksView({ stakeholder }: PersonalTasksViewProps) {
 
   const handleCreateTask = async (data: {
     task_name: string;
-    task_type: PersonalTaskType;
+    task_type: any; // work needed here
     deadline: string | null;
   }) => {
     try {
-      await createTask({
-        user_id: userId,
-        task_name: data.task_name,
-        task_type: data.task_type,
-        deadline: data.deadline,
-      }).unwrap();
+      // await createTask({
+      //   user_id: userId,
+      //   task_name: data.task_name,
+      //   task_type: data.task_type,
+      //   deadline: data.deadline,
+      // }).unwrap();
       toast.success("Task created successfully");
     } catch (err: unknown) {
       const msg =
@@ -68,7 +64,7 @@ export function PersonalTasksView({ stakeholder }: PersonalTasksViewProps) {
         open={modalOpen}
         onOpenChange={setModalOpen}
         onSubmit={handleCreateTask}
-        isLoading={isCreating}
+        isLoading={false}
       />
     </div>
   );

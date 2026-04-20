@@ -9,8 +9,6 @@ import {
   TableAction,
 } from "@/components/ui/data-table";
 import { cn } from "@/lib/utils";
-// import { useGetContentSubmissionsQuery } from "@/services/courses/courses";
-// import type { ContentSubmission } from "@/services/courses/courses-type";
 
 interface ResourceRow {
   id: string;
@@ -56,45 +54,6 @@ function getStatusLabel(status: ResourceRow["status"]) {
 }
 
 export default function ContentLibraryPage() {
-  // const { data: response, isLoading } = useGetContentSubmissionsQuery({
-  //   _all: true,
-  // });
-
-  // const list = useMemo(() => {
-  //   const d = response as
-  //     | { data?: ContentSubmission[] | { data?: ContentSubmission[] } }
-  //     | undefined;
-  //   if (!d?.data) return [];
-  //   return Array.isArray(d.data)
-  //     ? d.data
-  //     : ((d.data as { data?: ContentSubmission[] }).data ?? []);
-  // }, [response]);
-
-  const list: ContentSubmission[] = [];
-  const isLoading = false;
-
-  const tableData: ResourceRow[] = useMemo(
-    () =>
-      list.map((s) => ({
-        id: s.id,
-        resourceName: s.resource_name,
-        subject: s.subject as string,
-        class: s.class as string,
-        fileType: (s.file_type || "other").toUpperCase(),
-        // courseLocation:
-        //   s.course_location ?? (s.course as { title?: string })?.title ?? "—",
-        // submittedBy:
-        //   (s.submitted_by as { display_name?: string })?.display_name ?? "—",
-        status: mapStatus(s.status),
-      })),
-    [list],
-  );
-
-  const pendingCount = useMemo(
-    () => list.filter((s) => s.status === "pending_review").length,
-    [list],
-  );
-
   const columns: TableColumn<ResourceRow>[] = [
     { key: "resourceName", title: "Resource Name", className: "font-medium" },
     {
@@ -146,25 +105,8 @@ export default function ContentLibraryPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <MetricCard
-          title="Total Files"
-          value={
-            isLoading
-              ? "—"
-              : `${list.length} Resource${list.length !== 1 ? "s" : ""}`
-          }
-          trend="up"
-        />
-        <MetricCard
-          title="Needs Attention"
-          //   value={
-          //     isLoading
-          //       ? "—"
-          //       : `${pendingCount} Resource${pendingCount !== 1 ? "s" : ""}`
-          //   }
-          value={isLoading ? "—" : `${pendingCount} (Drafts/Rejected)`}
-          trend="up"
-        />
+        <MetricCard title="Total Files" value={""} trend="up" />
+        <MetricCard title="Needs Attention" value={""} trend="up" />
       </div>
 
       <Card>
@@ -177,9 +119,9 @@ export default function ContentLibraryPage() {
           <div className="border rounded-lg overflow-hidden">
             <DataTable
               columns={columns}
-              data={tableData}
+              data={[]}
               actions={actions}
-              isLoading={isLoading}
+              isLoading={false}
               emptyMessage="No resources found."
               tableClassName="border-collapse"
             />

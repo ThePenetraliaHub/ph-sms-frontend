@@ -83,7 +83,7 @@ export function TrackPaymentsModal({
           <div className="relative">
             <Input
               id="search-account"
-              placeholder="Search by Student Name, Student ID, or Invoice Number"
+              placeholder="Search by Student Name or Student ID"
               value={formData.searchQuery}
               onChange={(e) =>
                 setFormData((prev) => ({

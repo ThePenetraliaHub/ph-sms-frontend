@@ -1,18 +1,19 @@
 import { baseApi } from "../baseApi";
-import type {
-  Transaction,
-  TransactionListResponse,
-  TransactionSingleResponse,
-  TransactionsQueryParams,
-  CreateTransactions,
-  UpdateTransactions,
-  InitializePayment,
-  InitializePaymentResponse,
-  VerifyTransaction,
-  TransferMoney,
-  BudgetSummary,
-  CreateBulkInvoicePayload,
-  CreateBulkInvoiceResponse,
+import {
+  type Transaction,
+  type TransactionListResponse,
+  type TransactionSingleResponse,
+  type TransactionsQueryParams,
+  type CreateTransactions,
+  type UpdateTransactions,
+  type InitializePayment,
+  type InitializePaymentResponse,
+  type VerifyTransaction,
+  type TransferMoney,
+  type BudgetSummary,
+  type CreateBulkInvoicePayload,
+  type CreateBulkInvoiceResponse,
+  type TransactionMetrics,
 } from "./transaction-types";
 import { calculateBudgetSummary } from "./transaction-selectors";
 import type { ApiResponse, ApiDeleteResponse } from "../shared-types";
@@ -27,16 +28,16 @@ export const transactionsApi = baseApi.injectEndpoints({
       TransactionsQueryParams | void
     >({
       query: (params) => ({ url: BASE, params: params ?? {} }),
-      providesTags: (result) =>
-        result?.data
-          ? [
-              ...result.data.map(({ id }) => ({
-                type: "Transaction" as const,
-                id,
-              })),
-              { type: "Transaction", id: "LIST" },
-            ]
-          : [{ type: "Transaction", id: "LIST" }],
+      // providesTags: (result) =>
+      //   result?.data
+      //     ? [
+      //         ...result.data.map(({ id }) => ({
+      //           type: "Transaction" as const,
+      //           id,
+      //         })),
+      //         { type: "Transaction", id: "LIST" },
+      //       ]
+      //     : [{ type: "Transaction", id: "LIST" }],
     }),
 
     getAllTransactions: build.query<TransactionListResponse, void>({
@@ -58,16 +59,16 @@ export const transactionsApi = baseApi.injectEndpoints({
       providesTags: (_, __, id) => [{ type: "Transaction", id }],
     }),
 
+    getMetrics: build.query<ApiResponse<TransactionMetrics>, void>({
+      query: () => ({ url: `${BASE}/metrics/statistics` }),
+    }),
+
     createTransaction: build.mutation<
       ApiResponse<Transaction>,
       CreateTransactions
     >({
       query: (body) => ({ url: BASE, method: "POST", body }),
-      invalidatesTags: [
-        { type: "Transaction", id: "LIST" },
-        "Wallet",
-        "WalletTransaction",
-      ],
+      invalidatesTags: [{ type: "Transaction", id: "LIST" }],
     }),
 
     updateTransaction: build.mutation<
@@ -146,6 +147,7 @@ export const transactionsApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
+      invalidatesTags: [{ type: "Transaction", id: "LIST" }, "Stakeholder"],
     }),
   }),
 });
@@ -154,6 +156,7 @@ export const {
   useGetTransactionsQuery,
   useGetAllTransactionsQuery,
   useGetTransactionByIdQuery,
+  useGetMetricsQuery,
   useCreateTransactionMutation,
   useUpdateTransactionMutation,
   useDeleteTransactionMutation,

@@ -9,12 +9,8 @@
     "eslint": "eslint",
     "lint": "prettier --check .",
     "format": "prettier --write .",
+    "precommit": "npm run lint && npm run build",
     "prepare": "husky"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm run format"
-    }
   },
   "dependencies": {
     "@hugeicons/core-free-icons": "^2.0.0",

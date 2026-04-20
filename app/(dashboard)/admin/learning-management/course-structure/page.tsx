@@ -19,7 +19,6 @@ import { Icon } from "@/components/general/huge-icon";
 import { useGetSchoolsQuery } from "@/services/schools/schools";
 import { useGetSubjectsQuery } from "@/services/subjects/subjects";
 import { useGetAllStaffQuery } from "@/services/stakeholders/stakeholders";
-import { useCreateCourseMutation } from "@/services/courses/courses";
 import { useAppSelector } from "@/store/hooks";
 import { selectUser } from "@/store/slices/authSlice";
 import { getApiErrorMessage } from "@/lib/format-api-error";
@@ -82,7 +81,6 @@ export default function CourseStructurePage() {
   const { data: schoolsResponse, isLoading: isLoadingSchools } =
     useGetSchoolsQuery({ _all: true });
   const { data: staffResponse } = useGetAllStaffQuery();
-  const [createCourse, { isLoading: isCreating }] = useCreateCourseMutation();
 
   const subjectOptions = useMemo(() => {
     const d = (subjectsResponse as { data?: { id: string; name: string }[] })
@@ -166,16 +164,16 @@ export default function CourseStructurePage() {
     const units = formData.units.filter((u) => u.trim());
     const topics = formData.topics.filter((t) => t.trim());
     try {
-      await createCourse({
-        school_id: schoolId,
-        title: formData.courseTitle.trim(),
-        subject_id: formData.applicableSubject?.trim() || null,
-        applicable_grade: formData.applicableGrade?.trim() || null,
-        lead_instructor_id: formData.leadInstructor?.trim() || null,
-        units: units.length ? units : [],
-        topics: topics.length ? topics : [],
-        content_approval: formData.contentApproval?.trim() || null,
-      }).unwrap();
+      // await createCourse({
+      //   school_id: schoolId,
+      //   title: formData.courseTitle.trim(),
+      //   subject_id: formData.applicableSubject?.trim() || null,
+      //   applicable_grade: formData.applicableGrade?.trim() || null,
+      //   lead_instructor_id: formData.leadInstructor?.trim() || null,
+      //   units: units.length ? units : [],
+      //   topics: topics.length ? topics : [],
+      //   content_approval: formData.contentApproval?.trim() || null,
+      // }).unwrap();
       toast.success("Course created successfully.");
       router.push("/admin/learning-management");
     } catch (err) {
@@ -459,9 +457,9 @@ export default function CourseStructurePage() {
               <Button
                 className="bg-main-blue text-white hover:bg-main-blue/90"
                 onClick={handleCreateCourseShell}
-                disabled={isCreating}
+                disabled={false}
               >
-                {isCreating ? "Creating…" : "Create Course Shell & Save"}
+                {"Create Course Shell & Save"}
               </Button>
             </div>
           </div>

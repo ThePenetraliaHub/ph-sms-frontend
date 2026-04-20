@@ -17,6 +17,54 @@ const DEFAULT_BANK: Bank = {
   account_number: "",
 };
 
+type SchoolWithUpdateExtras = School & {
+  grading_scales_config?: UpdateSchoolRequest["grading_scales_config"];
+  academic_calendar_config?: UpdateSchoolRequest["academic_calendar_config"];
+  daily_reconciliation?: UpdateSchoolRequest["daily_reconciliation"];
+  max_single_transaction?: UpdateSchoolRequest["max_single_transaction"];
+  low_stock_threshold?: UpdateSchoolRequest["low_stock_threshold"];
+};
+
+function pickSchoolUpdateExtensionFields(
+  school: School,
+): Pick<
+  UpdateSchoolRequest,
+  | "grading_scales_config"
+  | "academic_calendar_config"
+  | "discount_rules"
+  | "daily_reconciliation"
+  | "max_single_transaction"
+  | "low_stock_threshold"
+> {
+  const s = school as SchoolWithUpdateExtras;
+  const discountRules =
+    s.discount_rules && s.discount_rules.length > 0
+      ? s.discount_rules
+      : (school.discount_rules ?? []);
+
+  return {
+    grading_scales_config: s.grading_scales_config ?? [],
+    academic_calendar_config: s.academic_calendar_config ?? {
+      name: "",
+      end_date: "",
+      start_date: "",
+      no_of_terms: 0,
+      holidays_or_breaks: {
+        name: "",
+        time_in: "",
+        end_date: "",
+        time_out: "",
+        start_date: "",
+      },
+    },
+    discount_rules: discountRules,
+    daily_reconciliation: (s.daily_reconciliation ??
+      false) as UpdateSchoolRequest["daily_reconciliation"],
+    max_single_transaction: s.max_single_transaction ?? "",
+    low_stock_threshold: s.low_stock_threshold ?? 0,
+  };
+}
+
 export interface IdentityState {
   schoolName: string;
   address: string;
@@ -366,5 +414,6 @@ export function buildUpdateSchoolPayload(
     break_periods: Array.isArray(school.break_periods)
       ? (school.break_periods as unknown as Break[])
       : [],
+    ...pickSchoolUpdateExtensionFields(school),
   };
 }

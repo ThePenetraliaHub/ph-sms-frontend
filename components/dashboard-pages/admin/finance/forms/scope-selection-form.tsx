@@ -9,35 +9,46 @@ import {
 import { SelectItem } from "@/components/ui/select";
 import DatePickerIcon from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
+import { useAppSelector } from "@/store/hooks";
+import { selectTerm } from "@/store/slices/schoolSlice";
 
 interface ScopeSelectionFormProps {
+  schoolClasses: string[];
   formData: {
     startInvoiceNumber: string;
     academicTerm: string;
     gradeClass: string;
+    amount: string;
     paymentDeadline: Date | undefined;
     note: string;
   };
   onFormDataChange: (
     data: Partial<ScopeSelectionFormProps["formData"]>,
   ) => void;
-  onNext: () => void;
+  onNext: () => void | Promise<void>;
   onCancel: () => void;
+  isPreviewLoading?: boolean;
 }
 
 export function ScopeSelectionForm({
+  schoolClasses,
   formData,
   onFormDataChange,
   onNext,
   onCancel,
+  isPreviewLoading = false,
 }: ScopeSelectionFormProps) {
   const [openPaymentDeadline, setOpenPaymentDeadline] =
     useState<boolean>(false);
+  const term = useAppSelector(selectTerm);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onNext();
+    await onNext();
   };
+
+  const canPreview =
+    schoolClasses.length > 0 && formData.academicTerm.trim().length > 0;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -56,44 +67,60 @@ export function ScopeSelectionForm({
           required
         />
 
-        <SelectField
-          label="Academic Term"
-          value={formData.academicTerm}
-          onValueChange={(value) => onFormDataChange({ academicTerm: value })}
-          placeholder="Select academic term or year"
-          required
-        >
-          <SelectItem value="2024-2025-t1">
-            2024/2025 - First Term (T1)
-          </SelectItem>
-          <SelectItem value="2024-2025-t2">
-            2024/2025 - Second Term (T2)
-          </SelectItem>
-          <SelectItem value="2024-2025-t3">
-            2024/2025 - Third Term (T3)
-          </SelectItem>
-          <SelectItem value="2025-2026-t1">
-            2025/2026 - First Term (T1)
-          </SelectItem>
-          <SelectItem value="2025-2026-t2">
-            2025/2026 - Second Term (T2)
-          </SelectItem>
-        </SelectField>
+        <div className="space-y-1">
+          <InputField
+            label="Academic Term"
+            placeholder={
+              formData.academicTerm.trim()
+                ? undefined
+                : "Waiting for school term…"
+            }
+            value={formData.academicTerm}
+            readOnly
+            disabled
+            title={formData.academicTerm}
+          />
+          {term?.session ? (
+            <p className="text-xs text-muted-foreground">
+              Session: {term.session}
+            </p>
+          ) : null}
+        </div>
 
         <SelectField
           label="Grade/Class"
           value={formData.gradeClass}
           onValueChange={(value) => onFormDataChange({ gradeClass: value })}
-          placeholder="E.g., JSS2"
+          placeholder={
+            schoolClasses.length === 0
+              ? "No classes on this school record"
+              : "Select grade or class"
+          }
           required
+          disabled={schoolClasses.length === 0}
         >
-          <SelectItem value="jss-1">JSS 1</SelectItem>
-          <SelectItem value="jss-2">JSS 2</SelectItem>
-          <SelectItem value="jss-3">JSS 3</SelectItem>
-          <SelectItem value="sss-1">SSS 1</SelectItem>
-          <SelectItem value="sss-2">SSS 2</SelectItem>
-          <SelectItem value="sss-3">SSS 3</SelectItem>
+          {schoolClasses.map((className) => (
+            <SelectItem key={className} value={className}>
+              {className}
+            </SelectItem>
+          ))}
         </SelectField>
+        {schoolClasses.length === 0 && (
+          <p className="text-xs text-muted-foreground">
+            No classes uploaded to the school.
+          </p>
+        )}
+
+        <InputField
+          label="Invoice amount (per student, ₦)"
+          placeholder="E.g., 50000"
+          type="number"
+          min={1}
+          step={1}
+          value={formData.amount}
+          onChange={(e) => onFormDataChange({ amount: e.target.value })}
+          required
+        />
 
         <DatePickerIcon
           open={openPaymentDeadline}
@@ -125,8 +152,12 @@ export function ScopeSelectionForm({
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" className="w-60">
-          Preview Recipients
+        <Button
+          type="submit"
+          className="w-60"
+          disabled={isPreviewLoading || !canPreview}
+        >
+          {isPreviewLoading ? "Loading preview…" : "Preview Recipients"}
         </Button>
       </div>
     </form>

@@ -24,12 +24,14 @@ export function SchoolDetailView({ schoolId }: SchoolDetailViewProps) {
     useState<SchoolDetailSectionId>("school-details");
 
   const {
-    data: school,
+    data: schoolResponse,
     isLoading,
     isError,
   } = useGetSchoolByIdQuery(schoolId, {
     skip: !schoolId,
   });
+
+  const school = schoolResponse?.data;
 
   const handleBack = () => router.push("/superadmin/main");
 

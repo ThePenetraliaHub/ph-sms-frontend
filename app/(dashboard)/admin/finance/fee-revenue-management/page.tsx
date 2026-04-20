@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,14 +26,20 @@ import { LogPaymentModal } from "@/components/dashboard-pages/admin/finance/comp
 import { PostCanteenItemModal } from "@/components/dashboard-pages/admin/finance/components/post-canteen-item-modal";
 import { SetFeeStructureModal } from "@/components/dashboard-pages/admin/finance/components/set-fee-structure-modal";
 
-import { useGetAllTransactionsQuery } from "@/services/transactions/transactions";
+import {
+  useGetAllTransactionsQuery,
+  useGetMetricsQuery,
+} from "@/services/transactions/transactions";
+import type { TransactionFeeAgeingRow } from "@/services/transactions/transaction-types";
 import { selectAllTransactionsData } from "@/services/transactions/transaction-selectors";
 import { useAppSelector } from "@/store/hooks";
+import { formattedAmount } from "@/common/helper";
 
 export default function FinancePage() {
   const router = useRouter();
   const [viewStudentsModalOpen, setViewStudentsModalOpen] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState<string>("");
+  const [selectedFeeAgeingRow, setSelectedFeeAgeingRow] =
+    useState<TransactionFeeAgeingRow | null>(null);
   const [trackPaymentsModalOpen, setTrackPaymentsModalOpen] = useState(false);
   const [logPaymentModalOpen, setLogPaymentModalOpen] = useState(false);
   const [postCanteenItemModalOpen, setPostCanteenItemModalOpen] =
@@ -43,9 +49,10 @@ export default function FinancePage() {
 
   useGetAllTransactionsQuery();
   const transactions = useAppSelector(selectAllTransactionsData);
+  const { data: metrics } = useGetMetricsQuery();
 
-  const handleViewStudents = (period: string) => {
-    setSelectedPeriod(period);
+  const handleViewStudents = (row: TransactionFeeAgeingRow) => {
+    setSelectedFeeAgeingRow(row);
     setViewStudentsModalOpen(true);
   };
 
@@ -96,9 +103,27 @@ export default function FinancePage() {
     total: number;
     barColor: string;
     actionLabel: string;
+    sourceRow: TransactionFeeAgeingRow;
   }
 
-  const feeAgeingData: FeeAgeingData[] = [];
+  const feeAgeingData: FeeAgeingData[] = useMemo(() => {
+    const barColors = [
+      "bg-red-500",
+      "bg-amber-500",
+      "bg-yellow-500",
+      "bg-main-blue",
+      "bg-emerald-500",
+    ];
+
+    return (metrics?.data?.fee_ageing ?? []).map((row, index) => ({
+      period: row.period_label,
+      value: row.outstanding_amount,
+      total: row.total_billed_amount,
+      barColor: barColors[index % barColors.length],
+      actionLabel: "View Students",
+      sourceRow: row,
+    }));
+  }, [metrics?.data?.fee_ageing]);
 
   const feeAgeingColumns: TableColumn<FeeAgeingData>[] = [
     {
@@ -133,7 +158,7 @@ export default function FinancePage() {
           onClick={(e) => {
             e.stopPropagation();
             if (row.actionLabel === "View Students") {
-              handleViewStudents(row.period);
+              handleViewStudents(row.sourceRow);
             } else {
               console.log("Send bulk reminder");
             }
@@ -163,18 +188,36 @@ export default function FinancePage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <FinancialMetricCard
           title="Net Available Cash"
-          value="0"
-          subtitle="No data"
+          value={
+            metrics
+              ? formattedAmount(metrics?.data?.net_available_cash?.value)
+              : "0"
+          }
+          subtitle={
+            metrics?.data?.net_available_cash?.value === 0 ? "No data" : ""
+          }
         />
         <FinancialMetricCard
           title="Total Outstanding Fees"
-          value="0"
-          subtitle="No data"
+          value={
+            metrics
+              ? formattedAmount(metrics?.data?.total_outstanding_fees?.value)
+              : "0"
+          }
+          subtitle={
+            metrics?.data?.total_outstanding_fees?.value === 0 ? "No data" : ""
+          }
         />
         <FinancialMetricCard
           title="Budget Adherence"
-          value="0"
-          subtitle="No data"
+          value={
+            metrics
+              ? `${metrics?.data?.budget_adherence?.percentage ?? 0}%`
+              : "0"
+          }
+          subtitle={
+            metrics?.data?.budget_adherence?.percentage === 0 ? "No data" : ""
+          }
         />
       </div>
 
@@ -279,9 +322,12 @@ export default function FinancePage() {
 
       <ViewStudentsModal
         open={viewStudentsModalOpen}
-        onOpenChange={setViewStudentsModalOpen}
-        period={selectedPeriod}
-        students={[]}
+        onOpenChange={(next) => {
+          setViewStudentsModalOpen(next);
+          if (!next) setSelectedFeeAgeingRow(null);
+        }}
+        period={selectedFeeAgeingRow?.period_label ?? ""}
+        stakeholdersSeed={selectedFeeAgeingRow?.students}
       />
 
       <TrackPaymentsModal

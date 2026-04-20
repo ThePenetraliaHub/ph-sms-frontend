@@ -38,7 +38,7 @@ export default function EditSchoolPage() {
 
   useEffect(() => {
     if (school) {
-      setFormState(schoolToFormState(school));
+      setFormState(schoolToFormState(school?.data));
     }
   }, [school]);
 
@@ -58,8 +58,13 @@ export default function EditSchoolPage() {
       return;
     }
     try {
-      const payload = buildUpdateSchoolPayload(formState, school, null, null);
-      await updateSchool({ id: school.id, data: payload }).unwrap();
+      const payload = buildUpdateSchoolPayload(
+        formState,
+        school?.data,
+        null,
+        null,
+      );
+      await updateSchool({ id: school?.data?.id, data: payload }).unwrap();
       toast.success("School updated successfully");
       router.push("/superadmin/main");
     } catch (err: unknown) {
@@ -160,7 +165,7 @@ export default function EditSchoolPage() {
       <div className="bg-background rounded-md p-6">
         <h2 className="text-2xl font-bold text-gray-800">Edit School</h2>
         <p className="text-muted-foreground mt-1">
-          Update the details for {school.name}.
+          Update the details for {school?.data.name}.
         </p>
       </div>
 

@@ -14,20 +14,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import type { PersonalTaskType } from "@/services/personal-tasks/personal-tasks-type";
-
-const TASK_TYPES: { value: PersonalTaskType; label: string }[] = [
-  { value: "study", label: "Study" },
-  { value: "personal", label: "Personal" },
-  { value: "other", label: "Other" },
-];
 
 interface TaskCreationModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: {
     task_name: string;
-    task_type: PersonalTaskType;
+    task_type: any;
     deadline: string | null;
   }) => void;
   isLoading?: boolean;
@@ -40,7 +33,7 @@ export function TaskCreationModal({
   isLoading = false,
 }: TaskCreationModalProps) {
   const [taskName, setTaskName] = useState("");
-  const [taskType, setTaskType] = useState<PersonalTaskType>("study");
+  const [taskType, setTaskType] = useState<any>("study");
   const [deadline, setDeadline] = useState<Date | undefined>(undefined);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
 
@@ -99,17 +92,14 @@ export function TaskCreationModal({
 
         <div className="space-y-2">
           <Label htmlFor="taskType">Task Type</Label>
-          <Select
-            value={taskType}
-            onValueChange={(v) => setTaskType(v as PersonalTaskType)}
-          >
+          <Select value={taskType} onValueChange={(v) => setTaskType(v as any)}>
             <SelectTrigger id="taskType" className="w-full">
               <SelectValue placeholder="Text Input (e.g., Study / Personal)" />
             </SelectTrigger>
             <SelectContent>
-              {TASK_TYPES.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
+              {[].map((opt, index) => (
+                <SelectItem key={index} value={opt}>
+                  {opt}
                 </SelectItem>
               ))}
             </SelectContent>
