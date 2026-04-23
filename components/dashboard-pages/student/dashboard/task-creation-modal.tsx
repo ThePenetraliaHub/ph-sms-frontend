@@ -20,7 +20,7 @@ interface TaskCreationModalProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: {
     task_name: string;
-    task_type: any;
+    task_type: string;
     deadline: string | null;
   }) => void;
   isLoading?: boolean;
@@ -33,7 +33,7 @@ export function TaskCreationModal({
   isLoading = false,
 }: TaskCreationModalProps) {
   const [taskName, setTaskName] = useState("");
-  const [taskType, setTaskType] = useState<any>("study");
+  const [taskType, setTaskType] = useState<string>("study");
   const [deadline, setDeadline] = useState<Date | undefined>(undefined);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
 
@@ -92,13 +92,16 @@ export function TaskCreationModal({
 
         <div className="space-y-2">
           <Label htmlFor="taskType">Task Type</Label>
-          <Select value={taskType} onValueChange={(v) => setTaskType(v as any)}>
+          <Select
+            value={taskType}
+            onValueChange={(v) => setTaskType(v as string)}
+          >
             <SelectTrigger id="taskType" className="w-full">
               <SelectValue placeholder="Text Input (e.g., Study / Personal)" />
             </SelectTrigger>
             <SelectContent>
-              {[].map((opt, index) => (
-                <SelectItem key={index} value={opt}>
+              {["study", "personal", "leisure", "others"].map((opt, index) => (
+                <SelectItem className="capitalize" key={index} value={opt}>
                   {opt}
                 </SelectItem>
               ))}

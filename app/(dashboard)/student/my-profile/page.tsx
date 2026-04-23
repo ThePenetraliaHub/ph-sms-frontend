@@ -65,10 +65,12 @@ export default function MyProfilePage() {
 
   //handle upload
   const handleUpload = async () => {
+    if (!user) return;
     const formData = new FormData();
 
     formData.append("file", selectedFile as Blob);
-    formData.append("type", "image");
+    formData.append("school_id", `${user?.school_id}`);
+    formData.append("name", "profie_image_url");
 
     try {
       const res = await createAttachment(formData).unwrap();

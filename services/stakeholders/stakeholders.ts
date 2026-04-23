@@ -203,6 +203,17 @@ export const stakeholdersApi = baseApi.injectEndpoints({
       providesTags: (_, __, id) => [{ type: "Stakeholder", id }],
     }),
 
+    //JUST ADDED
+    getStudentByQueryParam: build.query<ApiResponse<Stakeholders[]>, string>({
+      query: (id) => ({
+        url: BASE,
+        params: {
+          "user_id[eq]": id,
+        },
+      }),
+      providesTags: (_, __, id) => [{ type: "Stakeholder", id }],
+    }),
+
     createStakeholder: build.mutation<
       ApiResponse<Stakeholders>,
       CreateStakeholdersRequest | FormData
@@ -267,6 +278,7 @@ export const {
   useGetStudentByIdQuery,
   useCreateStakeholderMutation,
   useAssignDutyMutation,
+  useGetStudentByQueryParamQuery,
   useUpdateStakeholderMutation,
   useDeleteStakeholderMutation,
 } = stakeholdersApi;

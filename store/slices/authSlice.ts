@@ -56,8 +56,16 @@ export const authSlice = createSlice({
   extraReducers: (builder) => {
     builder.addCase(rehydrateAuth.fulfilled, (state, action) => {
       if (!action.payload) return;
+      // state.token = action.payload.token;
+      // state.user = action.payload.user;
+      // state.isAuthenticated = true;
+      if (action.payload.user) {
+        state.user = {
+          ...state.user,
+          ...action.payload.user,
+        };
+      }
       state.token = action.payload.token;
-      state.user = action.payload.user;
       state.isAuthenticated = true;
     });
   },

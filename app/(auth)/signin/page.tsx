@@ -16,7 +16,6 @@ import { setCredentials } from "@/store/slices/authSlice";
 export default function SignInPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");

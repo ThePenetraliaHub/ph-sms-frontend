@@ -1,20 +1,33 @@
 "use client";
 
 import { useState } from "react";
-import { useAppSelector } from "@/store/hooks";
-import { selectUser } from "@/store/slices/authSlice";
 import { MetricCard } from "@/components/dashboard-pages/admin/admissions/components/metric-card";
 import { PersonalTaskList } from "@/components/dashboard-pages/student/dashboard/personal-task-list";
 import { TaskCreationModal } from "@/components/dashboard-pages/student/dashboard/task-creation-modal";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/general/huge-icon";
 import { Add01Icon } from "@hugeicons/core-free-icons";
-import { toast } from "sonner";
-import { useMemo } from "react";
+import { Stakeholders } from "@/services/stakeholders/stakeholder-types";
+import { useGetStudentByQueryParamQuery } from "@/services/stakeholders/stakeholders";
+import { useAppSelector } from "@/store/hooks";
+import { selectUser } from "@/store/slices/authSlice";
+// import { toast } from "sonner";
+// import { useMemo } from "react";
 
 export default function PersonalTaskManagerPage() {
-  const user = useAppSelector(selectUser);
   const [modalOpen, setModalOpen] = useState(false);
+  const user = useAppSelector(selectUser);
+  const { data: student } = useGetStudentByQueryParamQuery(user?.id ?? "");
+  const currStudent: Stakeholders | undefined = student?.data[0];
+  console.log(currStudent);
+
+  const submitTask = (data: {
+    task_name: string;
+    task_type: string;
+    deadline: string | null;
+  }) => {
+    console.log(data);
+  };
 
   return (
     <div className="space-y-4">
@@ -53,7 +66,7 @@ export default function PersonalTaskManagerPage() {
       <TaskCreationModal
         open={modalOpen}
         onOpenChange={setModalOpen}
-        onSubmit={() => {}}
+        onSubmit={(data) => submitTask(data)}
         isLoading={false}
       />
     </div>

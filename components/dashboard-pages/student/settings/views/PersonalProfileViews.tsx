@@ -9,6 +9,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { ChangeEvent } from "react";
 import { AuthUser } from "@/services/auth/auth-type";
+import { useGetStudentByQueryParamQuery } from "@/services/stakeholders/stakeholders";
+import { Stakeholders } from "@/services/stakeholders/stakeholder-types";
 
 interface Props {
   uploadImg: (e: ChangeEvent<HTMLInputElement>) => void;
@@ -21,18 +23,23 @@ export default function PersonalProfileViews({
   loading,
   user,
 }: Props) {
+  const { data: student, isLoading } = useGetStudentByQueryParamQuery(
+    user?.id ?? "",
+  );
+  const currStudent: Stakeholders | undefined = student?.data[0];
   const personalProfileRows = [
     {
       field: "Display Name",
-      //   content: stakeholder?.user?.phone_number || "—",
       content: `${user?.last_name} ${user?.first_name}`,
     },
     {
       field: "Class / Student ID",
-      //   content: stakeholder?.school_email || stakeholder?.user?.email || "—",
-      content: "JS 2 / oluwole.m178023",
+      content: isLoading
+        ? "-"
+        : `${currStudent ? (currStudent.class_assigned ? currStudent.class_assigned : "Class N/A") : "-"} / ${`${user?.last_name.toLowerCase()}.${user?.gender === "female" ? "f" : "m"}${currStudent && currStudent.id}`}`,
     },
   ];
+
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold text-gray-800">Personal Profile</h2>

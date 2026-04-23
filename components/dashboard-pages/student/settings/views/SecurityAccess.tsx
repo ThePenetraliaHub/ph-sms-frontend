@@ -57,10 +57,11 @@ export default function SecurityAccess({ setOpenModal }: Props) {
       <div className="relative space-y-3 mt-8">
         <Label>Current Password</Label>
         <Input
-          defaultValue={"xxxxxxxxxx"}
-          type={showPass.currPassword ? "text" : "password"} //or password
+          value={"...................."}
+          type={showPass.currPassword ? "text" : "password"}
           placeholder="Enter value"
-          className="md:h-12 md:px-5"
+          className="md:h-12 md:px-5 cursor-not-allowed"
+          readOnly
         />
         <button
           type="button"
