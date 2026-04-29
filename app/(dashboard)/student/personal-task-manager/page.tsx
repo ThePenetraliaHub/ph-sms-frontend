@@ -11,22 +11,48 @@ import { Stakeholders } from "@/services/stakeholders/stakeholder-types";
 import { useGetStudentByQueryParamQuery } from "@/services/stakeholders/stakeholders";
 import { useAppSelector } from "@/store/hooks";
 import { selectUser } from "@/store/slices/authSlice";
-// import { toast } from "sonner";
+import { toast } from "sonner";
+import { useCreateUserRequestMutation } from "@/services/user-requests/user-requests";
+import { CreateUserRequestRequest } from "@/services/user-requests/user-request-types";
 // import { useMemo } from "react";
 
 export default function PersonalTaskManagerPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const user = useAppSelector(selectUser);
-  const { data: student } = useGetStudentByQueryParamQuery(user?.id ?? "");
+  const { data: student, isLoading: isFetchingStudentId } =
+    useGetStudentByQueryParamQuery(user?.id ?? "");
   const currStudent: Stakeholders | undefined = student?.data[0];
-  console.log(currStudent);
+  const [tasksDue, setTasksDue] = useState<number>();
 
-  const submitTask = (data: {
+  const [createUserRequest, { isLoading }] = useCreateUserRequestMutation();
+
+  const submitTask = async (data: {
     task_name: string;
     task_type: string;
     deadline: string | null;
   }) => {
-    console.log(data);
+    if (!user) return;
+    if (!data.task_name || !data.task_type || !data.deadline) {
+      return toast.error("Invalid field(s)");
+    }
+    try {
+      const payload: CreateUserRequestRequest = {
+        school_id: user.school_id ?? "",
+        title: data.task_type,
+        type: "others",
+        description: data.task_name,
+        end_date: data.deadline,
+      };
+      const res = await createUserRequest(payload).unwrap();
+      if (res.status) toast.success("Personal Task created successfully");
+    } catch (err) {
+      console.error("ERROR: ", err);
+      return;
+    }
+  };
+
+  const checkTasksDue = (tasksDue: number) => {
+    setTasksDue(tasksDue);
   };
 
   return (
@@ -42,7 +68,7 @@ export default function PersonalTaskManagerPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <MetricCard title="Tasks Due Today" value={`0 Tasks`} trend="up" />
+        <MetricCard title="Tasks Due" value={`${tasksDue} Tasks`} trend="up" />
         <MetricCard
           title="Completion Rate (Last 7 Days)"
           value={`1% Success`}
@@ -61,13 +87,19 @@ export default function PersonalTaskManagerPage() {
         </Button>
       </div>
 
-      <PersonalTaskList />
+      <PersonalTaskList
+        checkTasksDue={checkTasksDue}
+        isFetchingStudent={isFetchingStudentId}
+        studentId={currStudent?.user_id ?? ""}
+      />
+      {/* {currStudent?.user_id && (
+      )} */}
 
       <TaskCreationModal
         open={modalOpen}
         onOpenChange={setModalOpen}
         onSubmit={(data) => submitTask(data)}
-        isLoading={false}
+        isLoading={isLoading}
       />
     </div>
   );

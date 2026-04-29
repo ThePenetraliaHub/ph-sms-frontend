@@ -118,7 +118,7 @@ const formatDate = (value: Date | string): React.ReactNode => {
     return (
       <div className="flex flex-col gap-1">
         <p className="text-sm">{format(date, "LLL. d, yyyy")}</p>
-        <p className="text-xs text-muted-foreground font-light">
+        <p className="text-xs text-muted-foreground font-light hidden">
           {format(date, "hh:mm:ss a")}
         </p>
       </div>

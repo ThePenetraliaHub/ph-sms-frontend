@@ -1,35 +1,110 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-
-import { useMemo } from "react";
-import { format } from "date-fns";
+// import { useMemo } from "react";
+// import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable, TableColumn } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
-
+import {
+  useDeleteUserRequestMutation,
+  useGetUserRequestsQuery,
+  useUpdateUserRequestMutation,
+} from "@/services/user-requests/user-requests";
 import { toast } from "sonner";
+
+interface PersonalTasks {
+  id: string | null;
+  taskName: string | null;
+  taskType: string | null;
+  deadline: string | null;
+  status: string | null;
+  _raw: any;
+}
 
 interface PersonalTaskListProps {
   studentId?: string;
+  isFetchingStudent: boolean;
+  checkTasksDue: (tasksDue: number) => void;
 }
 
-export function PersonalTaskList({ studentId }: PersonalTaskListProps) {
-  const handleMarkCompleted = async () => {};
+export function PersonalTaskList({
+  studentId,
+  isFetchingStudent,
+  checkTasksDue,
+}: PersonalTaskListProps) {
+  //update request
+  const [updateUserRequest, { isLoading: updatingRequest }] =
+    useUpdateUserRequestMutation();
+  //delete request
+  const [deleteUserRequest, { isLoading: deletingRequest }] =
+    useDeleteUserRequestMutation();
+  //fetch request
+  const {
+    data: userRequests,
+    isLoading,
+    isFetching,
+    error,
+  } = useGetUserRequestsQuery();
+  const allRequests = userRequests?.data;
+  const filtered = allRequests?.filter(
+    (request) => request.creator_id === studentId,
+  );
+  const personalTasks: PersonalTasks[] = filtered
+    ? filtered?.map((item) => {
+        return {
+          id: item.id,
+          taskName: item.description,
+          taskType: `${item.title.slice(0, 1).toUpperCase()}${item.title.slice(1)}`,
+          deadline: item.end_date,
+          status: item.status === null ? "Pending" : item.status,
+          _raw: "",
+        };
+      })
+    : [];
 
-  const columns: TableColumn<{
-    id: string;
-    taskName: string;
-    taskType: string;
-    deadline: string;
-    status: string;
-    _raw: any;
-  }>[] = [
+  const tasksDueCount: number = personalTasks.filter(
+    (item) => item.status === "Pending",
+  ).length;
+
+  checkTasksDue(tasksDueCount);
+
+  const handleMarkCompleted = async (taskId: string) => {
+    try {
+      const res = await updateUserRequest({
+        id: taskId,
+        data: {
+          status: "Completed",
+        },
+      }).unwrap();
+      toast.success(res.message ? res.message : "Task updated successfully.");
+    } catch (err) {
+      console.error("UPDATE ERROR:", err);
+      toast.error("Update failed!");
+    }
+  };
+
+  const handleStatusDelete = async (taskId: string) => {
+    try {
+      const res = await deleteUserRequest(taskId).unwrap();
+      console.log(res);
+      toast.success(res.message ? res.message : "Task deleted successfully");
+    } catch (error: any) {
+      console.error("DELETE ERROR:", error);
+      toast.error("Failed to delete request");
+    }
+  };
+
+  const columns: TableColumn<PersonalTasks>[] = [
     {
       key: "taskName",
       title: "Task Name",
       render: (value) => <span className="font-medium">{value as string}</span>,
     },
     { key: "taskType", title: "Task Type" },
-    { key: "deadline", title: "Deadline" },
+    {
+      key: "deadline",
+      title: "Deadline",
+    },
     {
       key: "status",
       title: "Status",
@@ -52,13 +127,22 @@ export function PersonalTaskList({ studentId }: PersonalTaskListProps) {
       render: (_value, row) => {
         if (row.status === "Pending") {
           return (
-            <Button
-              variant="link"
-              className="h-auto p-0 text-main-blue"
-              onClick={() => handleMarkCompleted()}
-            >
-              Mark Completed
-            </Button>
+            <div className="flex flex-col gap-y-1 items-start">
+              <Button
+                variant="link"
+                className="h-auto p-0 text-main-blue"
+                onClick={() => handleMarkCompleted(row.id ?? "")}
+              >
+                Mark Completed
+              </Button>
+              <Button
+                variant="link"
+                className="h-auto p-0 text-destructive"
+                onClick={() => handleStatusDelete(row.id ?? "")}
+              >
+                Remove Task
+              </Button>
+            </div>
           );
         }
         return <span className="text-gray-400">—</span>;
@@ -66,7 +150,13 @@ export function PersonalTaskList({ studentId }: PersonalTaskListProps) {
     },
   ];
 
-  if (false) {
+  if (
+    isLoading ||
+    isFetching ||
+    isFetchingStudent ||
+    updatingRequest ||
+    deletingRequest
+  ) {
     return (
       <Card>
         <CardHeader>
@@ -83,7 +173,7 @@ export function PersonalTaskList({ studentId }: PersonalTaskListProps) {
     );
   }
 
-  if (false) {
+  if (error) {
     return (
       <Card>
         <CardHeader>
@@ -111,7 +201,7 @@ export function PersonalTaskList({ studentId }: PersonalTaskListProps) {
         <div className="border rounded-lg overflow-hidden">
           <DataTable
             columns={columns}
-            data={[]}
+            data={personalTasks ?? []}
             showActionsColumn={false}
             emptyMessage="No personal tasks yet. Create one to get started."
           />

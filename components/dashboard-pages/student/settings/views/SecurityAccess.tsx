@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { EyeOff, Eye } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Dispatch, SetStateAction, useState } from "react";
+import { Stakeholders } from "@/services/stakeholders/stakeholder-types";
 
 interface showPasswords {
   currPassword: boolean;
@@ -21,9 +22,10 @@ interface showPasswords {
 
 interface Props {
   setOpenModal: Dispatch<SetStateAction<boolean>>;
+  currStudent: Stakeholders | undefined;
 }
 
-export default function SecurityAccess({ setOpenModal }: Props) {
+export default function SecurityAccess({ setOpenModal, currStudent }: Props) {
   const [showPass, setShowPass] = useState<showPasswords>({
     currPassword: false,
     wallet: false,
@@ -98,7 +100,11 @@ export default function SecurityAccess({ setOpenModal }: Props) {
           </CardDescription>
         </div>
         <Input
-          value={"+234 098 765 4321"}
+          value={
+            currStudent?.emergency_contact
+              ? `${currStudent.emergency_contact}`
+              : "Not Provided"
+          }
           readOnly
           type="text"
           placeholder="Enter value"

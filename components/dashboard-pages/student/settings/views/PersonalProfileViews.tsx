@@ -9,24 +9,23 @@ import {
 import { Button } from "@/components/ui/button";
 import { ChangeEvent } from "react";
 import { AuthUser } from "@/services/auth/auth-type";
-import { useGetStudentByQueryParamQuery } from "@/services/stakeholders/stakeholders";
 import { Stakeholders } from "@/services/stakeholders/stakeholder-types";
 
 interface Props {
   uploadImg: (e: ChangeEvent<HTMLInputElement>) => void;
   loading: boolean;
   user: AuthUser | null;
+  currStudent: Stakeholders | undefined;
+  isLoading: boolean;
 }
 
 export default function PersonalProfileViews({
   uploadImg,
   loading,
   user,
+  currStudent,
+  isLoading,
 }: Props) {
-  const { data: student, isLoading } = useGetStudentByQueryParamQuery(
-    user?.id ?? "",
-  );
-  const currStudent: Stakeholders | undefined = student?.data[0];
   const personalProfileRows = [
     {
       field: "Display Name",

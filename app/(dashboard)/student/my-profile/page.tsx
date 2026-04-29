@@ -16,6 +16,8 @@ import SecurityAccess from "@/components/dashboard-pages/student/settings/views/
 import PasswordChange from "@/components/general/shared-modals/password-change";
 import { toast } from "sonner";
 import { useCreateAttachmentMutation } from "@/services/attachment/attachment";
+import { Stakeholders } from "@/services/stakeholders/stakeholder-types";
+import { useGetStudentByQueryParamQuery } from "@/services/stakeholders/stakeholders";
 
 type StepId =
   | "personal-profile"
@@ -49,9 +51,12 @@ const steps: Step[] = [
 ];
 
 export default function MyProfilePage() {
-  //view state handler
+  //fetch student attachment and create attachment mutation (change image)
   const [createAttachment, { isLoading }] = useCreateAttachmentMutation();
   const user = useAppSelector(selectUser);
+  const { data: student, isLoading: fetchingStudentAttachment } =
+    useGetStudentByQueryParamQuery(user?.id ?? "");
+  const currStudent: Stakeholders | undefined = student?.data[0];
   const [currentStep, setCurrentStep] = useState<StepId>("personal-profile");
   const [modalStepsId, setModalStepsId] =
     useState<ModalStepId>("verify-password");
@@ -75,6 +80,7 @@ export default function MyProfilePage() {
     try {
       const res = await createAttachment(formData).unwrap();
       console.log(res);
+      if (res.data.file) console.log(res.data.file);
     } catch {
       //base api catches error
     }
@@ -109,10 +115,17 @@ export default function MyProfilePage() {
             user={user}
             loading={isLoading}
             uploadImg={uploadImg}
+            currStudent={currStudent}
+            isLoading={fetchingStudentAttachment}
           />
         );
       case "security-access":
-        return <SecurityAccess setOpenModal={setOpenModal} />;
+        return (
+          <SecurityAccess
+            currStudent={currStudent}
+            setOpenModal={setOpenModal}
+          />
+        );
       case "notification-preferences":
         return <NotificationPreferences />;
       default:
@@ -121,6 +134,8 @@ export default function MyProfilePage() {
             user={user}
             loading={isLoading}
             uploadImg={uploadImg}
+            currStudent={currStudent}
+            isLoading={fetchingStudentAttachment}
           />
         );
     }
