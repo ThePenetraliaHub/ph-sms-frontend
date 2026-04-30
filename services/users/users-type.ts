@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 import { Attachment } from "../attachment/attachment-types";
 import { Notes } from "../notes/note-types";
 import { School } from "../schools/schools-type";

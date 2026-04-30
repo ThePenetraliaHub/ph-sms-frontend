@@ -1,5 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-
 import { useState } from "react";
 import { MetricCard } from "@/components/dashboard-pages/admin/admissions/components/metric-card";
 import { PersonalTaskList } from "@/components/dashboard-pages/student/dashboard/personal-task-list";
@@ -12,9 +12,21 @@ import { useGetStudentByQueryParamQuery } from "@/services/stakeholders/stakehol
 import { useAppSelector } from "@/store/hooks";
 import { selectUser } from "@/store/slices/authSlice";
 import { toast } from "sonner";
-import { useCreateUserRequestMutation } from "@/services/user-requests/user-requests";
+import {
+  useCreateUserRequestMutation,
+  useGetUserRequestsQuery,
+} from "@/services/user-requests/user-requests";
 import { CreateUserRequestRequest } from "@/services/user-requests/user-request-types";
 // import { useMemo } from "react";
+
+export interface PersonalTasks {
+  id: string | null;
+  taskName: string | null;
+  taskType: string | null;
+  deadline: string | null;
+  status: string | null;
+  _raw: any;
+}
 
 export default function PersonalTaskManagerPage() {
   const [modalOpen, setModalOpen] = useState(false);
@@ -22,7 +34,33 @@ export default function PersonalTaskManagerPage() {
   const { data: student, isLoading: isFetchingStudentId } =
     useGetStudentByQueryParamQuery(user?.id ?? "");
   const currStudent: Stakeholders | undefined = student?.data[0];
-  const [tasksDue, setTasksDue] = useState<number>();
+  //fetch request
+  const {
+    data: userRequests,
+    isLoading: isGettingRequests,
+    isFetching,
+    error,
+  } = useGetUserRequestsQuery();
+  const allRequests = userRequests?.data;
+  const filtered = allRequests?.filter(
+    (request) => request.creator_id === currStudent?.user_id,
+  );
+  const personalTasks: PersonalTasks[] = filtered
+    ? filtered?.map((item) => {
+        return {
+          id: item.id,
+          taskName: item.description,
+          taskType: `${item.title.slice(0, 1).toUpperCase()}${item.title.slice(1)}`,
+          deadline: item.end_date,
+          status: item.status === null ? "Pending" : item.status,
+          _raw: "",
+        };
+      })
+    : [];
+
+  const tasksDueCount: number = personalTasks.filter(
+    (item) => item.status === "Pending",
+  ).length;
 
   const [createUserRequest, { isLoading }] = useCreateUserRequestMutation();
 
@@ -51,10 +89,6 @@ export default function PersonalTaskManagerPage() {
     }
   };
 
-  const checkTasksDue = (tasksDue: number) => {
-    setTasksDue(tasksDue);
-  };
-
   return (
     <div className="space-y-4">
       <div className="bg-background rounded-md p-6">
@@ -68,7 +102,11 @@ export default function PersonalTaskManagerPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <MetricCard title="Tasks Due" value={`${tasksDue} Tasks`} trend="up" />
+        <MetricCard
+          title="Tasks Due"
+          value={`${tasksDueCount} Tasks`}
+          trend="up"
+        />
         <MetricCard
           title="Completion Rate (Last 7 Days)"
           value={`1% Success`}
@@ -88,9 +126,11 @@ export default function PersonalTaskManagerPage() {
       </div>
 
       <PersonalTaskList
-        checkTasksDue={checkTasksDue}
+        isGettingRequests={isGettingRequests}
+        error={error}
+        isFetching={isFetching}
         isFetchingStudent={isFetchingStudentId}
-        studentId={currStudent?.user_id ?? ""}
+        personalTasks={personalTasks}
       />
       {/* {currStudent?.user_id && (
       )} */}

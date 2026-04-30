@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ChangeEvent } from "react";
 import { AuthUser } from "@/services/auth/auth-type";
 import { Stakeholders } from "@/services/stakeholders/stakeholder-types";
+import Image from "next/image";
 
 interface Props {
   uploadImg: (e: ChangeEvent<HTMLInputElement>) => void;
@@ -17,6 +18,7 @@ interface Props {
   user: AuthUser | null;
   currStudent: Stakeholders | undefined;
   isLoading: boolean;
+  isUpdatingImg: boolean;
 }
 
 export default function PersonalProfileViews({
@@ -25,7 +27,9 @@ export default function PersonalProfileViews({
   user,
   currStudent,
   isLoading,
+  isUpdatingImg,
 }: Props) {
+  console.log(user);
   const personalProfileRows = [
     {
       field: "Display Name",
@@ -44,29 +48,28 @@ export default function PersonalProfileViews({
       <h2 className="text-xl font-semibold text-gray-800">Personal Profile</h2>
       <div className="flex items-center gap-x-5">
         {/* Profile Picture */}
-        {/* uncomment after getting user's image from database */}
-        {/* <div className="shrink-0">
-          {profilePicture ? (
+        <div className="shrink-0">
+          {user?.profile_image_url ? (
             <Image
-              src={profilePicture}
-              alt={name}
+              src={user.profile_image_url}
+              alt={"profile-img"}
               width={120}
               height={120}
               className="rounded-md object-cover object-top w-30 h-30"
             />
           ) : (
-            <div className="w-30 h-30 rounded-md bg-gray-200 flex items-center justify-center">
+            <div className="w-30 h-30 rounded-full bg-gray-200 flex items-center justify-center">
               <span className="text-4xl font-bold text-gray-400">
-                {name.charAt(0)}
+                {`${user?.last_name.charAt(0)}${user?.first_name.charAt(0)}`}
               </span>
             </div>
           )}
-        </div> */}
-        <div className="w-30 h-30 rounded-full bg-gray-200 flex items-center justify-center">
-          <span className="text-4xl font-bold text-gray-400">
-            {loading ? "-" : "S"}
-          </span>
         </div>
+        {/* <div className="w-30 h-30 rounded-full bg-gray-200 flex items-center justify-center">
+          <span className="text-4xl font-bold text-gray-400">
+            {loading || isUpdatingImg ? "-" : "S"}
+          </span>
+        </div> */}
         <div>
           <div className="relative w-fit">
             <Button className="w-fit h-13" variant={"outline"}>

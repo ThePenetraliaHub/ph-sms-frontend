@@ -62,7 +62,7 @@ export const usersApi = baseApi.injectEndpoints({
 
     updateUser: build.mutation<
       UserResponse,
-      { id: string; data: UpdateUserRequest }
+      { id: string; data: Partial<UpdateUserRequest> }
     >({
       query: ({ id, data }) => ({
         url: `/users/${id}`,

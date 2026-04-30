@@ -1,36 +1,29 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-// import { useMemo } from "react";
-// import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable, TableColumn } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import {
   useDeleteUserRequestMutation,
-  useGetUserRequestsQuery,
   useUpdateUserRequestMutation,
 } from "@/services/user-requests/user-requests";
 import { toast } from "sonner";
-
-interface PersonalTasks {
-  id: string | null;
-  taskName: string | null;
-  taskType: string | null;
-  deadline: string | null;
-  status: string | null;
-  _raw: any;
-}
+import { PersonalTasks } from "@/app/(dashboard)/student/personal-task-manager/page";
 
 interface PersonalTaskListProps {
-  studentId?: string;
+  error: any;
+  isFetching: boolean;
+  isGettingRequests: boolean;
   isFetchingStudent: boolean;
-  checkTasksDue: (tasksDue: number) => void;
+  personalTasks: PersonalTasks[];
 }
 
 export function PersonalTaskList({
-  studentId,
   isFetchingStudent,
-  checkTasksDue,
+  error,
+  isFetching,
+  isGettingRequests,
+  personalTasks,
 }: PersonalTaskListProps) {
   //update request
   const [updateUserRequest, { isLoading: updatingRequest }] =
@@ -38,35 +31,6 @@ export function PersonalTaskList({
   //delete request
   const [deleteUserRequest, { isLoading: deletingRequest }] =
     useDeleteUserRequestMutation();
-  //fetch request
-  const {
-    data: userRequests,
-    isLoading,
-    isFetching,
-    error,
-  } = useGetUserRequestsQuery();
-  const allRequests = userRequests?.data;
-  const filtered = allRequests?.filter(
-    (request) => request.creator_id === studentId,
-  );
-  const personalTasks: PersonalTasks[] = filtered
-    ? filtered?.map((item) => {
-        return {
-          id: item.id,
-          taskName: item.description,
-          taskType: `${item.title.slice(0, 1).toUpperCase()}${item.title.slice(1)}`,
-          deadline: item.end_date,
-          status: item.status === null ? "Pending" : item.status,
-          _raw: "",
-        };
-      })
-    : [];
-
-  const tasksDueCount: number = personalTasks.filter(
-    (item) => item.status === "Pending",
-  ).length;
-
-  checkTasksDue(tasksDueCount);
 
   const handleMarkCompleted = async (taskId: string) => {
     try {
@@ -77,10 +41,7 @@ export function PersonalTaskList({
         },
       }).unwrap();
       toast.success(res.message ? res.message : "Task updated successfully.");
-    } catch (err) {
-      console.error("UPDATE ERROR:", err);
-      toast.error("Update failed!");
-    }
+    } catch {}
   };
 
   const handleStatusDelete = async (taskId: string) => {
@@ -88,10 +49,7 @@ export function PersonalTaskList({
       const res = await deleteUserRequest(taskId).unwrap();
       console.log(res);
       toast.success(res.message ? res.message : "Task deleted successfully");
-    } catch (error: any) {
-      console.error("DELETE ERROR:", error);
-      toast.error("Failed to delete request");
-    }
+    } catch {}
   };
 
   const columns: TableColumn<PersonalTasks>[] = [
@@ -151,7 +109,7 @@ export function PersonalTaskList({
   ];
 
   if (
-    isLoading ||
+    isGettingRequests ||
     isFetching ||
     isFetchingStudent ||
     updatingRequest ||

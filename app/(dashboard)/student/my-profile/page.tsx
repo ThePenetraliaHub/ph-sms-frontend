@@ -1,6 +1,7 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
-import { useAppSelector } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { selectUser } from "@/store/slices/authSlice";
 import {
   Profile02Icon,
@@ -18,6 +19,8 @@ import { toast } from "sonner";
 import { useCreateAttachmentMutation } from "@/services/attachment/attachment";
 import { Stakeholders } from "@/services/stakeholders/stakeholder-types";
 import { useGetStudentByQueryParamQuery } from "@/services/stakeholders/stakeholders";
+import { useUpdateUserMutation } from "@/services/users/users";
+import { selectTerm } from "@/store/slices/schoolSlice";
 
 type StepId =
   | "personal-profile"
@@ -51,7 +54,8 @@ const steps: Step[] = [
 ];
 
 export default function MyProfilePage() {
-  //fetch student attachment and create attachment mutation (change image)
+  const dispatch = useAppDispatch();
+  const [updateUser, { isLoading: isUpdatingImg }] = useUpdateUserMutation();
   const [createAttachment, { isLoading }] = useCreateAttachmentMutation();
   const user = useAppSelector(selectUser);
   const { data: student, isLoading: fetchingStudentAttachment } =
@@ -62,10 +66,29 @@ export default function MyProfilePage() {
     useState<ModalStepId>("verify-password");
   const [openModal, setOpenModal] = useState<boolean>(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imgUrl, setImgUrl] = useState<string | null>(null);
 
   //view change handler
   const handleStepChange = (stepId: string) => {
     setCurrentStep(stepId as StepId);
+  };
+
+  //handle img
+  const updateUserImage = async () => {
+    try {
+      const res = await updateUser({
+        id: user?.id ?? "",
+        data: {
+          profile_image_url: imgUrl,
+        },
+      }).unwrap();
+      toast.success(
+        res.message ? res.message : "Profile image updated successfully",
+      );
+      // const userDetails = res.data
+      // if (!res.data) return;
+      // dispatch(updateUser({...state.user}));
+    } catch {}
   };
 
   //handle upload
@@ -79,8 +102,7 @@ export default function MyProfilePage() {
 
     try {
       const res = await createAttachment(formData).unwrap();
-      console.log(res);
-      if (res.data.file) console.log(res.data.file);
+      if (res.data.file) setImgUrl(res.data.file);
     } catch {
       //base api catches error
     }
@@ -104,14 +126,19 @@ export default function MyProfilePage() {
   useEffect(() => {
     if (!selectedFile) return;
     handleUpload();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFile]);
+
+  useEffect(() => {
+    if (!imgUrl) return;
+    updateUserImage();
+  }, [imgUrl]);
 
   const renderContent = () => {
     switch (currentStep) {
       case "personal-profile":
         return (
           <PersonalProfileViews
+            isUpdatingImg={isUpdatingImg}
             user={user}
             loading={isLoading}
             uploadImg={uploadImg}
@@ -132,6 +159,7 @@ export default function MyProfilePage() {
         return (
           <PersonalProfileViews
             user={user}
+            isUpdatingImg={isUpdatingImg}
             loading={isLoading}
             uploadImg={uploadImg}
             currStudent={currStudent}
