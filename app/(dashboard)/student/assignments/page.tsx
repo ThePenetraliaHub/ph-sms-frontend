@@ -19,6 +19,9 @@ import type { CbtExam } from "@/services/cbt-exams/cbt-exam-types";
 import { format, isAfter, isPast, parseISO } from "date-fns";
 
 import type { Grade } from "@/services/grades/grades-type";
+import { useGetStudentByQueryParamQuery } from "@/services/stakeholders/stakeholders";
+import { useGetUserRequestsQuery } from "@/services/user-requests/user-requests";
+import { useGetAllExamResultsQuery } from "@/services/results/results";
 
 function getCbtExamsList(data: unknown): CbtExam[] {
   if (!data || typeof data !== "object") return [];
@@ -40,6 +43,21 @@ function getCbtExamsList(data: unknown): CbtExam[] {
 export default function AssignmentsPage() {
   const router = useRouter();
   const user = useAppSelector(selectUser);
+  // const { data: student, isLoading: fetchingStudentAttachment } =
+  //   useGetStudentByQueryParamQuery(user?.id ?? "");
+  // const studentData = student?.data[0];
+
+  //FOR ASSIGNMENT
+  const { data: userRequests } = useGetUserRequestsQuery();
+  const personalRequests = userRequests?.data.filter((request) => {
+    return request.creator_id === user?.id;
+  });
+  // console.log(personalRequests); //FOR ASSIGNMENTS
+
+  //FOR QUIZZES
+  const { data: results } = useGetAllExamResultsQuery();
+  console.log(results?.data);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
 

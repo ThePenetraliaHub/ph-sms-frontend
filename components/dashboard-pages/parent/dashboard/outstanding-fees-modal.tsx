@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Stakeholders } from "@/services/stakeholders/stakeholder-types";
 
 interface Invoice {
   id: string;
@@ -26,6 +27,7 @@ interface OutstandingFeesModalProps {
   onOpenChange: (open: boolean) => void;
   totalOutstanding?: string;
   invoices?: Invoice[];
+  parent: Stakeholders | null;
 }
 
 const defaultInvoices: Invoice[] = [
@@ -44,13 +46,13 @@ const defaultInvoices: Invoice[] = [
 export function OutstandingFeesModal({
   open,
   onOpenChange,
-  totalOutstanding = "₦ 500,000.00",
+  totalOutstanding = "₦ 0.00",
   invoices = defaultInvoices,
+  parent,
 }: OutstandingFeesModalProps) {
   const [selectedInvoices, setSelectedInvoices] = useState<Set<string>>(
     new Set(),
   );
-
   const handleToggleInvoice = (invoiceId: string) => {
     setSelectedInvoices((prev) => {
       const newSet = new Set(prev);
@@ -79,7 +81,9 @@ export function OutstandingFeesModal({
       title="Outstanding School Fees"
       size="xl"
       footer={
-        <div className="grid grid-cols-2 gap-2 w-full">
+        <div
+          className={`gap-2 w-full ${parent?.school_fees.total ? "grid grid-cols-2" : "hidden"}`}
+        >
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
@@ -109,59 +113,67 @@ export function OutstandingFeesModal({
           <Label className="text-sm font-medium text-gray-700">
             List of all active invoices:
           </Label>
-          <div className="border rounded-lg overflow-hidden">
-            <Table>
-              <TableHeader className="bg-main-blue/5">
-                <TableRow>
-                  <TableHead className="w-12">
-                    <Checkbox
-                      checked={
-                        selectedInvoices.size === invoices.length &&
-                        invoices.length > 0
-                      }
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedInvoices(
-                            new Set(invoices.map((inv) => inv.id)),
-                          );
-                        } else {
-                          setSelectedInvoices(new Set());
-                        }
-                      }}
-                    />
-                  </TableHead>
-                  <TableHead className="font-semibold">Invoice</TableHead>
-                  <TableHead className="font-semibold">Amount</TableHead>
-                  <TableHead className="font-semibold">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoices.map((invoice) => (
-                  <TableRow key={invoice.id}>
-                    <TableCell>
+          {parent?.school_fees.total ? (
+            <div className="border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader className="bg-main-blue/5">
+                  <TableRow>
+                    <TableHead className="w-12">
                       <Checkbox
-                        checked={selectedInvoices.has(invoice.id)}
-                        onCheckedChange={() => handleToggleInvoice(invoice.id)}
+                        checked={
+                          selectedInvoices.size === invoices.length &&
+                          invoices.length > 0
+                        }
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedInvoices(
+                              new Set(invoices.map((inv) => inv.id)),
+                            );
+                          } else {
+                            setSelectedInvoices(new Set());
+                          }
+                        }}
                       />
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {invoice.name}
-                    </TableCell>
-                    <TableCell>{invoice.amount}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="link"
-                        className="h-auto p-0 text-main-blue underline"
-                        onClick={() => handleDownloadInvoice(invoice.id)}
-                      >
-                        Download Invoice
-                      </Button>
-                    </TableCell>
+                    </TableHead>
+                    <TableHead className="font-semibold">Invoice</TableHead>
+                    <TableHead className="font-semibold">Amount</TableHead>
+                    <TableHead className="font-semibold">Action</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {invoices.map((invoice) => (
+                    <TableRow key={invoice.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedInvoices.has(invoice.id)}
+                          onCheckedChange={() =>
+                            handleToggleInvoice(invoice.id)
+                          }
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {invoice.name}
+                      </TableCell>
+                      <TableCell>{invoice.amount}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="link"
+                          className="h-auto p-0 text-main-blue underline"
+                          onClick={() => handleDownloadInvoice(invoice.id)}
+                        >
+                          Download Invoice
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="w-full text-muted-foreground text-sm border rounded-lg p-5 text-center">
+              No active invoices.
+            </div>
+          )}
         </div>
       </div>
     </ModalContainer>

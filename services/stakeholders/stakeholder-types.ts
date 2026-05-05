@@ -39,7 +39,7 @@ export interface Stakeholders {
   business: string | null;
   services: string[];
   contracts: Contract[];
-  grade: string | null;
+  grade: any[] | null;
   age: number | null;
   performance: any;
   bank: Record<string, any>;

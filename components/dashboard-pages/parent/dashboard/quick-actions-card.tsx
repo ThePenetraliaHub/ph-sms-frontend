@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useAppSelector } from "@/store/hooks";
-import { selectUser } from "@/store/slices/authSlice";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { QuickActionCard } from "@/components/dashboard-pages/admin/admissions/components/quick-action-card";
 import {
@@ -15,11 +13,14 @@ import { TopUpWalletModal } from "@/components/dashboard-pages/parent/top-up-wal
 import { OutstandingFeesModal } from "./outstanding-fees-modal";
 import { FinancialArrangementModal } from "./financial-arrangement-modal";
 import { LeaveRequestModal } from "./leave-request-modal";
-import { useGetParentByUserIdQuery } from "@/services/stakeholders/stakeholders";
 import { useGetWalletBalanceQuery } from "@/services/wallet/wallet";
+import { Stakeholders } from "@/services/stakeholders/stakeholder-types";
 
-export function QuickActionsCard() {
-  const user = useAppSelector(selectUser);
+interface Props {
+  parent: Stakeholders | null;
+}
+
+export function QuickActionsCard({ parent }: Props) {
   const [topUpModalOpen, setTopUpModalOpen] = useState(false);
   const [outstandingFeesModalOpen, setOutstandingFeesModalOpen] =
     useState(false);
@@ -27,12 +28,14 @@ export function QuickActionsCard() {
     useState(false);
   const [leaveRequestModalOpen, setLeaveRequestModalOpen] = useState(false);
 
-  const { data: parentData } = useGetParentByUserIdQuery(user?.id ?? "", {
-    skip: !user?.id || !topUpModalOpen,
-  });
+  // const { data: parentData } = useGetParentByUserIdQuery(user?.id ?? "", {
+  //   skip: !user?.id || !topUpModalOpen,
+  // });
+  // const parent = parentData?.data ?? null;
+  // console.log(parentData);
   const wards =
     (
-      parentData?.data as {
+      parent as {
         children_details?: Array<{
           id: string;
           user_id: string;
@@ -104,7 +107,13 @@ export function QuickActionsCard() {
       />
       <OutstandingFeesModal
         open={outstandingFeesModalOpen}
+        totalOutstanding={
+          parent?.school_fees.total
+            ? parent.school_fees.total.toString()
+            : "₦ 0.00"
+        }
         onOpenChange={setOutstandingFeesModalOpen}
+        parent={parent}
       />
       <FinancialArrangementModal
         open={financialArrangementModalOpen}

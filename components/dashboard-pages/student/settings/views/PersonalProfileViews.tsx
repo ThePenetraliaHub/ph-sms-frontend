@@ -29,7 +29,6 @@ export default function PersonalProfileViews({
   isLoading,
   isUpdatingImg,
 }: Props) {
-  console.log(user);
   const personalProfileRows = [
     {
       field: "Display Name",

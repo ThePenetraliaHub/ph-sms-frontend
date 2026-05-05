@@ -127,7 +127,7 @@ export default function ParentDashboard() {
       <StudentNoticeBoardCard notices={latestNotices} />
 
       {/* Quick Actions Section */}
-      <QuickActionsCard />
+      <QuickActionsCard parent={parent} />
     </div>
   );
 }

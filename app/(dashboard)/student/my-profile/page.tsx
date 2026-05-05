@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useAppSelector } from "@/store/hooks";
 import { selectUser } from "@/store/slices/authSlice";
 import {
   Profile02Icon,
@@ -20,7 +20,7 @@ import { useCreateAttachmentMutation } from "@/services/attachment/attachment";
 import { Stakeholders } from "@/services/stakeholders/stakeholder-types";
 import { useGetStudentByQueryParamQuery } from "@/services/stakeholders/stakeholders";
 import { useUpdateUserMutation } from "@/services/users/users";
-import { selectTerm } from "@/store/slices/schoolSlice";
+// import { selectTerm } from "@/store/slices/schoolSlice";
 
 type StepId =
   | "personal-profile"
@@ -54,7 +54,6 @@ const steps: Step[] = [
 ];
 
 export default function MyProfilePage() {
-  const dispatch = useAppDispatch();
   const [updateUser, { isLoading: isUpdatingImg }] = useUpdateUserMutation();
   const [createAttachment, { isLoading }] = useCreateAttachmentMutation();
   const user = useAppSelector(selectUser);
@@ -73,7 +72,7 @@ export default function MyProfilePage() {
     setCurrentStep(stepId as StepId);
   };
 
-  //handle img
+  //handle img update
   const updateUserImage = async () => {
     try {
       const res = await updateUser({
@@ -85,9 +84,6 @@ export default function MyProfilePage() {
       toast.success(
         res.message ? res.message : "Profile image updated successfully",
       );
-      // const userDetails = res.data
-      // if (!res.data) return;
-      // dispatch(updateUser({...state.user}));
     } catch {}
   };
 
