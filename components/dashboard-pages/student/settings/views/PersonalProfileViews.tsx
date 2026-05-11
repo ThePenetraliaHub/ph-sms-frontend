@@ -29,6 +29,10 @@ export default function PersonalProfileViews({
   isLoading,
   isUpdatingImg,
 }: Props) {
+  const isLoadingImgChange = (): boolean => {
+    if (isUpdatingImg || loading) return true;
+    return false;
+  };
   const personalProfileRows = [
     {
       field: "Display Name",
@@ -64,17 +68,12 @@ export default function PersonalProfileViews({
             </div>
           )}
         </div>
-        {/* <div className="w-30 h-30 rounded-full bg-gray-200 flex items-center justify-center">
-          <span className="text-4xl font-bold text-gray-400">
-            {loading || isUpdatingImg ? "-" : "S"}
-          </span>
-        </div> */}
         <div>
           <div className="relative w-fit">
             <Button className="w-fit h-13" variant={"outline"}>
               Change Profile Image
             </Button>
-            {!loading && (
+            {!isLoadingImgChange() && (
               <input
                 className="absolute top-0 right-0 left-0 bottom-0 opacity-0"
                 type="file"

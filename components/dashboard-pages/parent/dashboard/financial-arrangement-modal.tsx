@@ -1,6 +1,7 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ModalContainer } from "@/components/ui/modal-container";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CreateUserRequestRequest } from "@/services/user-requests/user-request-types";
+import { useCreateUserRequestMutation } from "@/services/user-requests/user-requests";
+import { toast } from "sonner";
+import { useAppSelector } from "@/store/hooks";
+import { selectUser } from "@/store/slices/authSlice";
+import { useCreateAttachmentMutation } from "@/services/attachment/attachment";
 
 interface FinancialArrangementModalProps {
   open: boolean;
@@ -24,10 +31,18 @@ export function FinancialArrangementModal({
   onOpenChange,
 }: FinancialArrangementModalProps) {
   const [requestType, setRequestType] = useState("");
+  const [attachmentId, setAttachmentId] = useState<string>();
+  const [hasUploadedAttachment, setHasUploadedAttachment] =
+    useState<boolean>(false);
   const [justification, setJustification] = useState("");
   const [proposedPlan, setProposedPlan] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [createUserRequest, { isLoading: isCreatingFinReq }] =
+    useCreateUserRequestMutation();
+  const [createAttachment, { isLoading: isCreatingAttachment }] =
+    useCreateAttachmentMutation();
+  const user = useAppSelector(selectUser);
 
   const handleClose = (isOpen: boolean) => {
     if (!isOpen) {
@@ -44,15 +59,60 @@ export function FinancialArrangementModal({
     setSelectedFile(file);
   };
 
-  const handleSubmit = () => {
-    console.log("Financial arrangement request:", {
-      requestType,
-      justification,
-      proposedPlan,
-      file: selectedFile,
-    });
-    handleClose(false);
+  const handleAttachmentUpload = async () => {
+    if (!user) return;
+    if (!selectedFile) return toast.error("Invalid file");
+    const formData = new FormData();
+
+    formData.append("file", selectedFile as Blob);
+    formData.append("school_id", `${user.school_id}`);
+    formData.append("name", "financial_arrangement_request");
+    try {
+      const res = await createAttachment(formData).unwrap();
+      if (res.data.id) setAttachmentId(res.data.id);
+      setHasUploadedAttachment(true);
+    } catch {
+      //base api catches error
+    }
   };
+
+  const handleRequestSubmission = async () => {
+    //AFTER FILE MUST HAVE BEEN UPLOADED SUCCESFULLY TO ATTACHMENTS
+    if (!user) return;
+    if (!requestType.trim() || !justification.trim() || !proposedPlan.trim()) {
+      return toast.error("Invalid field(s)");
+    }
+    if (!attachmentId) return toast.error("File not found!");
+    try {
+      const payload: CreateUserRequestRequest = {
+        school_id: user.school_id ?? "",
+        title: proposedPlan,
+        type: "others",
+        description: justification,
+        attachment_id: attachmentId,
+      };
+      const res = await createUserRequest(payload).unwrap();
+      if (res.status) {
+        toast.success(
+          res.message
+            ? res.message
+            : "New Financial Arrangement Request created successfully",
+        );
+        //reset upload document with id flag
+        setHasUploadedAttachment(false);
+      }
+      //close modal
+      handleClose(false);
+    } catch (err) {
+      console.error("ERROR: ", err);
+      return;
+    }
+  };
+
+  useEffect(() => {
+    if (!hasUploadedAttachment) return;
+    handleRequestSubmission();
+  }, [hasUploadedAttachment]);
 
   return (
     <ModalContainer
@@ -69,7 +129,13 @@ export function FinancialArrangementModal({
           >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} className="flex-1">
+          <Button
+            disabled={
+              isCreatingFinReq || isCreatingAttachment || hasUploadedAttachment
+            }
+            onClick={handleAttachmentUpload}
+            className="flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             Submit Request to Bursar
           </Button>
         </div>

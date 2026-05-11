@@ -32,6 +32,7 @@ export default function GradesReportCardPage() {
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
 
   const { data: resultsData } = useGetAllExamResultsQuery({ _all: true });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const examResults = resultsData?.data ?? [];
 
   const allSubjectPerformances = useMemo(() => {

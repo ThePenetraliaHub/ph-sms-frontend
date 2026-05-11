@@ -68,6 +68,7 @@ export interface UserRequest {
 export interface CreateUserRequestRequest {
   school_id?: string;
   supervisor_id?: string;
+  attachment_id?: string;
   staff_member_id?: string;
   coverage_staff_id?: string;
   leave_policy_id?: string;

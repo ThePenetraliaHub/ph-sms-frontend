@@ -1,6 +1,7 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ModalContainer } from "@/components/ui/modal-container";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +14,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import DatePickerIcon from "@/components/ui/date-picker";
+import { CreateUserRequestRequest } from "@/services/user-requests/user-request-types";
+import { useCreateUserRequestMutation } from "@/services/user-requests/user-requests";
+import { useAppSelector } from "@/store/hooks";
+import { selectUser } from "@/store/slices/authSlice";
+import { toast } from "sonner";
+import { useCreateAttachmentMutation } from "@/services/attachment/attachment";
 
 interface LeaveRequestModalProps {
   open: boolean;
@@ -30,7 +37,15 @@ export function LeaveRequestModal({
   const [leaveEndDate, setLeaveEndDate] = useState<Date | undefined>(undefined);
   const [reason, setReason] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [attachmentId, setAttachmentId] = useState<string>();
+  const [hasUploadedAttachment, setHasUploadedAttachment] =
+    useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [createUserRequest, { isLoading: isCreatingLeaveReq }] =
+    useCreateUserRequestMutation();
+  const [createAttachment, { isLoading: isCreatingAttachment }] =
+    useCreateAttachmentMutation();
+  const user = useAppSelector(selectUser);
 
   const handleClose = (isOpen: boolean) => {
     if (!isOpen) {
@@ -43,21 +58,74 @@ export function LeaveRequestModal({
     onOpenChange(isOpen);
   };
 
+  const formatPeriod = (date: Date | undefined): string => {
+    if (!date) return "";
+    const formattedStr = new Date(date).toISOString().split("T")[0];
+    return formattedStr;
+  };
+
+  const handleAttachmentUpload = async () => {
+    if (!user) return;
+    if (!selectedFile) return toast.error("Invalid file");
+    const formData = new FormData();
+
+    formData.append("file", selectedFile as Blob);
+    formData.append("school_id", `${user.school_id}`);
+    formData.append("type", "others");
+    formData.append("name", "leave_request_form");
+    try {
+      const res = await createAttachment(formData).unwrap();
+      if (res.data.id) setAttachmentId(res.data.id);
+      setHasUploadedAttachment(true);
+    } catch {
+      //base api catches error
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setSelectedFile(file);
   };
 
-  const handleSubmit = () => {
-    console.log("Leave request:", {
-      requestType,
-      leaveStartDate,
-      leaveEndDate,
-      reason,
-      file: selectedFile,
-    });
-    handleClose(false);
+  const handleRequestSubmission = async () => {
+    if (!leaveStartDate && !leaveEndDate) return;
+    const leaveStartDateFormatted = formatPeriod(leaveStartDate);
+    const leaveEndDateFormatted = formatPeriod(leaveEndDate);
+    if (!user) return;
+    if (
+      !requestType.trim() ||
+      !leaveStartDateFormatted.trim() ||
+      !leaveEndDateFormatted.trim() ||
+      !reason.trim()
+    ) {
+      return toast.error("Invalid field(s)");
+    }
+    try {
+      const payload: CreateUserRequestRequest = {
+        school_id: user.school_id ?? "",
+        title: requestType,
+        type: "leave",
+        description: reason,
+        attachment_id: attachmentId,
+        start_date: leaveStartDateFormatted,
+        end_date: leaveEndDateFormatted,
+      };
+      const res = await createUserRequest(payload).unwrap();
+      if (res.status) {
+        toast.success(res.message ? res.message : "Request Form submitted");
+        setHasUploadedAttachment(false);
+      }
+      handleClose(false);
+    } catch (err) {
+      console.error("ERROR: ", err);
+      return;
+    }
   };
+
+  useEffect(() => {
+    if (!hasUploadedAttachment) return;
+    handleRequestSubmission();
+  }, [hasUploadedAttachment]);
 
   return (
     <ModalContainer
@@ -74,7 +142,15 @@ export function LeaveRequestModal({
           >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} className="flex-1">
+          <Button
+            disabled={
+              isCreatingLeaveReq ||
+              isCreatingAttachment ||
+              hasUploadedAttachment
+            }
+            onClick={handleAttachmentUpload}
+            className="flex-1 disabled:opacity-50 disabled:cursor-not-allowed ease-in-out transition delay-100"
+          >
             Submit Leave Request
           </Button>
         </div>

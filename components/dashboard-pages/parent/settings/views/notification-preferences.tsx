@@ -6,8 +6,11 @@ import {
   TableCell,
   Table,
 } from "@/components/ui/table";
+import { useGetNotificationsQuery } from "@/services/notifications/notification";
 
 export default function NotificationPreferences() {
+  const { data: notifications } = useGetNotificationsQuery();
+  console.log("notifications: ", notifications);
   const notificationPreferences = [
     {
       field: "Attendance (Check-in/out)",

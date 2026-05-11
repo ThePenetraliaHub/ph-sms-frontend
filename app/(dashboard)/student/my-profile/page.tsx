@@ -20,6 +20,7 @@ import { useCreateAttachmentMutation } from "@/services/attachment/attachment";
 import { Stakeholders } from "@/services/stakeholders/stakeholder-types";
 import { useGetStudentByQueryParamQuery } from "@/services/stakeholders/stakeholders";
 import { useUpdateUserMutation } from "@/services/users/users";
+import { UploadedImageDetails } from "../../parent/settings/page";
 // import { selectTerm } from "@/store/slices/schoolSlice";
 
 type StepId =
@@ -65,7 +66,10 @@ export default function MyProfilePage() {
     useState<ModalStepId>("verify-password");
   const [openModal, setOpenModal] = useState<boolean>(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [imgUrl, setImgUrl] = useState<string | null>(null);
+  const [imgDetails, setImgDetails] = useState<UploadedImageDetails>({
+    profile_image_public_id: null,
+    profile_image_url: null,
+  });
 
   //view change handler
   const handleStepChange = (stepId: string) => {
@@ -78,7 +82,8 @@ export default function MyProfilePage() {
       const res = await updateUser({
         id: user?.id ?? "",
         data: {
-          profile_image_url: imgUrl,
+          profile_image_url: imgDetails.profile_image_url,
+          profile_image_public_id: imgDetails.profile_image_public_id,
         },
       }).unwrap();
       toast.success(
@@ -94,11 +99,16 @@ export default function MyProfilePage() {
 
     formData.append("file", selectedFile as Blob);
     formData.append("school_id", `${user?.school_id}`);
+    formData.append("type", "others");
     formData.append("name", "profie_image_url");
 
     try {
       const res = await createAttachment(formData).unwrap();
-      if (res.data.file) setImgUrl(res.data.file);
+      if (res.data.file && res.data.id)
+        setImgDetails({
+          profile_image_url: res.data.file,
+          profile_image_public_id: res.data.id,
+        });
     } catch {
       //base api catches error
     }
@@ -125,9 +135,9 @@ export default function MyProfilePage() {
   }, [selectedFile]);
 
   useEffect(() => {
-    if (!imgUrl) return;
+    if (!imgDetails.profile_image_url) return;
     updateUserImage();
-  }, [imgUrl]);
+  }, [imgDetails.profile_image_url]);
 
   const renderContent = () => {
     switch (currentStep) {

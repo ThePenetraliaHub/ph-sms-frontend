@@ -12,6 +12,17 @@ import { Icon } from "@/components/general/huge-icon";
 import { AddSquareIcon, PolicyIcon } from "@hugeicons/core-free-icons";
 import { FinancialArrangementModal } from "@/components/dashboard-pages/parent/dashboard/financial-arrangement-modal";
 import { DiscountPolicyModal } from "@/components/dashboard-pages/parent/fee-request-portal/discount-policy-modal";
+import {
+  useGetUserRequestByIdQuery,
+  useGetUserRequestsQuery,
+} from "@/services/user-requests/user-requests";
+import { useAppSelector } from "@/store/hooks";
+import { selectUser } from "@/store/slices/authSlice";
+import {
+  useGetParentByUserIdQuery,
+  useGetStudentByQueryParamQuery,
+} from "@/services/stakeholders/stakeholders";
+import { Stakeholders } from "@/services/stakeholders/stakeholder-types";
 
 interface Request {
   id: string;
@@ -21,36 +32,36 @@ interface Request {
   status: "Pending Approval" | "Completed" | "Rejected" | "Approved";
 }
 
-const requests: Request[] = [
-  {
-    id: "1",
-    requestType: "Installment Plan",
-    childName: "Oluwole, Tunde",
-    date: "Nov. 10, 2025",
-    status: "Pending Approval",
-  },
-  {
-    id: "2",
-    requestType: "Transcript Request",
-    childName: "Oluwole, Kehinde",
-    date: "Aug. 20, 2025",
-    status: "Completed",
-  },
-  {
-    id: "3",
-    requestType: "Sibling Discount Appeal",
-    childName: "Oluwole, Tunde",
-    date: "Jul. 01, 2025",
-    status: "Rejected",
-  },
-  {
-    id: "4",
-    requestType: "Late Payment Extension",
-    childName: "Oluwole, Kehinde",
-    date: "May. 14, 2025",
-    status: "Approved",
-  },
-];
+// const requests: Request[] = [
+//   {
+//     id: "1",
+//     requestType: "Installment Plan",
+//     childName: "Oluwole, Tunde",
+//     date: "Nov. 10, 2025",
+//     status: "Pending Approval",
+//   },
+//   {
+//     id: "2",
+//     requestType: "Transcript Request",
+//     childName: "Oluwole, Kehinde",
+//     date: "Aug. 20, 2025",
+//     status: "Completed",
+//   },
+//   {
+//     id: "3",
+//     requestType: "Sibling Discount Appeal",
+//     childName: "Oluwole, Tunde",
+//     date: "Jul. 01, 2025",
+//     status: "Rejected",
+//   },
+//   {
+//     id: "4",
+//     requestType: "Late Payment Extension",
+//     childName: "Oluwole, Kehinde",
+//     date: "May. 14, 2025",
+//     status: "Approved",
+//   },
+// ];
 
 const getStatusColor = (status: Request["status"]) => {
   switch (status) {
@@ -69,6 +80,31 @@ const getStatusColor = (status: Request["status"]) => {
 export default function FeeRequestPortalPage() {
   const [submitModalOpen, setSubmitModalOpen] = useState(false);
   const [policyModalOpen, setPolicyModalOpen] = useState(false);
+  const user = useAppSelector(selectUser);
+  //fetch stakeholder
+  const { data: parent } = useGetParentByUserIdQuery(user?.id ?? "");
+  const stakeParent: Stakeholders | undefined = parent?.data;
+  //fetch request
+  const {
+    data: userRequests,
+    isLoading: isGettingRequests,
+    // error,
+  } = useGetUserRequestsQuery();
+  const allRequests = userRequests?.data;
+  const rawRequests = allRequests?.filter(
+    (request) => request.creator_id === stakeParent?.id, //or user ID
+  );
+
+  const requests: Request[] =
+    rawRequests?.map((item) => {
+      return {
+        id: item.id,
+        requestType: item.type,
+        childName: item.title, // change later
+        date: item.end_date as string,
+        status: item.status as Request["status"], // cross check later
+      };
+    }) ?? [];
 
   const columns: TableColumn<Request>[] = [
     {
@@ -179,6 +215,7 @@ export default function FeeRequestPortalPage() {
             actions={actions}
             showActionsColumn={true}
             actionsColumnTitle="Action"
+            isLoading={isGettingRequests}
           />
         </div>
       </div>
