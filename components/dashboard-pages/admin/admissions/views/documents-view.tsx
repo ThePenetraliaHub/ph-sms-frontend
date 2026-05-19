@@ -21,6 +21,8 @@ import type { Stakeholders } from "@/services/stakeholders/stakeholder-types";
 import { useCreateAttachmentMutation } from "@/services/attachment/attachment";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useAppSelector } from "@/store/hooks";
+import { selectToken } from "@/store/slices/authSlice";
 
 interface Document {
   type: string;
@@ -45,6 +47,7 @@ const EXPECTED_DOCUMENT_TYPES = [
 
 export function DocumentsView({ stakeholder }: DocumentsViewProps) {
   const router = useRouter();
+  const token = useAppSelector(selectToken);
   const [createAttachment, { isLoading: isUploading }] =
     useCreateAttachmentMutation();
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -93,13 +96,9 @@ export function DocumentsView({ stakeholder }: DocumentsViewProps) {
         process.env.NEXT_PUBLIC_API_URL ||
         process.env.NEXT_PUBLIC_API_BASE_URL_LOCAL ||
         "";
-      const fileUrl = `${apiBaseUrl}/attachments/${attachmentId}/file`;
+      const fileUrl = `${apiBaseUrl}/attachments/${attachmentId}`;
 
-      // Get auth token from localStorage (matches authSlice)
-      const token =
-        typeof window !== "undefined"
-          ? localStorage.getItem("auth_token")
-          : null;
+      //token assigned from top
       const apiKey = process.env.NEXT_PUBLIC_AUTH_API_KEY || "";
 
       const response = await fetch(fileUrl, {
@@ -115,11 +114,12 @@ export function DocumentsView({ stakeholder }: DocumentsViewProps) {
         throw new Error(`Failed to fetch file: ${response.statusText}`);
       }
 
-      // Get the final URL after redirects (signed S3 URL)
-      const finalUrl = response.url;
+      // Get the file link after redirects (signed S3 URL)
+      const data = await response.json();
+      const fileLink = data.data.file;
 
       // Open in new tab
-      window.open(finalUrl, "_blank", "noopener,noreferrer");
+      window.open(fileLink, "_blank", "noopener,noreferrer");
     } catch (error) {
       console.error("Error viewing document:", error);
       toast.error("Failed to open document. Please try again.");

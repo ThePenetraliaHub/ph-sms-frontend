@@ -1,19 +1,29 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
-import { useRef, useState, Dispatch, SetStateAction } from "react";
+import { useRef, useState, Dispatch, SetStateAction, useEffect } from "react";
 import { ModalContainer } from "@/components/ui/modal-container";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { format } from "date-fns";
 import {
-  Select,
-  SelectContent,
+  // Select,
+  // SelectContent,
   SelectItem,
-  SelectTrigger,
-  SelectValue,
+  // SelectTrigger,
+  // SelectValue,
 } from "@/components/ui/select";
 import { InputField, SelectField } from "@/components/ui/input-field";
 import DatePickerIcon from "@/components/ui/date-picker";
+import { useCreateUserRequestMutation } from "@/services/user-requests/user-requests";
+import { useCreateAttachmentMutation } from "@/services/attachment/attachment";
+// import { useGetStudentByQueryParamQuery } from "@/services/stakeholders/stakeholders";
+// import { Stakeholders } from "@/services/stakeholders/stakeholder-types";
+import { useAppSelector } from "@/store/hooks";
+import { selectUser } from "@/store/slices/authSlice";
+import { toast } from "sonner";
+import { CreateUserRequestRequest } from "@/services/user-requests/user-request-types";
 
 interface TeacherLeaveRequestModalProps {
   open: boolean;
@@ -24,10 +34,21 @@ export function TeacherLeaveRequestModal({
   open,
   onOpenChange,
 }: TeacherLeaveRequestModalProps) {
+  const user = useAppSelector(selectUser);
+  const [createUserRequest, { isLoading: isCreatingReq }] =
+    useCreateUserRequestMutation();
+  const [createAttachment, { isLoading: isCreatingAttachment }] =
+    useCreateAttachmentMutation();
+  // const { data: teacher, isLoading: isFetchingTeacher } =
+  //   useGetStudentByQueryParamQuery(user?.id ?? "");
+  // const currTeacher: Stakeholders | undefined = teacher?.data[0];
+  // console.log(currTeacher);
   const [leaveType, setLeaveType] = useState("");
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [duration, setDuration] = useState("");
+  const [attachmendId, setAttachmentId] = useState<string>("");
+  const [hasUploadedAtt, setHasUploadedAtt] = useState<boolean>(false);
   const [reason, setReason] = useState("");
   const [coverStaff, setCoverStaff] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -87,7 +108,27 @@ export function TeacherLeaveRequestModal({
     setSelectedFile(file);
   };
 
-  const handleSubmit = () => {
+  //submission processes
+  const handleFileUpload = async () => {
+    if (!user) return;
+    const formData = new FormData();
+
+    formData.append("file", selectedFile as Blob);
+    formData.append("school_id", `${user?.school_id}`);
+    formData.append("type", "others");
+    formData.append("name", "leave_request");
+
+    try {
+      const res = await createAttachment(formData).unwrap();
+      if (res) console.log("Attachment created: ", res);
+      if (res.data.id) setAttachmentId(res.data.id);
+      setHasUploadedAtt(true);
+    } catch {
+      //base api catches and displays error
+    }
+  };
+
+  const handleSubmit = async () => {
     console.log("Teacher leave request:", {
       leaveType,
       startDate,
@@ -97,8 +138,44 @@ export function TeacherLeaveRequestModal({
       coverStaff,
       file: selectedFile,
     });
-    handleClose(false);
+    if (
+      !leaveType ||
+      !user ||
+      !startDate ||
+      !endDate ||
+      !duration ||
+      !reason ||
+      !coverStaff ||
+      !attachmendId
+    )
+      return toast.error("Missing field(s)");
+    try {
+      const payload: CreateUserRequestRequest = {
+        school_id: user.school_id ?? "",
+        title: leaveType,
+        type: "leave",
+        description: reason,
+        end_date: format(endDate, "yyyy-MM-dd"),
+        start_date: format(startDate, "yyyy-MM-dd"),
+        attachment_id: attachmendId,
+        // coverage_staff_id: user?.id ?? "", //change to other staff ID later on (coverStaff)
+      };
+      const res = await createUserRequest(payload).unwrap();
+      console.log("Request created: ", res);
+      if (res.status) toast.success("User request created successfully");
+      handleClose(false);
+    } catch (err) {
+      console.error("ERROR: ", err);
+      return;
+    } finally {
+      setHasUploadedAtt(false);
+    }
   };
+
+  useEffect(() => {
+    if (!hasUploadedAtt) return;
+    handleSubmit();
+  }, [hasUploadedAtt]);
 
   return (
     <ModalContainer
@@ -115,7 +192,11 @@ export function TeacherLeaveRequestModal({
           >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} className="flex-1">
+          <Button
+            disabled={isCreatingAttachment || isCreatingReq || hasUploadedAtt}
+            onClick={handleFileUpload}
+            className="flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             Submit Request
           </Button>
         </div>

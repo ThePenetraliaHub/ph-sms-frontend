@@ -20,6 +20,7 @@ export function EmploymentRoleForm({
   isSaving?: boolean;
 }) {
   const [openContractDate, setOpenContractDate] = useState(false);
+  // console.log(initialData);
   const [formData, setFormData] = useState({
     jobTitle: "",
     department: "",
@@ -29,9 +30,10 @@ export function EmploymentRoleForm({
 
   useEffect(() => {
     if (initialData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         jobTitle: initialData.position ?? "",
-        department: initialData.class_assigned ?? "",
+        department: initialData.department ?? "",
         annualLeaveEntitlement: initialData.annual_leave_entitlement ?? "",
         contractEndDate: initialData.contract_end_date
           ? new Date(initialData.contract_end_date)
@@ -41,20 +43,25 @@ export function EmploymentRoleForm({
   }, [initialData]);
 
   const jobTitles = [
-    "JS 2 Science Teacher",
-    "HOD Science",
-    "P5 Teacher",
+    "Science Teacher",
+    "Arts Teacher",
+    "Commercial Teacher",
+    "Head of Department",
+    "Class Teacher",
     "Bursar",
     "Security Guard",
     "HR Admin",
     "Academic Admin",
   ];
 
+  //  CHANGE
   const departments = [
     "JSS Science",
     "JSS Art",
+    "JSS Commercial",
     "SS Science",
     "SS Art",
+    "SS Commercial",
     "Admin",
     "NAS",
   ];
@@ -63,6 +70,7 @@ export function EmploymentRoleForm({
     const payload: StaffEditSavePayload = {
       stakeholder: {
         position: formData.jobTitle || null,
+        department: formData.department || null,
         annual_leave_entitlement: formData.annualLeaveEntitlement || null,
         contract_end_date: formData.contractEndDate
           ? formData.contractEndDate.toISOString().split("T")[0]
@@ -100,9 +108,9 @@ export function EmploymentRoleForm({
             setFormData({ ...formData, department: value })
           }
         >
-          {departments.map((dept) => (
-            <SelectItem key={dept} value={dept}>
-              {dept}
+          {departments.map((item, index) => (
+            <SelectItem key={index} value={item}>
+              {item}
             </SelectItem>
           ))}
         </SelectField>

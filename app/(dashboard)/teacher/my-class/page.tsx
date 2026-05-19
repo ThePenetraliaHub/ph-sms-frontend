@@ -18,6 +18,10 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { AttendanceRosterModal } from "@/components/dashboard-pages/teacher/my-class/attendance-roster-modal";
+import { selectUser } from "@/store/slices/authSlice";
+import { useAppSelector } from "@/store/hooks";
+import { useGetStudentByQueryParamQuery } from "@/services/stakeholders/stakeholders";
+import { Stakeholders } from "@/services/stakeholders/stakeholder-types";
 
 interface Student {
   id: string;
@@ -107,9 +111,19 @@ const getStatusColor = (status: Student["status"]) => {
 };
 
 export default function MyClassPage() {
+  const user = useAppSelector(selectUser);
+  console.log(user);
   const [classFilter, setClassFilter] = useState("jss3");
   const [statusFilter, setStatusFilter] = useState("all");
   const [attendanceModalOpen, setAttendanceModalOpen] = useState(false);
+
+  //get stakeholder
+  const { data: currTeacher, isLoading: isFetchingTeacher } =
+    useGetStudentByQueryParamQuery(user?.id ?? "");
+  const teacher: Stakeholders | undefined = currTeacher?.data[0];
+  console.log(teacher?.assigned_classes);
+  console.log(teacher);
+  // console.log(teacher?.school.classes);
 
   const filteredStudents = allStudents.filter((student) => {
     if (statusFilter === "all") return true;
@@ -207,19 +221,19 @@ export default function MyClassPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <MetricCard
           title="Total Students"
-          value="180 Students"
+          value="- Students"
           trend="up"
           trendColor="text-main-blue"
         />
         <MetricCard
           title="Total Class Covered"
-          value="5 Classes"
+          value={`${teacher?.assigned_classes.length} Classes`}
           trend="up"
           trendColor="text-main-blue"
         />
         <MetricCard
           title="Today's Attendance"
-          value="178 Present / 2 Absent"
+          value="- Present / - Absent"
           trend="up"
           trendColor="text-main-blue"
         />

@@ -17,10 +17,12 @@ import {
   ElearningExchangeIcon,
   ViewIcon,
   PrinterIcon,
+  Delete01Icon,
 } from "@hugeicons/core-free-icons";
 import type { AdmissionApplication } from "@/services/shared-types";
 import { getStakeholderStageLabel } from "@/services/stakeholders/stakeholders-selector";
 import { useUpdateStakeholderMutation } from "@/services/stakeholders/stakeholders";
+import { useDeleteUserMutation } from "@/services/users/users";
 
 interface ApplicationTableProps {
   applications: AdmissionApplication[];
@@ -36,6 +38,14 @@ export function ApplicationTable({
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [updatingStage, setUpdatingStage] = useState<string | null>(null);
   const [updateStakeholder] = useUpdateStakeholderMutation();
+  const [removeUser, { isLoading }] = useDeleteUserMutation();
+
+  const deleteUser = async (id: string) => {
+    try {
+      const res = await removeUser(id).unwrap();
+      console.log(res);
+    } catch {}
+  };
 
   const handleStatusChange = async (
     applicationId: string,
@@ -207,6 +217,12 @@ export function ApplicationTable({
             label: "Print document",
             onClick: () => {},
             icon: <Icon icon={PrinterIcon} size={16} />,
+            separator: true,
+          },
+          {
+            label: "Remove student",
+            onClick: (row) => deleteUser(row.stakeholder_id),
+            icon: <Icon icon={Delete01Icon} size={16} />,
             separator: true,
           },
         ],

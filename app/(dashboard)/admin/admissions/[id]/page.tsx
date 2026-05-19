@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { ApplicantHeader } from "@/components/dashboard-pages/admin/admissions/components/applicant-header";
@@ -20,7 +20,7 @@ export default function ApplicantDetailPage({
 }: {
   params: { id: string } | Promise<{ id: string }>;
 }) {
-  const router = useRouter();
+  // const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabId>("personal");
   const [stakeholderId, setStakeholderId] = useState<string | null>(null);
   const [hasChecked, setHasChecked] = useState(false);

@@ -18,6 +18,7 @@ export function ContactInformationForm({
   onSave: (payload: StaffEditSavePayload) => void;
   isSaving?: boolean;
 }) {
+  console.log(initialData);
   const [formData, setFormData] = useState({
     primaryPhone: "",
     emergencyContact: "",
@@ -27,6 +28,7 @@ export function ContactInformationForm({
 
   useEffect(() => {
     if (initialData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         primaryPhone: initialData.user?.phone_number ?? "",
         emergencyContact: initialData.emergency_contact_and_phone ?? "",

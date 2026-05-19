@@ -1,3 +1,5 @@
+import { School } from "../schools/schools-type";
+
 export interface AuthUser {
   id: string;
   creator_id: string | null;
@@ -42,7 +44,7 @@ export interface AuthUser {
   is_deleted: boolean;
   creator: string | null;
   updated_by: string | null;
-  school: string | null;
+  school: School;
   date_joined: string;
   updated_at: string;
   deleted_at: string | null;

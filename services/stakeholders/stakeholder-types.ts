@@ -33,6 +33,7 @@ export interface Stakeholders {
   transport_details: any | null;
   subjects: string[];
   class_assigned: string | null;
+  department: string | null;
   assigned_classes: string[];
   qualification: string | null;
   salary: string | null;

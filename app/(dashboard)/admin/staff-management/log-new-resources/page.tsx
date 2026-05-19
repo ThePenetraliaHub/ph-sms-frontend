@@ -50,7 +50,7 @@ export default function LogNewResourcesPage() {
       <div className="bg-background rounded-md p-6">
         <h2 className="text-2xl font-bold text-gray-800">Log New Resources</h2>
         <p className="text-gray-600 mt-1">
-          This form is used to formally document a staff member's new duty,
+          This form is used to formally document a staff member&#39;s new duty,
           task, or the allocation of a school asset.
         </p>
       </div>

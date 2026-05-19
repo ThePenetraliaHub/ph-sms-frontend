@@ -62,7 +62,9 @@ const mockCourses: TeacherCourse[] = [
 
 export default function MyCoursesPage() {
   const { push } = useRouter();
-  const { data, isLoading, isError } = useGetTeacherCoursesQuery();
+  // const { data, isLoading, isError } = useGetTeacherCoursesQuery();
+  const isLoading = false;
+  const isError = false;
   const appError = useAppSelector((state) => state.error.lastError);
   const [openNewResourceModal, setOpenNewResourceModal] =
     useState<boolean>(false);
@@ -72,7 +74,8 @@ export default function MyCoursesPage() {
   const [selectedAssignment, setSelectedAssignment] =
     useState<AssignmentSubmission>();
 
-  const tableData = (data ?? mockCourses) || [];
+  // const tableData = (data ?? mockCourses) || [];
+  const tableData = mockCourses;
 
   const columns: TableColumn<TeacherCourse>[] = [
     {

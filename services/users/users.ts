@@ -74,7 +74,7 @@ export const usersApi = baseApi.injectEndpoints({
 
     deleteUser: build.mutation<DeleteUserResponse, string>({
       query: (id) => ({ url: `/users/${id}`, method: "DELETE" }),
-      invalidatesTags: ["User"],
+      invalidatesTags: ["User", "Stakeholder"],
     }),
 
     admissionRegister: build.mutation<CreateAdmissionResponse, FormData>({
