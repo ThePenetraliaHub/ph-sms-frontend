@@ -160,7 +160,13 @@ export default function StudentDashboard() {
         />
       </div>
 
-      <PersonalTaskList />
+      <PersonalTaskList
+        isGettingRequests={false}
+        error={false}
+        isFetching={false}
+        isFetchingStudent={false}
+        personalTasks={[]}
+      />
     </div>
   );
 }

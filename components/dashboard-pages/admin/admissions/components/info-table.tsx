@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import {
@@ -14,7 +15,7 @@ import { cn } from "@/lib/utils";
 
 interface InfoRow {
   field: string;
-  content: string;
+  content: string | any[];
   status?: "verified" | "pending" | "missing";
 }
 

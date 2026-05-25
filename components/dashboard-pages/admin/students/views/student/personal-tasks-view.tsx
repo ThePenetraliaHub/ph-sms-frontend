@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -59,7 +60,13 @@ export function PersonalTasksView({ stakeholder }: PersonalTasksViewProps) {
           Create Task for Student
         </Button>
       </div>
-      <PersonalTaskList studentId={userId} />
+      <PersonalTaskList
+        isFetchingStudent={false}
+        error={false}
+        isFetching={false}
+        isGettingRequests={false}
+        personalTasks={[]}
+      />
       <TaskCreationModal
         open={modalOpen}
         onOpenChange={setModalOpen}
