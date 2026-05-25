@@ -17,7 +17,8 @@ import { useAppSelector } from "@/store/hooks";
 import { selectUser } from "@/store/slices/authSlice";
 import { generateSchoolID } from "@/common/helper";
 
-const STEPS = ["details", "academic", "documents", "status"] as const;
+// const STEPS = ["details", "academic", "documents", "status"] as const;
+const STEPS = ["details", "academic", "status"] as const;
 type StepId = (typeof STEPS)[number];
 
 export default function AddApplicantPage() {
@@ -97,7 +98,7 @@ export default function AddApplicantPage() {
                   onCancel={() => router.back()}
                 />
               )}
-              {step === "documents" && (
+              {/* {step === "documents" && (
                 <DocumentUploadForm
                   value={formState.documents}
                   onChange={(v) => update("documents", v)}
@@ -105,7 +106,7 @@ export default function AddApplicantPage() {
                   onBack={() => go(-1)}
                   onCancel={() => router.back()}
                 />
-              )}
+              )} */}
               {step === "status" && (
                 <ApplicationStatusForm
                   value={formState.status}

@@ -16,6 +16,7 @@ import {
   useGetAllStudentsQuery,
   useGetAllStaffQuery,
 } from "@/services/stakeholders/stakeholders";
+import { useEffect } from "react";
 
 export default function AdminDashboard() {
   const user = useAppSelector(selectUser);
@@ -64,6 +65,12 @@ export default function AdminDashboard() {
       user.email ||
       "Admin"
     : "Admin";
+
+  //DELETE LATER
+  useEffect(() => {
+    console.log("API-URL", process.env.NEXT_PUBLIC_API_URL);
+    console.log("API KEY", process.env.NEXT_PUBLIC_AUTH_API_KEY);
+  }, []);
 
   return (
     <div className="space-y-4">

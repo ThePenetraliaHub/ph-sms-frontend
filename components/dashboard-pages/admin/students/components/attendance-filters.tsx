@@ -9,6 +9,10 @@ import {
 } from "@/components/ui/select";
 import { Calendar03Icon } from "@hugeicons/core-free-icons";
 import { Icon } from "@/components/general/huge-icon";
+import { useAppSelector } from "@/store/hooks";
+import { selectUser } from "@/store/slices/authSlice";
+import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 
 interface AttendanceFiltersProps {
   month: string;
@@ -17,6 +21,7 @@ interface AttendanceFiltersProps {
   onMonthChange: (value: string) => void;
   onWeekChange: (value: string) => void;
   onClassChange: (value: string) => void;
+  onSubmit: () => void;
 }
 
 export function AttendanceFilters({
@@ -26,7 +31,27 @@ export function AttendanceFilters({
   onMonthChange,
   onWeekChange,
   onClassChange,
+  onSubmit,
 }: AttendanceFiltersProps) {
+  const user = useAppSelector(selectUser);
+  const [regClasses, setRegClasses] = useState<string[]>(
+    user?.school.classes ?? [],
+  );
+  const fallBackClasses: string[] = [
+    "JSS 1",
+    "JSS 2",
+    "JSS 3",
+    "SSS 1",
+    "SSS 2",
+    "SSS 3",
+  ];
+
+  useEffect(() => {
+    if (user?.school.classes) return;
+    setRegClasses(fallBackClasses);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-center gap-4 w-full">
       <Select value={month} onValueChange={onMonthChange}>
@@ -57,14 +82,17 @@ export function AttendanceFilters({
           <SelectValue placeholder="Select class" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="js1">JS 1</SelectItem>
-          <SelectItem value="js2">JS 2</SelectItem>
-          <SelectItem value="js3">JS 3</SelectItem>
-          <SelectItem value="ss1">SS 1</SelectItem>
-          <SelectItem value="ss2">SS 2</SelectItem>
-          <SelectItem value="ss3">SS 3</SelectItem>
+          {regClasses.map((cls, index) => {
+            return (
+              <SelectItem key={index} value={cls}>
+                {cls}
+              </SelectItem>
+            );
+          })}
         </SelectContent>
       </Select>
+
+      <Button onClick={onSubmit}>Apply Filter</Button>
     </div>
   );
 }

@@ -1,9 +1,11 @@
+import { School } from "../schools/schools-type";
 import type {
   ApiResponse,
   ApiListResponse,
   ApiDeleteResponse,
   BaseQueryParams,
 } from "../shared-types";
+import { Stakeholders } from "../stakeholders/stakeholder-types";
 
 /**
  * Type definitions for Attendance API responses
@@ -22,6 +24,23 @@ export interface Attendance {
   remarks?: string;
   markedBy?: string;
   createdAt?: string;
+}
+
+export interface StudentAttendance {
+  id: string;
+  creator_id: string;
+  updated_by_id: string;
+  school_id: string;
+  stakeholder_id: string;
+  class_name: string;
+  session: string;
+  date: string;
+  notes: string;
+  status: "present" | "absent" | "late" | "excused";
+  created_at: string;
+  updated_at: string;
+  school: School;
+  stakeholder: Stakeholders;
 }
 
 export interface CreateAttendanceRequest {
@@ -47,7 +66,7 @@ export interface BulkAttendanceRequest {
 /**
  * Attendance list response with pagination
  */
-export type AttendanceListResponse = ApiListResponse<Attendance>;
+export type AttendanceListResponse = ApiListResponse<StudentAttendance>;
 
 /**
  * Attendance response for single entity operations
