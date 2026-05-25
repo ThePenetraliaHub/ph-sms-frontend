@@ -12,6 +12,12 @@ import type {
   ExamResult,
   SubjectResult,
 } from "@/services/results/result-types";
+import {
+  useGetStakeholderByIdQuery,
+  useGetStudentByQueryParamQuery,
+} from "@/services/stakeholders/stakeholders";
+import { useAppSelector } from "@/store/hooks";
+import { selectUser } from "@/store/slices/authSlice";
 
 interface SubjectPerformance {
   subject: string;
@@ -29,7 +35,12 @@ interface ReportCard {
 
 export default function GradesReportCardPage() {
   const [modalOpen, setModalOpen] = useState(false);
+  const user = useAppSelector(selectUser);
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+  const { data: currParent, isLoading: isFetchingCurrParent } =
+    useGetStudentByQueryParamQuery(user?.id ?? "");
+
+  console.log(currParent);
 
   const { data: resultsData } = useGetAllExamResultsQuery({ _all: true });
   // eslint-disable-next-line react-hooks/exhaustive-deps

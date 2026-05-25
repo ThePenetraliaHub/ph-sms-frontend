@@ -116,6 +116,7 @@ export default function SignInPage() {
       }
     } catch (err: any) {
       let errorMessage = "Invalid email or password. Please try again.";
+      console.log(err);
 
       if (err?.data) {
         // API error response
