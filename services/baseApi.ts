@@ -52,6 +52,9 @@ const getApiKey = () => {
   return apiKey || "";
 };
 
+console.log("API ENDPOINT", process.env.NEXT_PUBLIC_API_URL);
+console.log("API KEY", process.env.NEXT_PUBLIC_AUTH_API_KEY);
+
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: getBaseUrl(),
   prepareHeaders: (headers, { getState, endpoint }) => {
