@@ -12,6 +12,11 @@ import {
   Money03Icon,
 } from "@hugeicons/core-free-icons";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useAppSelector } from "@/store/hooks";
+import { selectUser } from "@/store/slices/authSlice";
+import { CreateJobPayload, type JobType } from "@/services/jobs/jobs-type";
+import { useCreateJobMutation } from "@/services/jobs/jobs";
 
 type StepId = "details" | "description" | "compensation";
 
@@ -50,6 +55,10 @@ export default function PostNewVacancyPage() {
     recruitmentBudget: "",
   });
 
+  const [createJob, { isLoading: isCreatingJob }] = useCreateJobMutation();
+
+  const user = useAppSelector(selectUser);
+
   const handleStepChange = (stepId: string) => {
     setActiveStep(stepId as StepId);
   };
@@ -74,8 +83,81 @@ export default function PostNewVacancyPage() {
     router.back();
   };
 
+  const postNewJob = async (newJob: CreateJobPayload) => {
+    try {
+      const res = await createJob({
+        ...newJob,
+      }).unwrap();
+      //notify
+      if (res.status)
+        toast.success(res.message ? res.message : "Job posted successfully");
+      //resetForm
+      setFormData({
+        vacancyTitle: "",
+        department: "",
+        employmentType: "",
+        applicationDeadline: undefined as Date | undefined,
+        publicSummary: "",
+        fullJobDescription: "",
+        mandatoryRequirements: "",
+        preferredQualifications: "",
+        salaryRange: "",
+        allowances: "",
+        recruitmentBudget: "",
+      });
+      //route to all jobs
+      setActiveStep("details");
+    } catch (err) {
+      console.error(err);
+      toast.error("❌ Failed to create job");
+    }
+  };
+
   const handleSubmit = () => {
-    console.log("Submitting vacancy:", formData);
+    const expiryDate = formData.applicationDeadline
+      ?.toISOString()
+      .split("T")[0];
+
+    //vacancy title, grade, type, salary, budget, public summary, description, requirements
+    if (
+      !formData.vacancyTitle.trim() ||
+      !formData.department.trim() ||
+      !formData.employmentType.trim() ||
+      !formData.publicSummary.trim() ||
+      !formData.fullJobDescription.trim() ||
+      !formData.mandatoryRequirements.trim() ||
+      !formData.salaryRange.trim() ||
+      !formData.recruitmentBudget.trim()
+    ) {
+      toast.error("Mandatory fields are required");
+      return;
+    }
+
+    if (isNaN(Number(formData.recruitmentBudget)))
+      return toast.error("⚠️ Budget can only be numbers!");
+
+    if (!expiryDate) return toast.error("⚠️ Please set job expiry date!");
+
+    if (!user?.school_id || !user.school_id.trim())
+      return toast.error("⚠️ School not found!");
+
+    const newJobPosting: CreateJobPayload = {
+      school_id: user.school_id,
+      title: formData.vacancyTitle,
+      category: formData.department,
+      employment_type: formData.employmentType as JobType,
+      expiry_date: expiryDate,
+      summary: formData.publicSummary,
+      description: formData.fullJobDescription,
+      requirements: formData.mandatoryRequirements,
+      qualifications: formData.preferredQualifications,
+      salary_range: formData.salaryRange,
+      allowances: formData.allowances,
+      status: "active",
+      budget: Number(formData.recruitmentBudget),
+    };
+
+    postNewJob(newJobPosting);
   };
 
   const renderStepContent = () => {
@@ -121,6 +203,7 @@ export default function PostNewVacancyPage() {
             onSubmit={handleSubmit}
             onBack={handleBack}
             onCancel={handleCancel}
+            isCreatingJob={isCreatingJob}
           />
         );
       default:

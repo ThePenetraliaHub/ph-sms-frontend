@@ -47,8 +47,8 @@ export function JobDetailsForm({
         />
 
         <InputField
-          label="Department/Grade"
-          placeholder="E.g., Secondary Math, Finance"
+          label="Category"
+          placeholder="E.g., Finance, Technology, Marketing"
           value={formData.department}
           onChange={(e) => onFormDataChange({ department: e.target.value })}
           required
@@ -63,7 +63,11 @@ export function JobDetailsForm({
         >
           <SelectItem value="full-time">Full-Time</SelectItem>
           <SelectItem value="part-time">Part-Time</SelectItem>
-          <SelectItem value="substitute">Substitute Teacher</SelectItem>
+          <SelectItem value="contract">Contract</SelectItem>
+          <SelectItem value="temporary">Temporary</SelectItem>
+          <SelectItem value="internship">Internship</SelectItem>
+          <SelectItem value="freelance">Freelance</SelectItem>
+          <SelectItem value="permanent">Permanent</SelectItem>
         </SelectField>
 
         <DatePickerIcon

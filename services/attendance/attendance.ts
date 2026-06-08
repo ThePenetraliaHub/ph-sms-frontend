@@ -70,6 +70,7 @@ export const attendanceApi = baseApi.injectEndpoints({
 
 export const {
   useGetAttendanceQuery,
+  useLazyGetAttendanceQuery,
   useGetAllAttendanceQuery,
   useGetAttendanceByIdQuery,
   useCreateAttendanceMutation,

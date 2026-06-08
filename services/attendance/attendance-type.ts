@@ -39,6 +39,8 @@ export interface StudentAttendance {
   status: "present" | "absent" | "late" | "excused";
   created_at: string;
   updated_at: string;
+  student_name: string;
+  student_email: string;
   school: School;
   stakeholder: Stakeholders;
 }
@@ -89,4 +91,12 @@ export interface AttendanceQueryParams extends BaseQueryParams {
   startDate?: string;
   endDate?: string;
   status?: "present" | "absent" | "late" | "excused";
+  //new params
+  id?: string;
+  creator_id?: string;
+  updated_by_id?: string;
+  school_id?: string;
+  stakeholder_id?: string;
+  class_name?: string;
+  session?: string;
 }

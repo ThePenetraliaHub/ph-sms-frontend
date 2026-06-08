@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -25,8 +26,9 @@ import {
   selectTerm,
 } from "@/store/slices/schoolSlice";
 import { useAppSelector } from "@/store/hooks";
-import type { Break } from "@/services/schools/schools-type";
+import type { Break, TimeTableFormat } from "@/services/schools/schools-type";
 import { toast } from "sonner";
+import { useUpdateSchoolMutation } from "@/services/schools/schools";
 
 type StepId = "scope" | "time-slot";
 
@@ -97,20 +99,24 @@ export default function CreateTimetablePage() {
   const [activeStep, setActiveStep] = useState<StepId>("scope");
   const [formData, setFormData] = useState<TimetableForm>(initialData);
   const [breakModalOpen, setBreakModalOpen] = useState(false);
+  const [updateSchool, { isLoading: isUpdatingSchool }] =
+    useUpdateSchoolMutation();
 
   const currentAcademicTerm = useAppSelector(selectTerm);
   const currentSchool = useAppSelector(selectCurrentSchool);
   const schoolDays = useAppSelector(selectSchoolDays);
   const classes = useAppSelector(selectClasses);
-  const isSubmitting = false;
-  const updateTimetable = async (_args?: unknown) => ({
-    unwrap: async () => {},
-  });
+  // const isSubmitting = false;
+  // const updateTimetable = async (_args?: unknown) => ({
+  //   unwrap: async () => {},
+  // });
 
   const prefilled = useRef(false);
+
   useEffect(() => {
     if (!currentSchool || prefilled.current) return;
     prefilled.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormData((prev) => ({
       ...prev,
       schoolId: currentSchool.id,
@@ -181,30 +187,31 @@ export default function CreateTimetablePage() {
       toast.error("Please select at least one school day.");
       return;
     }
-
+    const data: TimeTableFormat = {
+      timetable_name: formData.timetableName.trim(),
+      applicable_school_grade: applicableGrade ?? null,
+      academic_term: academicTerm ?? null,
+      school_days: formData.schoolDays,
+      no_of_periods_per_day: noOfPeriods,
+      default_period_duration: defaultDuration,
+      break_periods:
+        formData.breakPeriods.length > 0 ? formData.breakPeriods : [],
+    };
     try {
-      await updateTimetable({
+      const res = await updateSchool({
         id: formData.schoolId,
-        data: {
-          timetable_name: formData.timetableName.trim(),
-          applicable_school_grade: applicableGrade || undefined,
-          academic_term: academicTerm || undefined,
-          school_days: formData.schoolDays,
-          no_of_periods_per_day: noOfPeriods,
-          default_period_duration: defaultDuration,
-          break_periods:
-            formData.breakPeriods.length > 0
-              ? formData.breakPeriods
-              : undefined,
-        },
-      });
-      toast.success("Timetable saved successfully.");
-    } catch (err: unknown) {
-      const msg =
-        err && typeof err === "object" && "data" in err
-          ? (err as { data?: { message?: string } }).data?.message
-          : "Failed to save timetable.";
-      toast.error(String(msg));
+        data: { timetable: [data] },
+      }).unwrap();
+      console.log(res.data);
+      if (res.message) toast.success(res.message);
+      setFormData(initialData);
+      router.push("/admin/academic/dashboard");
+    } catch (err: any) {
+      console.log(err);
+      toast.error(
+        err?.data?.message || "An error occurred while saving the timetable.",
+      );
+      return;
     }
   };
 
@@ -334,10 +341,11 @@ export default function CreateTimetablePage() {
 
             <div className="space-y-2">
               <Label className="text-sm font-medium">
-                Applicable School Grade
+                Configure break periods
               </Label>
               <div className="flex gap-2 items-end">
-                <div className="flex-1">
+                {/* hide applicable school grade 2 */}
+                <div className="flex-1 hidden">
                   <InputField
                     label=""
                     placeholder="placeholder"
@@ -353,7 +361,7 @@ export default function CreateTimetablePage() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="gap-2 h-9"
+                  className="gap-2 h-10 w-full"
                   onClick={() => setBreakModalOpen(true)}
                 >
                   <Icon icon={AddCircleIcon} size={16} />
@@ -398,12 +406,12 @@ export default function CreateTimetablePage() {
               </div>
             )}
 
-            <div className="flex justify-end gap-3 pt-4">
+            <div className="flex justify-end gap-3 pt-2">
               <Button variant="outline" onClick={handleBack}>
                 Back
               </Button>
-              <Button onClick={handleSubmit} disabled={isSubmitting}>
-                {isSubmitting ? "Saving…" : "Review & Save Template"}
+              <Button onClick={handleSubmit} disabled={isUpdatingSchool}>
+                {isUpdatingSchool ? "Saving…" : "Review & Save Template"}
               </Button>
             </div>
           </div>

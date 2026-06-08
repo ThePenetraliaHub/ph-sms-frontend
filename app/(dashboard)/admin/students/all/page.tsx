@@ -24,18 +24,17 @@ export default function AllStudentsPage() {
     if (!studentsData) return undefined;
     return {
       ...studentsData,
-      data: enrolledStudents,
+      // data: enrolledStudents, //uncomment this for later stage
+      data: studentsData.data,
     };
-  }, [studentsData, enrolledStudents]);
+  }, [studentsData]);
 
   const totalStudents = enrolledStudents.length;
 
   return (
     <div className="space-y-6">
       <div className="bg-background rounded-md mb-6 p-6">
-        <h2 className="text-2xl font-bold text-gray-800">
-          All Penetraliahub Students List
-        </h2>
+        <h2 className="text-2xl font-bold text-gray-800">All Students List</h2>
         <p className="text-gray-600 mt-1">
           Manage Student Records (IEP, Grades, Class Assignment).
         </p>
@@ -47,9 +46,7 @@ export default function AllStudentsPage() {
           <div>
             <h3 className="text-2xl font-bold text-gray-800">
               Total Students:{" "}
-              {isAllStudentsLoading
-                ? "Loading..."
-                : totalStudents.toLocaleString()}
+              {isAllStudentsLoading ? "Loading..." : studentsData?.data.length}
             </h3>
           </div>
         </div>

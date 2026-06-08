@@ -20,8 +20,12 @@ import { cn } from "@/lib/utils";
 import { AttendanceRosterModal } from "@/components/dashboard-pages/teacher/my-class/attendance-roster-modal";
 import { selectUser } from "@/store/slices/authSlice";
 import { useAppSelector } from "@/store/hooks";
-import { useGetStudentByQueryParamQuery } from "@/services/stakeholders/stakeholders";
+import {
+  useGetStakeholdersQuery,
+  useGetStudentByQueryParamQuery,
+} from "@/services/stakeholders/stakeholders";
 import { Stakeholders } from "@/services/stakeholders/stakeholder-types";
+// import { Stakeholders } from "@/services/stakeholders/stakeholder-types";
 
 interface Student {
   id: string;
@@ -112,18 +116,17 @@ const getStatusColor = (status: Student["status"]) => {
 
 export default function MyClassPage() {
   const user = useAppSelector(selectUser);
-  console.log(user);
   const [classFilter, setClassFilter] = useState("jss3");
   const [statusFilter, setStatusFilter] = useState("all");
   const [attendanceModalOpen, setAttendanceModalOpen] = useState(false);
 
   //get stakeholder
   const { data: currTeacher, isLoading: isFetchingTeacher } =
-    useGetStudentByQueryParamQuery(user?.id ?? "");
+    useGetStudentByQueryParamQuery(user?.id ?? "", {
+      refetchOnMountOrArgChange: true,
+    });
   const teacher: Stakeholders | undefined = currTeacher?.data[0];
-  console.log(teacher?.assigned_classes);
   console.log(teacher);
-  // console.log(teacher?.school.classes);
 
   const filteredStudents = allStudents.filter((student) => {
     if (statusFilter === "all") return true;
@@ -227,7 +230,8 @@ export default function MyClassPage() {
         />
         <MetricCard
           title="Total Class Covered"
-          value={`${teacher?.assigned_classes.length} Classes`}
+          // value={`${teacher?.assigned_classes.length ?? 0} Classes`}
+          value={`0 Classes`}
           trend="up"
           trendColor="text-main-blue"
         />

@@ -94,7 +94,7 @@ export function AccessDocumentationForm({
 
         {/* Document Upload Section */}
         {documentFields.map((field) => (
-          <div key={field.id} className="space-y-2">
+          <div key={field.id} className="space-y-2 hidden">
             <Label htmlFor={field.id}>{field.label}</Label>
             <div className="relative">
               <input

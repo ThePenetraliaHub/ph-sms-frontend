@@ -5,13 +5,14 @@ import { ModalContainer } from "@/components/ui/modal-container";
 import { Button } from "@/components/ui/button";
 import DatePickerIcon from "@/components/ui/date-picker";
 
-interface TermDate {
+export interface TermDate {
   startDate: Date | undefined;
   endDate: Date | undefined;
 }
 
 interface TermSemesterConfigModalProps {
   open: boolean;
+  isUpdating: boolean;
   onOpenChange: (open: boolean) => void;
   numberOfTerms?: number;
   onConfirm?: (terms: TermDate[]) => void;
@@ -22,6 +23,7 @@ export function TermSemesterConfigModal({
   onOpenChange,
   numberOfTerms = 3,
   onConfirm,
+  isUpdating,
 }: TermSemesterConfigModalProps) {
   const [terms, setTerms] = useState<TermDate[]>(
     Array.from({ length: numberOfTerms }, () => ({
@@ -61,7 +63,7 @@ export function TermSemesterConfigModal({
     if (onConfirm) {
       onConfirm(terms);
     }
-    onOpenChange(false);
+    // onOpenChange(false);
   };
 
   const handleCancel = () => {
@@ -80,10 +82,11 @@ export function TermSemesterConfigModal({
             Cancel
           </Button>
           <Button
-            className="bg-main-blue text-white hover:bg-main-blue/90"
+            disabled={isUpdating}
+            className="bg-main-blue text-white hover:bg-main-blue/90 disabled:opacity-50"
             onClick={handleConfirm}
           >
-            Confirm & Activate Admin Access
+            {isUpdating ? "Updating..." : "Set Dates"}
           </Button>
         </div>
       }
@@ -94,7 +97,7 @@ export function TermSemesterConfigModal({
             <h4 className="text-sm font-semibold text-gray-800">
               Term {index + 1}
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <DatePickerIcon
                 label="Start Date"
                 date={term.startDate}

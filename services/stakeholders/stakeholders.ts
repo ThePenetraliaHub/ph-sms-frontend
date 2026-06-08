@@ -141,7 +141,7 @@ export const stakeholdersApi = baseApi.injectEndpoints({
           metrics: calculateStakeholderMetrics(students),
           data: students.map((stakeholder) => ({
             ...stakeholder,
-            stage_text: getStakeholderStageLabel(stakeholder.stage),
+            stage_text: getStakeholderStageLabel(stakeholder.stage ?? 2),
           })),
         };
       },
@@ -196,7 +196,7 @@ export const stakeholdersApi = baseApi.injectEndpoints({
           ...response,
           data: {
             ...response.data,
-            stage_text: getStakeholderStageLabel(response.data.stage),
+            stage_text: getStakeholderStageLabel(response?.data?.stage ?? 2),
           },
         };
       },

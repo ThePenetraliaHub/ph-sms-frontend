@@ -13,12 +13,14 @@ interface CompensationFormProps {
   onSubmit: () => void;
   onBack: () => void;
   onCancel: () => void;
+  isCreatingJob: boolean;
 }
 
 export function CompensationForm({
   formData,
   onFormDataChange,
   onSubmit,
+  isCreatingJob,
   onBack,
   onCancel,
 }: CompensationFormProps) {
@@ -39,8 +41,8 @@ export function CompensationForm({
         </p>
 
         <InputField
-          label="Salary Range"
-          placeholder="Budgeted range for the role"
+          label="Salary/Salary Range"
+          placeholder="Budgeted range for the role (e.g. N300,000 - N400,000)"
           value={formData.salaryRange}
           onChange={(e) => onFormDataChange({ salaryRange: e.target.value })}
           required
@@ -55,8 +57,8 @@ export function CompensationForm({
         />
 
         <InputField
-          label="Recruitment Budget"
-          placeholder="Total amount allocated for advertising, agency fees, etc."
+          label="Recruitment Budget (Digits Only)"
+          placeholder="Total amount allocated for advertising, agency fees, etc. (e.g. 200000)"
           value={formData.recruitmentBudget}
           onChange={(e) =>
             onFormDataChange({ recruitmentBudget: e.target.value })
@@ -69,8 +71,12 @@ export function CompensationForm({
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button className="w-60" type="submit">
-          Submit
+        <Button
+          disabled={isCreatingJob}
+          className="w-60 disabled:opacity-50 disabled:cursor-not-allowed"
+          type="submit"
+        >
+          {isCreatingJob ? "Submitting" : "Submit"}
         </Button>
       </div>
     </form>

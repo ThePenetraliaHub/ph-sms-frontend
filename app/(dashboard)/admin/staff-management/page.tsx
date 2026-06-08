@@ -20,13 +20,17 @@ import {
 import { useGetAllStaffQuery } from "@/services/stakeholders/stakeholders";
 import { useGetUserRequestsQuery } from "@/services/user-requests/user-requests";
 import { useGetNotificationsQuery } from "@/services/shared";
+import { useGetJobsQuery } from "@/services/jobs/jobs";
 
 export default function StaffDashboardPage() {
   const router = useRouter();
 
   const { data: staffData, isLoading } = useGetAllStaffQuery();
+  const { data: jobs, isLoading: isFetchingJobs } = useGetJobsQuery();
   const { data: userRequestData, isLoading: isUserRequestLoading } =
     useGetUserRequestsQuery();
+
+  // console.log(staffData);
 
   interface QuickAction {
     title: string;
@@ -147,7 +151,7 @@ export default function StaffDashboardPage() {
           />
           <MetricCard
             title="Current Vacancies"
-            value={`${0} Open Positions`}
+            value={`${isFetchingJobs ? "-" : `${jobs?.data.length} Posted Jobs`}`}
             subtitle=""
             trend="up"
             trendColor="text-main-blue"
@@ -164,7 +168,7 @@ export default function StaffDashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {staffData?.data[0]?.notifications.map((activity, index) => (
+              {/* {staffData?.data[0]?.notifications.map((activity, index) => (
                 <StaffActivityItem
                   key={index}
                   type={activity.type}
@@ -172,7 +176,7 @@ export default function StaffDashboardPage() {
                   description={activity?.specifics ?? "N/A"}
                   timestamp={activity?.created_at ?? "unknown"}
                 />
-              ))}
+              ))} */}
               <div className="flex justify-center pt-4">
                 <Button variant="outline" size="sm">
                   Load more

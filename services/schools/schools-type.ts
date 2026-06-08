@@ -7,8 +7,24 @@ import type {
   BaseQueryParams,
 } from "../shared-types";
 
+export interface AcademicCalendarConfig {
+  name: string;
+  end_date: string;
+  start_date: string;
+  no_of_terms: number;
+  holidays_or_breaks?: {
+    name: string;
+    time_in: string;
+    end_date: string;
+    time_out: string;
+    start_date: string;
+  };
+}
+
 export type School = {
   id: string;
+  academic_calendar_config: AcademicCalendarConfig;
+  grading_scales_config: GradingScaleConfig[];
   creator_id: string;
   updated_by_id: string | null;
 
@@ -21,7 +37,7 @@ export type School = {
   email: string;
   website: string;
 
-  term: Term;
+  term: Term[];
   bank: Record<string, unknown>;
   score: Score;
 
@@ -175,7 +191,7 @@ export interface CreateSchoolRequest {
   linkedin_url: string;
 
   is_active: boolean;
-  term: Term;
+  term: Term[];
 }
 
 export interface TimetableUpdatePayload {
@@ -195,6 +211,21 @@ export interface SchoolSubscriptionUpdate {
   end_date: string;
   status: string;
 }
+
+export type TimeTableFormat = {
+  school_days: string[];
+  academic_term: string;
+  break_periods: {
+    type: string;
+    title: string;
+    end_time: string;
+    start_time: string;
+  }[];
+  timetable_name: string;
+  no_of_periods_per_day: number;
+  applicable_school_grade: string;
+  default_period_duration: number;
+};
 
 export interface UpdateSchoolRequest {
   name: string;
@@ -224,17 +255,16 @@ export interface UpdateSchoolRequest {
   linkedin_url: string;
 
   is_active: boolean;
-  term: Term;
+  term: Term[];
 
   bank: Bank;
   score: Score;
 
-  timetable?: TimeTable[];
   grading_scales_config: GradingScaleConfig[];
   academic_calendar_config: AcademicCalendarConfig;
   discount_rules: DiscountRule[];
 
-  daily_reconciliation: Boolean;
+  daily_reconciliation: boolean;
   max_single_transaction: string;
   low_stock_threshold: number;
 
@@ -242,6 +272,7 @@ export interface UpdateSchoolRequest {
   classes: string[];
   subjects: string[];
   timetable_name: string;
+  timetable: TimeTableFormat[];
   applicable_school_grade: string;
   academic_term: string;
   school_days: string[];
@@ -250,36 +281,23 @@ export interface UpdateSchoolRequest {
   break_periods: Break[];
 }
 
-interface TimeTable {
-  school_days: string[];
-  academic_term: string;
-  break_periods: Break[];
-  timetable_name: string;
-  no_of_periods_per_day: number;
-  applicable_school_grade: string;
-  default_period_duration: number;
-}
+// interface TimeTable {
+//   school_days: string[];
+//   academic_term: string;
+//   break_periods: Break[];
+//   timetable_name: string;
+//   no_of_periods_per_day: number;
+//   applicable_school_grade: string;
+//   default_period_duration: number;
+// }
 
-interface GradingScaleConfig {
-  name: string;
-  gpa_value: string;
+export interface GradingScaleConfig {
+  grade_name: string;
+  grade_point: number;
   lower_percentage: number;
   upper_percentage: number;
-  holidays_or_breaks: string;
-}
-
-interface AcademicCalendarConfig {
-  name: string;
-  end_date: string;
-  start_date: string;
-  no_of_terms: number;
-  holidays_or_breaks: {
-    name: string;
-    time_in: string;
-    end_date: string;
-    time_out: string;
-    start_date: string;
-  };
+  remark: string;
+  // holidays_or_breaks: string;
 }
 
 export interface DiscountRule {
@@ -287,7 +305,7 @@ export interface DiscountRule {
   discount_value: number;
   trigger_criteria: string;
   policy_type?: string;
-  status_control: Boolean;
+  status_control: boolean;
   reason: string;
   supervisor: string;
   rule_condition: string;

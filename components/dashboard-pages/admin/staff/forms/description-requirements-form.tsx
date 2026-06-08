@@ -48,7 +48,7 @@ export function DescriptionRequirementsForm({
 
         <TextareaField
           label="Full Job Description"
-          placeholder="Detailed responsibilities, using formatting tools"
+          placeholder="Detailed responsibilities, using formatting tools."
           value={formData.fullJobDescription}
           onChange={(e) =>
             onFormDataChange({ fullJobDescription: e.target.value })

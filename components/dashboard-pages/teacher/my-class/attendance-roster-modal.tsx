@@ -77,6 +77,30 @@ const allStudents: Student[] = [
   },
 ];
 
+/**
+ * Marking multiple attendance
+ * {
+ *    date: "2026-05-27",
+ *    session: "2024/2025",
+ *    class_name: "SSS 2",
+ *    data: [
+ *      {
+ *        school_id: "xxx",
+ *        stakeholder_id: "xxx",
+ *        status: "preent",
+ *        notes: "Student arrived on time!"
+ *      },
+ *      {
+ *        school_id: "xxx",
+ *        stakeholder_id: "xxx",
+ *        status: "absent",
+ *        notes: "Called parents, student is sick!"
+ *      }
+ *    ]
+ * }
+ *
+ */
+
 export function AttendanceRosterModal({
   open,
   onOpenChange,
@@ -151,7 +175,7 @@ export function AttendanceRosterModal({
         </div>
       }
     >
-      <div className="space-y-4">
+      <div className="space-y-4 max-h-[400px]">
         <div className="grid grid-cols-2 gap-4">
           <DatePickerIcon
             label="Date"

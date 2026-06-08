@@ -81,11 +81,18 @@ export default function SignInPage() {
         }),
       });
 
+      // if (
+      //   loginResponse.user.role === "admin" &&
+      //   loginResponse.user.permissions.length === 0
+      // ) {
+      //   router.push("/superadmin/main");
+      // }
+
       if (
         loginResponse.user.role === "admin" &&
         loginResponse.user.permissions.length === 0
       ) {
-        router.push("/superadmin/main");
+        router.push("/admin/dashboard");
       }
 
       if (loginResponse.user.role === "canteen") {

@@ -20,6 +20,8 @@ export default function AdmissionsPage() {
   const { data: stakeholderMetrics, isLoading } =
     useGetStakeholderMetricsQuery();
 
+  // console.log("Stakeholder Metrics:", stakeholderMetrics?.metrics);
+
   const metrics = useMemo(
     () => ({
       inquiries: stakeholderMetrics?.metrics?.inquiries ?? 0,
@@ -42,7 +44,7 @@ export default function AdmissionsPage() {
     return {
       id: stakeholder.id,
       stakeholder_id: stakeholder.id,
-      name: `${stakeholder.user.first_name} ${stakeholder.user.last_name}`,
+      name: `${stakeholder.user.first_name ?? ""} ${stakeholder.user.last_name ?? ""}`,
       classApplyingFor: stakeholder.class_assigned,
       dateSubmitted: format(date, "MMM. d, yyyy"),
       timeSubmitted: format(date, "h:mm a"),

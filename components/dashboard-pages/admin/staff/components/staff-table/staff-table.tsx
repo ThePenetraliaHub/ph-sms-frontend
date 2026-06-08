@@ -47,13 +47,15 @@ export function StaffTable({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
+  console.log(staffData);
+
   const staff: Staff[] = useMemo(() => {
     if (!staffData || staffData.length === 0) return [];
 
     return staffData.map((stakeholder) => {
       const fullName = stakeholder.user
         ? `${stakeholder.user.first_name || ""} ${stakeholder.user.middle_name || ""} ${stakeholder.user.last_name || ""}`.trim()
-        : "Unknown";
+        : "Name Missing";
 
       let contractExpiry: string | undefined;
       if (stakeholder.contract_end_date) {

@@ -51,6 +51,7 @@ export default function StaffDetailPage({
   });
 
   const stakeholder = staffDataResponse?.data;
+  console.log(stakeholder); //PROBLEM POINT FROM BACKEND
 
   if (!hasChecked || !staffId) {
     return (

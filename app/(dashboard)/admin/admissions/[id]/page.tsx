@@ -120,10 +120,11 @@ export default function ApplicantDetailPage({
     ? new Date(stakeholder.created_at)
     : new Date();
   const applicantHeaderData = {
-    name: `${stakeholder.user.first_name} ${stakeholder.user.last_name}`,
-    status: getStatusFromStage(stakeholder.stage),
+    name: `${stakeholder.user?.first_name} ${stakeholder.user?.last_name}`,
+    status: getStatusFromStage(stakeholder.stage ?? 0),
     statusLabel:
-      stakeholder.stage_text || getStakeholderStageLabel(stakeholder.stage),
+      stakeholder.stage_text ||
+      getStakeholderStageLabel(stakeholder.stage ?? 0),
     applicationId: stakeholder.id,
     classApplyingFor: stakeholder.class_assigned || "—",
     dateSubmitted: format(date, "MMM. d, yyyy"),

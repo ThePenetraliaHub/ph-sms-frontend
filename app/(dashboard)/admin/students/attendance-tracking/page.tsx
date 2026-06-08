@@ -6,196 +6,46 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { MetricCard } from "@/components/dashboard-pages/admin/admissions/components/metric-card";
 import { AttendanceFilters } from "@/components/dashboard-pages/admin/students/components/attendance-filters";
 import { AttendanceTable } from "@/components/dashboard-pages/admin/students/components/attendance-table";
+import {
+  useGetAllAttendanceQuery,
+  useLazyGetAttendanceQuery,
+} from "@/services/attendance/attendance";
+import { useAppSelector } from "@/store/hooks";
+import { selectUser } from "@/store/slices/authSlice";
 
-import { useGetAllAttendanceQuery } from "@/services/attendance/attendance";
-
-// type AttendanceStatus = "present" | "absent" | "no-data";
+type AttendanceStatus = "present" | "absent" | "no-data";
 
 interface StudentAttendance {
   id: string;
   name: string;
   schoolId: string;
-  // attendance: Record<number, AttendanceStatus>;
   attendance: {
     day: number;
-    status: string;
+    status: AttendanceStatus;
   };
 }
 
 const dates = Array.from({ length: 31 }, (_, i) => i + 1);
 
-// const sampleStudents: StudentAttendance[] = [
-//   {
-//     id: "1",
-//     name: "Chinedu Nwokodi",
-//     schoolId: "nwokodi.m178023",
-//     attendance: {
-//       13: "present",
-//       14: "present",
-//       15: "present",
-//       16: "present",
-//       17: "present",
-//       18: "no-data",
-//       19: "no-data",
-//       20: "present",
-//       21: "present",
-//       22: "present",
-//       23: "present",
-//       24: "present",
-//       25: "present",
-//     },
-//   },
-//   {
-//     id: "2",
-//     name: "Adebisi Deborah",
-//     schoolId: "adebisi.m178024",
-//     attendance: {
-//       13: "present",
-//       14: "present",
-//       15: "absent",
-//       16: "present",
-//       17: "present",
-//       18: "no-data",
-//       19: "no-data",
-//       20: "present",
-//       21: "present",
-//       22: "absent",
-//       23: "present",
-//       24: "present",
-//       25: "present",
-//     },
-//   },
-//   {
-//     id: "3",
-//     name: "Dauda Ahfiz",
-//     schoolId: "ahfiz.m178025",
-//     attendance: {
-//       13: "present",
-//       14: "present",
-//       15: "present",
-//       16: "present",
-//       17: "present",
-//       18: "no-data",
-//       19: "no-data",
-//       20: "present",
-//       21: "present",
-//       22: "present",
-//       23: "present",
-//       24: "present",
-//       25: "present",
-//     },
-//   },
-//   {
-//     id: "4",
-//     name: "Sarah Collins",
-//     schoolId: "collins.m178026",
-//     attendance: {
-//       13: "present",
-//       14: "present",
-//       15: "present",
-//       16: "present",
-//       17: "present",
-//       18: "no-data",
-//       19: "no-data",
-//       20: "present",
-//       21: "present",
-//       22: "present",
-//       23: "present",
-//       24: "present",
-//       25: "present",
-//     },
-//   },
-//   {
-//     id: "5",
-//     name: "John Terjiri",
-//     schoolId: "terjiri.m178027",
-//     attendance: {
-//       13: "present",
-//       14: "present",
-//       15: "present",
-//       16: "present",
-//       17: "present",
-//       18: "no-data",
-//       19: "no-data",
-//       20: "present",
-//       21: "present",
-//       22: "present",
-//       23: "present",
-//       24: "present",
-//       25: "present",
-//     },
-//   },
-//   {
-//     id: "6",
-//     name: "Chinedu Nwokodi",
-//     schoolId: "nwokodi.m178023",
-//     attendance: {
-//       13: "present",
-//       14: "present",
-//       15: "present",
-//       16: "present",
-//       17: "present",
-//       18: "no-data",
-//       19: "no-data",
-//       20: "present",
-//       21: "present",
-//       22: "present",
-//       23: "present",
-//       24: "present",
-//       25: "absent",
-//     },
-//   },
-//   {
-//     id: "7",
-//     name: "Adebisi Deborah",
-//     schoolId: "adebisi.m178024",
-//     attendance: {
-//       13: "absent",
-//       14: "present",
-//       15: "present",
-//       16: "present",
-//       17: "present",
-//       18: "no-data",
-//       19: "no-data",
-//       20: "present",
-//       21: "present",
-//       22: "present",
-//       23: "present",
-//       24: "present",
-//       25: "present",
-//     },
-//   },
-//   {
-//     id: "8",
-//     name: "Dauda Ahfiz",
-//     schoolId: "ahfiz.m178025",
-//     attendance: {
-//       13: "present",
-//       14: "present",
-//       15: "present",
-//       16: "present",
-//       17: "present",
-//       18: "no-data",
-//       19: "no-data",
-//       20: "present",
-//       21: "present",
-//       22: "present",
-//       23: "present",
-//       24: "present",
-//       25: "present",
-//     },
-//   },
-// ];
-
 export default function AttendanceTrackingPage() {
-  const [month, setMonth] = useState("october-2025");
-  const [week, setWeek] = useState("week-7-8");
+  const user = useAppSelector(selectUser);
+  const all_school_classes = user ? user.school.classes : [];
+  const session = user ? user.school.term.session : "";
+  const [selectedDate, setSelectedDate] = useState<Date>("");
+  const [status, setStatus] = useState("all");
   const [selectedClass, setSelectedClass] = useState("JSS 1");
   const [formattedAttendance, setFormattedAttendance] = useState<
     StudentAttendance[]
   >([]);
 
+  const formatDate = (date: Date): string => {
+    const rawDate = new Date(date);
+    const formattedDate = rawDate.toISOString().split("T")[0];
+    return formattedDate ? formattedDate : "";
+  };
+
   const { data: attendanceData, isLoading } = useGetAllAttendanceQuery();
+  const [getFilteredAttendance] = useLazyGetAttendanceQuery();
 
   const getDatebyNumber = (date: string): number => {
     if (!date) return 0;
@@ -206,10 +56,28 @@ export default function AttendanceTrackingPage() {
     return Number(day);
   };
 
+  const fetchFilteredAttendance = async () => {
+    try {
+      const res = await getFilteredAttendance({
+        class_name: selectedClass,
+        status: status as "present" | "absent" | "late" | "excused",
+        date: formatDate(selectedDate),
+        session: session,
+      }).unwrap();
+      console.log(res);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const handleFilterSubmission = () => {
-    console.log("Month", month);
-    console.log("Week", week);
-    console.log("Class", selectedClass);
+    if (!selectedDate) return;
+    console.log("Date: ", formatDate(selectedDate));
+    console.log("Status: ", status);
+    console.log("Class: ", selectedClass);
+    console.log("Session: ", session);
+
+    fetchFilteredAttendance();
   };
 
   useEffect(() => {
@@ -217,12 +85,12 @@ export default function AttendanceTrackingPage() {
     const attendance: StudentAttendance[] = attendanceData?.data.map(
       (student) => {
         return {
-          id: student.school_id,
-          name: `ST ID: ${student.school_id}`,
+          id: student.stakeholder_id,
+          name: student.student_name,
           schoolId: student.school_id,
           attendance: {
             day: getDatebyNumber(student.date),
-            status: student.status,
+            status: student.status as AttendanceStatus,
           },
         };
       },
@@ -246,11 +114,13 @@ export default function AttendanceTrackingPage() {
         <CardContent>
           <div className="space-y-6">
             <AttendanceFilters
-              month={month}
-              week={week}
+              classes={all_school_classes}
+              session={session}
+              status={status}
               class={selectedClass}
-              onMonthChange={setMonth}
-              onWeekChange={setWeek}
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+              onStatusChange={setStatus}
               onClassChange={setSelectedClass}
               onSubmit={handleFilterSubmission}
             />
@@ -261,21 +131,21 @@ export default function AttendanceTrackingPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <MetricCard
           title="Total Students"
-          value="200"
+          value={formattedAttendance.length}
           subtitle=""
           trend="up"
           trendColor="text-main-blue"
         />
         <MetricCard
           title="Overall Attendance"
-          value="95.2%"
+          value="N/A"
           subtitle=""
           trend="up"
           trendColor="text-main-blue"
         />
         <MetricCard
           title="Total Absentees"
-          value="4"
+          value={"N/A"}
           subtitle=""
           trend="up"
           trendColor="text-main-blue"

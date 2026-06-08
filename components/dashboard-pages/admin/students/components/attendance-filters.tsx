@@ -7,73 +7,63 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar03Icon } from "@hugeicons/core-free-icons";
-import { Icon } from "@/components/general/huge-icon";
-import { useAppSelector } from "@/store/hooks";
-import { selectUser } from "@/store/slices/authSlice";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction } from "react";
+import DatePickerIcon from "@/components/ui/date-picker";
 
 interface AttendanceFiltersProps {
-  month: string;
-  week: string;
+  status: string;
   class: string;
-  onMonthChange: (value: string) => void;
-  onWeekChange: (value: string) => void;
+  classes: string[];
+  session: string;
+  onStatusChange: (value: string) => void;
   onClassChange: (value: string) => void;
   onSubmit: () => void;
+  setSelectedDate: Dispatch<SetStateAction<Date | undefined>>;
+  selectedDate: Date | undefined;
 }
 
 export function AttendanceFilters({
-  month,
-  week,
+  status,
   class: className,
-  onMonthChange,
-  onWeekChange,
+  setSelectedDate,
+  selectedDate,
+  classes,
+  session,
+  onStatusChange,
   onClassChange,
   onSubmit,
 }: AttendanceFiltersProps) {
-  const user = useAppSelector(selectUser);
-  const [regClasses, setRegClasses] = useState<string[]>(
-    user?.school.classes ?? [],
-  );
-  const fallBackClasses: string[] = [
-    "JSS 1",
-    "JSS 2",
-    "JSS 3",
-    "SSS 1",
-    "SSS 2",
-    "SSS 3",
-  ];
-
-  useEffect(() => {
-    if (user?.school.classes) return;
-    setRegClasses(fallBackClasses);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-center gap-4 w-full">
-      <Select value={month} onValueChange={onMonthChange}>
+      <DatePickerIcon
+        label=""
+        date={selectedDate}
+        setDate={setSelectedDate}
+        placeholder="Select date"
+      />
+
+      <Select value={session}>
         <SelectTrigger className="w-full">
-          <Icon icon={Calendar03Icon} size={16} className="shrink-0" />
-          <SelectValue placeholder="Select month" />
+          <SelectValue placeholder="Select Session" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="october-2025">October 2025</SelectItem>
-          <SelectItem value="november-2025">November 2025</SelectItem>
-          <SelectItem value="december-2025">December 2025</SelectItem>
+          <SelectItem value={`${session}`}>{session}</SelectItem>
         </SelectContent>
       </Select>
 
-      <Select value={week} onValueChange={onWeekChange}>
+      <Select value={status} onValueChange={onStatusChange}>
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select week" />
+          <SelectValue placeholder="Select Status" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="week-7-8">Academic Week 7-8</SelectItem>
-          <SelectItem value="week-9-10">Academic Week 9-10</SelectItem>
-          <SelectItem value="week-11-12">Academic Week 11-12</SelectItem>
+          {["absent", "present", "all"].map((status, index) => {
+            return (
+              <SelectItem key={index} value={status} className="capitalize">
+                {status}
+              </SelectItem>
+            );
+          })}
         </SelectContent>
       </Select>
 
@@ -82,7 +72,7 @@ export function AttendanceFilters({
           <SelectValue placeholder="Select class" />
         </SelectTrigger>
         <SelectContent>
-          {regClasses.map((cls, index) => {
+          {classes.map((cls, index) => {
             return (
               <SelectItem key={index} value={cls}>
                 {cls}

@@ -9,7 +9,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, XCircle, Minus } from "lucide-react";
 
 import {
   CheckmarkCircle01Icon,
@@ -17,7 +16,6 @@ import {
   MinusSignIcon,
 } from "@hugeicons/core-free-icons";
 import { Icon } from "@/components/general/huge-icon";
-import { cn } from "@/lib/utils";
 
 type AttendanceStatus = "present" | "absent" | "no-data";
 
@@ -25,7 +23,10 @@ interface StudentAttendance {
   id: string;
   name: string;
   schoolId: string;
-  attendance: Record<number, AttendanceStatus>;
+  attendance: {
+    day: number;
+    status: AttendanceStatus;
+  };
 }
 
 interface AttendanceTableProps {
@@ -88,7 +89,11 @@ export function AttendanceTable({ students, dates }: AttendanceTableProps) {
                 </TableCell>
                 {dates.map((date) => (
                   <TableCell key={date} className="text-center">
-                    {getAttendanceIcon(student.attendance[date] || "no-data")}
+                    {date.toString() === student.attendance.day.toString()
+                      ? getAttendanceIcon(
+                          student.attendance.status || "no-data",
+                        )
+                      : "-"}
                   </TableCell>
                 ))}
               </TableRow>

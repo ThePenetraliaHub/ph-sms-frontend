@@ -32,7 +32,7 @@ export const schoolsApi = baseApi.injectEndpoints({
 
     updateSchool: build.mutation<
       SchoolResponse,
-      { id: string; data: UpdateSchoolRequest }
+      { id: string; data: Partial<UpdateSchoolRequest> }
     >({
       query: ({ id, data }) => ({
         url: `${BASE}/${id}`,
@@ -59,11 +59,11 @@ export const schoolsApi = baseApi.injectEndpoints({
         response.data.classes ?? [],
     }),
 
-    getTerm: build.query<Term | null, string>({
-      query: (id) => ({ url: `${BASE}/${id}` }),
-      transformResponse: (response: SchoolResponse): Term | null =>
-        response.data.term ?? null,
-    }),
+    // getTerm: build.query<Term | null, string>({
+    //   query: (id) => ({ url: `${BASE}/${id}` }),
+    //   transformResponse: (response: SchoolResponse): Term | null =>
+    //     response.data.term ?? null,
+    // }),
   }),
 });
 
@@ -72,7 +72,7 @@ export const {
   useGetSchoolByIdQuery,
   useGetDiscountRulesQuery,
   useGetClassesQuery,
-  useGetTermQuery,
+  // useGetTermQuery,
   useCreateSchoolMutation,
   useUpdateSchoolMutation,
   useDeleteSchoolMutation,
