@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { MetricCard } from "@/components/dashboard-pages/admin/admissions/components/metric-card";
 import { usePagination } from "@/hooks/use-pagination";
 import {
@@ -17,7 +17,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { AttendanceRosterModal } from "@/components/dashboard-pages/teacher/my-class/attendance-roster-modal";
+import {
+  AttendanceInfo,
+  AttendanceRosterModal,
+} from "@/components/dashboard-pages/teacher/my-class/attendance-roster-modal";
 import { selectUser } from "@/store/slices/authSlice";
 import { useAppSelector } from "@/store/hooks";
 import {
@@ -25,89 +28,29 @@ import {
   useGetStudentByQueryParamQuery,
 } from "@/services/stakeholders/stakeholders";
 import { Stakeholders } from "@/services/stakeholders/stakeholder-types";
-// import { Stakeholders } from "@/services/stakeholders/stakeholder-types";
+import { useGetClassQuery } from "@/services/schools/schools";
+import { useRouter } from "next/navigation";
+import { useMarkAsReadMutation } from "@/services/shared";
+import { useMarkBulkAttendanceMutation } from "@/services/attendance/attendance";
+import { toast } from "sonner";
 
-interface Student {
+export interface Student {
   id: string;
-  name: string;
-  studentId: string;
-  status: "Present" | "Absent";
-  lastAssignmentScore: string;
-  lastAssignmentName: string;
+  full_name: string;
+  first_name: string;
+  last_name: string;
+  gender: "male" | "female";
+  status: "active" | "inactive";
+  parent_name: string;
+  parent_email: string;
+  parent_phone: string;
 }
-
-const allStudents: Student[] = [
-  {
-    id: "1",
-    name: "Sola Adebayo",
-    studentId: "adebayo.m178031",
-    status: "Present",
-    lastAssignmentScore: "92%",
-    lastAssignmentName: "Unit 4 Quiz",
-  },
-  {
-    id: "2",
-    name: "Helen Davies",
-    studentId: "davies.m178032",
-    status: "Present",
-    lastAssignmentScore: "92%",
-    lastAssignmentName: "Unit 4 Quiz",
-  },
-  {
-    id: "3",
-    name: "Tolu Adebayo",
-    studentId: "adebayo.m170833",
-    status: "Absent",
-    lastAssignmentScore: "92%",
-    lastAssignmentName: "Unit 4 Quiz",
-  },
-  {
-    id: "4",
-    name: "Biodun Eke",
-    studentId: "eke.m178033",
-    status: "Present",
-    lastAssignmentScore: "92%",
-    lastAssignmentName: "Unit 4 Quiz",
-  },
-  {
-    id: "5",
-    name: "Uche Nwachukwu",
-    studentId: "nwachukwu.m170844",
-    status: "Absent",
-    lastAssignmentScore: "92%",
-    lastAssignmentName: "Unit 4 Quiz",
-  },
-  {
-    id: "6",
-    name: "Adebisi Femi",
-    studentId: "femi.m170844",
-    status: "Present",
-    lastAssignmentScore: "88%",
-    lastAssignmentName: "Unit 4 Quiz",
-  },
-  {
-    id: "7",
-    name: "Oluwole Tunde",
-    studentId: "oluwole.m170844",
-    status: "Present",
-    lastAssignmentScore: "95%",
-    lastAssignmentName: "Unit 4 Quiz",
-  },
-  {
-    id: "8",
-    name: "Zara Amani",
-    studentId: "amani.m170844",
-    status: "Present",
-    lastAssignmentScore: "90%",
-    lastAssignmentName: "Unit 4 Quiz",
-  },
-];
 
 const getStatusColor = (status: Student["status"]) => {
   switch (status) {
-    case "Present":
+    case "active":
       return "text-green-600";
-    case "Absent":
+    case "inactive":
       return "text-red-600";
     default:
       return "text-gray-600";
@@ -116,9 +59,13 @@ const getStatusColor = (status: Student["status"]) => {
 
 export default function MyClassPage() {
   const user = useAppSelector(selectUser);
-  const [classFilter, setClassFilter] = useState("jss3");
+  const { push } = useRouter();
   const [statusFilter, setStatusFilter] = useState("all");
   const [attendanceModalOpen, setAttendanceModalOpen] = useState(false);
+
+  //mark attendance
+  const [markAttendance, { isLoading: isMarkingAttendance }] =
+    useMarkBulkAttendanceMutation();
 
   //get stakeholder
   const { data: currTeacher, isLoading: isFetchingTeacher } =
@@ -126,7 +73,42 @@ export default function MyClassPage() {
       refetchOnMountOrArgChange: true,
     });
   const teacher: Stakeholders | undefined = currTeacher?.data[0];
-  console.log(teacher);
+
+  const [classFilter, setClassFilter] = useState<string>(
+    teacher?.assigned_classes[0] ?? "",
+  );
+
+  //get teacher's class
+  const { data: class_data, isLoading: isFetchingClass } = useGetClassQuery(
+    { id: user?.school_id ?? "", class_name: classFilter },
+    { skip: !user?.school_id || !classFilter },
+  );
+
+  const myClassData = useMemo(() => {
+    if (!class_data) return;
+    setClassFilter(class_data.data.class_details.class_name);
+    return class_data.data;
+  }, [class_data]);
+
+  const allStudents: Student[] = myClassData
+    ? myClassData?.students.map((student) => {
+        return {
+          id: student.id ?? "",
+          full_name: student.full_name ?? "",
+          first_name: student.first_name ?? "",
+          last_name: student.last_name ?? "",
+          gender: student.gender
+            ? (student.gender as "male" | "female")
+            : "female",
+          status: student.status
+            ? (student.status as "active" | "inactive")
+            : "active",
+          parent_name: student.parent_name ?? "",
+          parent_email: student.parent_email ?? "",
+          parent_phone: student.parent_phone ?? "",
+        };
+      })
+    : [];
 
   const filteredStudents = allStudents.filter((student) => {
     if (statusFilter === "all") return true;
@@ -145,12 +127,12 @@ export default function MyClassPage() {
 
   const columns: TableColumn<Student>[] = [
     {
-      key: "name",
+      key: "full_name",
       title: "Name & Student ID",
       render: (value, row) => (
         <div className="flex flex-col">
-          <span className="font-medium text-gray-800">{row.name}</span>
-          <span className="text-sm text-gray-500">{row.studentId}</span>
+          <span className="font-medium text-gray-800">{row.full_name}</span>
+          <span className="text-sm text-gray-500">{`${row.last_name}.${row.gender === "male" ? "m" : "f"}${row.id}`}</span>
         </div>
       ),
     },
@@ -160,20 +142,28 @@ export default function MyClassPage() {
       render: (value) => {
         const status = value as Student["status"];
         return (
-          <span className={cn("text-sm font-medium", getStatusColor(status))}>
+          <span
+            className={cn(
+              "text-sm font-medium capitalize",
+              getStatusColor(status),
+            )}
+          >
             {status}
           </span>
         );
       },
     },
     {
-      key: "lastAssignmentScore",
-      title: "Last Assignment Score",
+      key: "parent_name",
+      title: "Parent Information",
       render: (value, row) => (
         <div className="flex flex-col">
-          <span className="text-gray-800">{row.lastAssignmentScore}</span>
+          <span className="text-gray-800 font-semibold">{row.parent_name}</span>
           <span className="text-sm text-gray-500">
-            ({row.lastAssignmentName})
+            Parent Phone: {row.parent_phone ?? "N/A"}
+          </span>
+          <span className="text-sm text-gray-500">
+            Parent Email: {row.parent_email ?? "N/A"}
           </span>
         </div>
       ),
@@ -189,15 +179,16 @@ export default function MyClassPage() {
             label: "View Profile",
             onClick: (row) => {
               console.log("View profile for:", row.id);
+              push(`/teacher/my-class/${row.id}`);
             },
           },
-          {
-            label: "View Grades",
-            onClick: (row) => {
-              console.log("View grades for:", row.id);
-            },
-            separator: true,
-          },
+          // {
+          //   label: "View Grades",
+          //   onClick: (row) => {
+          //     console.log("View grades for:", row.id);
+          //   },
+          //   separator: true,
+          // },
           {
             label: "Send Message",
             onClick: (row) => {
@@ -208,6 +199,35 @@ export default function MyClassPage() {
       },
     },
   ];
+
+  const postAttendance = async (data: AttendanceInfo) => {
+    if (!user?.school_id) return toast.error("Students not recognized");
+    if (!user.school.academic_calendar_config.name)
+      return toast.error("Academic term not set, please contact admin");
+    if (data.att.length === 0) return toast.error("No students found");
+    const attendanceRegister = data.att.map((item) => {
+      return { ...item, school_id: user?.school_id ?? "" };
+    });
+    const attendance_payload = {
+      date: data.date,
+      session: user.school.academic_calendar_config.name, //you can also use user?.school.term.session
+      class_name: classFilter,
+      data: attendanceRegister,
+    };
+    try {
+      const res = await markAttendance(attendance_payload).unwrap();
+      if (res.status) {
+        toast.success(
+          res.message
+            ? res.message
+            : "Attendance register uploaded successfully",
+        );
+      }
+      setAttendanceModalOpen(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -224,14 +244,23 @@ export default function MyClassPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <MetricCard
           title="Total Students"
-          value="- Students"
+          value={
+            isFetchingClass
+              ? "-"
+              : myClassData
+                ? `${myClassData?.students.length} Students`
+                : "-"
+          }
           trend="up"
           trendColor="text-main-blue"
         />
         <MetricCard
           title="Total Class Covered"
-          // value={`${teacher?.assigned_classes.length ?? 0} Classes`}
-          value={`0 Classes`}
+          value={
+            isFetchingTeacher
+              ? "-"
+              : `${teacher?.assigned_classes.length ?? 0} Classes - ${teacher?.assigned_classes.join(", ")}`
+          }
           trend="up"
           trendColor="text-main-blue"
         />
@@ -245,8 +274,9 @@ export default function MyClassPage() {
 
       <Button
         variant={"outline"}
+        disabled={isFetchingClass || isFetchingTeacher}
         onClick={() => setAttendanceModalOpen(true)}
-        className="w-full h-11"
+        className="w-full h-11 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         Mark Attendance
       </Button>
@@ -257,17 +287,21 @@ export default function MyClassPage() {
             Student Roster Table
           </h2>
           <div className="flex items-center gap-3">
-            <Select value={classFilter} onValueChange={setClassFilter}>
+            <Select
+              value={classFilter}
+              onValueChange={(value) => setClassFilter(value)}
+            >
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Class" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="jss1">JSS 1</SelectItem>
-                <SelectItem value="jss2">JSS 2</SelectItem>
-                <SelectItem value="jss3">JSS 3</SelectItem>
-                <SelectItem value="ss1">SS 1</SelectItem>
-                <SelectItem value="ss2">SS 2</SelectItem>
-                <SelectItem value="ss3">SS 3</SelectItem>
+                {teacher?.assigned_classes.map((class_name, index) => {
+                  return (
+                    <SelectItem key={index} value={class_name}>
+                      {class_name}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -276,8 +310,8 @@ export default function MyClassPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All</SelectItem>
-                <SelectItem value="present">Present</SelectItem>
-                <SelectItem value="absent">Absent</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -290,6 +324,7 @@ export default function MyClassPage() {
             actions={actions}
             showActionsColumn={true}
             actionsColumnTitle="Action"
+            emptyMessage={"No student in this class yet"}
           />
         </div>
 
@@ -305,6 +340,9 @@ export default function MyClassPage() {
       <AttendanceRosterModal
         open={attendanceModalOpen}
         onOpenChange={setAttendanceModalOpen}
+        allStudents={students}
+        onSave={(data) => postAttendance(data)}
+        isLoading={isMarkingAttendance}
       />
     </div>
   );

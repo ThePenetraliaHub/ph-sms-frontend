@@ -6,6 +6,8 @@ import type {
   ApiDeleteResponse,
   BaseQueryParams,
 } from "../shared-types";
+import { Stakeholders } from "../stakeholders/stakeholder-types";
+import { Subject } from "../subjects/subject-types";
 
 export interface AcademicCalendarConfig {
   name: string;
@@ -316,6 +318,7 @@ export interface DiscountRule {
 
 export type SchoolListResponse = ApiListResponse<School>;
 export type SchoolResponse = ApiResponse<School>;
+export type SchoolClassResponse = ApiResponse<Class>;
 export type DeleteSchoolResponse = ApiDeleteResponse;
 
 export interface SchoolQueryParams extends BaseQueryParams {
@@ -395,4 +398,69 @@ export interface RoleTemplateUpdatePayload {
   name: string;
   description: string;
   modulePermissions: RoleTemplateModulePermission[];
+}
+
+export interface Class {
+  class_details: {
+    average_attendance_percentage: number;
+    class_name: string;
+    present_today: number;
+    total_students: number;
+    total_teachers: number;
+  };
+  school: {
+    id: string;
+    name: string;
+    session: string;
+    term: Term;
+  };
+  students: {
+    admission_number: string | null;
+    age: string | null;
+    attendance: {
+      total_days: number;
+      present: number;
+      absent: number;
+      late: number;
+      excused: number;
+      attendance_percentage: number;
+    };
+    date_joined: string;
+    email: string;
+    first_name: string;
+    full_name: string;
+    gender: "male" | "female";
+    hostel: any;
+    id: string | null;
+    last_name: string | null;
+    parent_email: string | null;
+    parent_name: string | null;
+    parent_phone: string | null;
+    phone_number: string | null;
+    school_fees: {
+      last_payment: string | null;
+      total_owed: number;
+      total_paid: number;
+    };
+    status: "active" | "inactive";
+    transport: {};
+    user_id: string;
+  }[];
+  teachers: {
+    assigned_classes: string[];
+    date_joined: string;
+    department: string;
+    email: string;
+    first_name: string;
+    full_name: string;
+    id: string;
+    last_name: string;
+    phone_number: string;
+    position: string;
+    qualification: string | null;
+    status: string; // "active" | "inactive"
+    subjects: Subject[];
+    user_id: string;
+  }[];
+  timetable: TimeTableFormat[];
 }

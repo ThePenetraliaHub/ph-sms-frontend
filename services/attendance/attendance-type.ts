@@ -11,6 +11,8 @@ import { Stakeholders } from "../stakeholders/stakeholder-types";
  * Type definitions for Attendance API responses
  */
 
+export type AttendanceStatus = "present" | "absent" | "late" | "excused";
+
 export interface Attendance {
   id: string;
   studentId: string;
@@ -50,7 +52,7 @@ export interface CreateAttendanceRequest {
   classId: string;
   courseId?: string;
   date: string;
-  status: "present" | "absent" | "late" | "excused";
+  status: AttendanceStatus;
   remarks?: string;
 }
 
@@ -60,15 +62,32 @@ export interface BulkAttendanceRequest {
   date: string;
   attendances: {
     studentId: string;
-    status: "present" | "absent" | "late" | "excused";
+    status: AttendanceStatus;
     remarks?: string;
   }[];
+}
+
+export interface MarkAttendanceStudentRequestData {
+  school_id: string;
+  stakeholder_id: string;
+  status: AttendanceStatus;
+  notes?: string;
+}
+
+export interface MarkAttendanceRequest {
+  date: string;
+  session: string;
+  class_name: string;
+  data: MarkAttendanceStudentRequestData[];
 }
 
 /**
  * Attendance list response with pagination
  */
 export type AttendanceListResponse = ApiListResponse<StudentAttendance>;
+
+export type MarkAttendanceResponse =
+  ApiListResponse<MarkAttendanceStudentRequestData>;
 
 /**
  * Attendance response for single entity operations

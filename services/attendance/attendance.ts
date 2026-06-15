@@ -5,6 +5,8 @@ import type {
   BulkAttendanceRequest,
   AttendanceListResponse,
   AttendanceQueryParams,
+  MarkAttendanceRequest,
+  MarkAttendanceResponse,
 } from "./attendance-type";
 
 const BASE = "/attendances";
@@ -43,6 +45,18 @@ export const attendanceApi = baseApi.injectEndpoints({
       invalidatesTags: ["Attendance"],
     }),
 
+    markBulkAttendance: build.mutation<
+      MarkAttendanceResponse,
+      MarkAttendanceRequest
+    >({
+      query: (body) => ({
+        url: `${BASE}/mark/attendance`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Attendance"],
+    }),
+
     updateAttendance: build.mutation<
       Attendance,
       { id: string; data: Partial<CreateAttendanceRequest> }
@@ -77,4 +91,5 @@ export const {
   useBulkCreateAttendanceMutation,
   useUpdateAttendanceMutation,
   useDeleteAttendanceMutation,
+  useMarkBulkAttendanceMutation,
 } = attendanceApi;

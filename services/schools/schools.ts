@@ -8,6 +8,7 @@ import type {
   SchoolQueryParams,
   DiscountRule,
   Term,
+  SchoolClassResponse,
 } from "./schools-type";
 
 const BASE = "/schools";
@@ -59,6 +60,13 @@ export const schoolsApi = baseApi.injectEndpoints({
         response.data.classes ?? [],
     }),
 
+    getClass: build.query<SchoolClassResponse, { id: string; class_name: string }>({
+      query: ({ id, class_name }) => ({
+        url: `${BASE}/${id}/classes/${class_name}`,
+      }),
+      providesTags: (_, __, { id }) => [{ type: "School", id }],
+    }),
+
     // getTerm: build.query<Term | null, string>({
     //   query: (id) => ({ url: `${BASE}/${id}` }),
     //   transformResponse: (response: SchoolResponse): Term | null =>
@@ -76,4 +84,5 @@ export const {
   useCreateSchoolMutation,
   useUpdateSchoolMutation,
   useDeleteSchoolMutation,
+  useGetClassQuery,
 } = schoolsApi;

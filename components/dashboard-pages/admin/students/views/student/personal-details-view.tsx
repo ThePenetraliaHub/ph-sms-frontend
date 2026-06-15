@@ -77,8 +77,6 @@ export function PersonalDetailsView({ stakeholder }: PersonalDetailsViewProps) {
     },
   ];
 
-  console.log("Details ", stakeholder);
-
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold text-gray-800">Personal Details</h2>
