@@ -73,6 +73,7 @@ export default function MyClassPage() {
       refetchOnMountOrArgChange: true,
     });
   const teacher: Stakeholders | undefined = currTeacher?.data[0];
+  console.log(teacher);
 
   const [classFilter, setClassFilter] = useState<string>(
     teacher?.assigned_classes[0] ?? "",

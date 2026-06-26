@@ -4,6 +4,7 @@ import { User } from "../users/users-type";
 import { Notes } from "../notes/note-types";
 import { ApiResponse } from "../shared-types";
 import { Notifications } from "../shared";
+import { Bank } from "../schools/schools-type";
 
 export interface StakeholderChildDetails {
   id: string;
@@ -26,7 +27,7 @@ export interface Stakeholders {
   position: string | null;
   admission_number: string | null;
 
-  school_fees: SchoolFees;
+  school_fees: SchoolFees | null;
   hostel: Record<string, any>;
   hostel_details: any | null;
   transport: Record<string, any>;
@@ -43,7 +44,8 @@ export interface Stakeholders {
   grade: any[] | null;
   age: number | null;
   performance: any;
-  bank: Record<string, any>;
+  // bank: Record<string, any>;
+  bank: Bank | null;
 
   teaching_duty?: TeachingDuty | null;
   non_teaching_duty?: NonTeachingDuty | null;
@@ -124,6 +126,7 @@ export interface CreateStakeholdersRequest {
   status: "active" | "inactive" | "suspended";
 
   phone: string;
+  bank?: Bank;
 
   // Staff / academic
   position?: string;

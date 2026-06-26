@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { SelectItem } from "@/components/ui/select";
 import type { Stakeholders } from "@/services/stakeholders/stakeholder-types";
 import type { StaffEditSavePayload } from "./staff-edit-types";
+import { Bank } from "@/services/schools/schools-type";
+import { toast } from "sonner";
 
 export function FinancialPayrollForm({
   initialData,
@@ -23,42 +25,110 @@ export function FinancialPayrollForm({
     monthlySalary: "",
     bankName: "",
     accountNumber: "",
-    taxId: "",
+    accountName: "",
   });
+
+  //   export interface Bank {
+  //  bank_id: string;
+  //  bank_code: string;
+  //  bank_name: string;
+  //  account_name: string;
+  //  account_number: string;
+  // }
 
   useEffect(() => {
     if (initialData) {
-      const bank = initialData.bank ?? {};
+      const bank: Bank | null = initialData.bank ?? null;
       setFormData({
         monthlySalary: initialData.salary ?? "",
-        bankName: bank.bank_name ?? "",
-        accountNumber: bank.account_number ?? "",
-        taxId: bank.tax_id ?? "",
+        bankName: bank?.bank_name ?? "",
+        accountNumber: bank?.account_number ?? "",
+        accountName: bank?.account_name ?? "",
       });
     }
   }, [initialData]);
 
-  const banks = [
-    "Zenith",
-    "Access Bank",
-    "First Bank",
-    "GTBank",
-    "UBA",
-    "Fidelity Bank",
-    "Stanbic IBTC",
-    "Union Bank",
+  const banks: { id: string; code: string; name: string }[] = [
+    {
+      id: "1",
+      code: "1111",
+      name: "Zenith Bank PLC",
+    },
+    {
+      id: "2",
+      code: "2222",
+      name: "Access Bank",
+    },
+    {
+      id: "3",
+      code: "3333",
+      name: "First Bank",
+    },
+    {
+      id: "4",
+      code: "4444",
+      name: "GTBank",
+    },
+    {
+      id: "5",
+      code: "5555",
+      name: "UBA",
+    },
+    {
+      id: "6",
+      code: "6666",
+      name: "Fidelity Bank PLC",
+    },
+    {
+      id: "7",
+      code: "7777",
+      name: "Stanbic IBTC Bank",
+    },
+    {
+      id: "8",
+      code: "8888",
+      name: "Union Bank",
+    },
+    {
+      id: "9",
+      code: "9999",
+      name: "Moniepoint MFB Bank",
+    },
+    {
+      id: "10",
+      code: "0000",
+      name: "OPay Digital Services",
+    },
   ];
 
   const handleSubmit = () => {
+    if (formData.bankName && isNaN(Number(formData.accountNumber)))
+      return toast.error("Please enter only numbers for account number");
+    if (formData.bankName && formData.accountNumber.length !== 10)
+      return toast.error("Please enter a valid account number");
+    if (formData.bankName && !formData.accountName.trim())
+      return toast.error("Please input the account holder's name");
+    if(isNaN(Number(formData.monthlySalary))) return toast.error('Salary can only be in numbers')
+
+    const [selectedBank] = banks.filter(
+      (bank) => bank.name === formData.bankName,
+    );
     const payload: StaffEditSavePayload = {
       stakeholder: {
         salary: formData.monthlySalary || null,
-        bank: {
-          ...(initialData.bank ?? {}),
-          bank_name: formData.bankName || undefined,
-          account_number: formData.accountNumber || undefined,
-          tax_id: formData.taxId || undefined,
-        },
+        bank: formData.bankName
+          ? {
+              // ...(initialData.bank ?? {}),
+              // bank_name: formData.bankName || undefined,
+              // account_number: formData.accountNumber || undefined,
+              // tax_id: formData.accountName || undefined,
+              bank_id: selectedBank.id ?? null,
+              bank_code: selectedBank.code ?? null,
+              bank_name: formData.bankName ?? null,
+              account_name: formData.accountName ?? null,
+              account_number: formData.accountNumber ?? null,
+            }
+          : null,
       },
     };
     onSave(payload);
@@ -85,13 +155,14 @@ export function FinancialPayrollForm({
           label="Bank Name"
           placeholder="Select bank name"
           value={formData.bankName}
-          onValueChange={(value) =>
-            setFormData({ ...formData, bankName: value })
-          }
+          onValueChange={(value) => {
+            setFormData({ ...formData, bankName: value });
+            // setSelectedBankId(value);
+          }}
         >
-          {banks.map((bank) => (
-            <SelectItem key={bank} value={bank}>
-              {bank}
+          {banks.map((bank, index) => (
+            <SelectItem key={index} value={bank.name}>
+              {bank.name}
             </SelectItem>
           ))}
         </SelectField>
@@ -107,11 +178,13 @@ export function FinancialPayrollForm({
         />
 
         <InputField
-          id="taxId"
-          label="Tax ID/Pension No."
+          id="accountName"
+          label="Account Holder's Name"
           placeholder="placeholder"
-          value={formData.taxId}
-          onChange={(e) => setFormData({ ...formData, taxId: e.target.value })}
+          value={formData.accountName}
+          onChange={(e) =>
+            setFormData({ ...formData, accountName: e.target.value })
+          }
         />
       </div>
 

@@ -15,6 +15,7 @@ import {
 } from "@/services/stakeholders/stakeholders";
 import { useUpdateUserMutation } from "@/services/users/users";
 import type { StaffEditSavePayload } from "@/components/dashboard-pages/admin/staff/forms/staff-edit-types";
+import { toast } from "sonner";
 
 type TabId = "contact" | "employment" | "permissions" | "financial";
 
@@ -132,18 +133,19 @@ export default function EditStaffPage({ params }: { params: { id: string } }) {
       if (
         payload.user &&
         Object.keys(payload.user).length > 0 &&
-        stakeholder.user_id
+        stakeholder.user.id
       ) {
         promises.push(
           updateUser({
-            id: stakeholder.user_id,
+            id: stakeholder.user.id,
             data: payload.user as any,
           }).unwrap(),
         );
       }
       if (promises.length > 0) {
         await Promise.all(promises);
-        window.history.back();
+        // window.history.back();
+        toast.success("Staff information updated successfully!");
       }
     } catch (err) {
       console.error("Failed to save staff:", err);

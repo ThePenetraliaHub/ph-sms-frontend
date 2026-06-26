@@ -7,6 +7,16 @@ import DatePickerIcon from "@/components/ui/date-picker";
 import { SelectItem } from "@/components/ui/select";
 import type { Stakeholders } from "@/services/stakeholders/stakeholder-types";
 import type { StaffEditSavePayload } from "./staff-edit-types";
+import { X } from "lucide-react";
+import { toast } from "sonner";
+
+type InitialData = {
+  jobTitle: string;
+  department: string;
+  annualLeaveEntitlement: string;
+  contractEndDate: Date | undefined;
+  assigned_classes: string[];
+};
 
 export function EmploymentRoleForm({
   initialData,
@@ -21,11 +31,12 @@ export function EmploymentRoleForm({
 }) {
   const [openContractDate, setOpenContractDate] = useState(false);
   // console.log(initialData);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<InitialData>({
     jobTitle: "",
     department: "",
     annualLeaveEntitlement: "",
     contractEndDate: undefined as Date | undefined,
+    assigned_classes: [],
   });
 
   useEffect(() => {
@@ -34,6 +45,7 @@ export function EmploymentRoleForm({
       setFormData({
         jobTitle: initialData.position ?? "",
         department: initialData.department ?? "",
+        assigned_classes: initialData.assigned_classes ?? [],
         annualLeaveEntitlement: initialData.annual_leave_entitlement ?? "",
         contractEndDate: initialData.contract_end_date
           ? new Date(initialData.contract_end_date)
@@ -56,21 +68,33 @@ export function EmploymentRoleForm({
 
   //  CHANGE
   const departments = [
-    "JSS Science",
-    "JSS Art",
-    "JSS Commercial",
+    "JSS",
     "SS Science",
     "SS Art",
     "SS Commercial",
     "Admin",
-    "NAS",
+    "Staff",
   ];
+
+  const assignClass = (e: string) => {
+    if (!e.trim()) return toast.error("Invalid class");
+    setFormData((prev) => ({
+      ...prev,
+      assigned_classes: [...formData.assigned_classes, e],
+    }));
+  };
+
+  const removeAssignedClass = (e: string) => {
+    const editedArr = formData.assigned_classes.filter((item) => item !== e);
+    setFormData((prev) => ({ ...prev, assigned_classes: editedArr }));
+  };
 
   const handleSubmit = () => {
     const payload: StaffEditSavePayload = {
       stakeholder: {
         position: formData.jobTitle || null,
         department: formData.department || null,
+        assigned_classes: formData.assigned_classes || [],
         annual_leave_entitlement: formData.annualLeaveEntitlement || null,
         contract_end_date: formData.contractEndDate
           ? formData.contractEndDate.toISOString().split("T")[0]
@@ -114,6 +138,44 @@ export function EmploymentRoleForm({
             </SelectItem>
           ))}
         </SelectField>
+
+        {/* //assigned classes */}
+        <SelectField
+          label="Assigned Classes"
+          placeholder="Select class(es) to assign staff to"
+          value={formData.department}
+          onValueChange={(value) =>
+            // setFormData({ ...formData, department: value })
+            assignClass(value)
+          }
+        >
+          {initialData.school.classes.map((item, index) => (
+            <SelectItem key={index} value={item}>
+              {item}
+            </SelectItem>
+          ))}
+        </SelectField>
+
+        <div
+          className={`border-input p-3 rounded-lg border flex-wrap items-center flex-row gap-3 ${formData.assigned_classes.length > 0 ? "flex" : "hidden"}`}
+        >
+          {formData.assigned_classes.map((clx, index) => {
+            return (
+              <div
+                key={index}
+                className="py-1.5 px-3 bg-accent w-fit rounded-full text-black flex items-center justify-center text-sm border-input border"
+              >
+                <p>{clx}</p>
+                <button
+                  onClick={() => removeAssignedClass(clx)}
+                  className="p-1 text-destructive hover:cursor-pointer hover:scale-110"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
 
         <InputField
           id="annualLeaveEntitlement"

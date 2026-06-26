@@ -18,7 +18,6 @@ export function ContactInformationForm({
   onSave: (payload: StaffEditSavePayload) => void;
   isSaving?: boolean;
 }) {
-  console.log(initialData);
   const [formData, setFormData] = useState({
     primaryPhone: "",
     emergencyContact: "",

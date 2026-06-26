@@ -20,7 +20,10 @@ import {
 } from "@/components/dashboard-pages/admin/students/forms/student-edit-form-state";
 import { useGetStudentByIdQuery } from "@/services/stakeholders/stakeholders";
 import { useUpdateStakeholderMutation } from "@/services/stakeholders/stakeholders";
-import { useUpdateUserMutation } from "@/services/users/users";
+import {
+  useGetUserByIdQuery,
+  useUpdateUserMutation,
+} from "@/services/users/users";
 import { useCreateAttachmentMutation } from "@/services/attachment/attachment";
 
 const STEPS: EditStepId[] = ["details", "academic", "documents", "status"];
@@ -64,6 +67,7 @@ export default function EditStudentPage({
   } = useGetStudentByIdQuery(studentId ?? "", { skip: !studentId });
 
   const student = studentData?.data;
+  console.log(student);
 
   // Initialise form state once student data arrives
   useEffect(() => {
@@ -93,9 +97,13 @@ export default function EditStudentPage({
         student,
       );
       const newDocs = getNewDocuments(formState);
+      // console.log("User Payload", userPayload);
+      // console.log("Stakeholder Payload", userPayload);
+      // console.log("Student ID: ", student.id);
+      // console.log("Studer User ID", student.user.id);
 
       await Promise.all([
-        updateUser({ id: student.user_id, data: userPayload as any }).unwrap(),
+        updateUser({ id: student.user.id, data: userPayload as any }).unwrap(),
         updateStakeholder({
           id: student.id,
           data: stakeholderPayload,
@@ -121,7 +129,7 @@ export default function EditStudentPage({
       router.push(`/admin/students/${student.id}`);
     } catch (err: any) {
       const message =
-        err?.data?.message || err?.message || "Failed to update student";
+        err?.data?.message || err?.message || "Failed to update student oh";
       toast.error(message);
       console.error("Edit student failed:", err);
     } finally {

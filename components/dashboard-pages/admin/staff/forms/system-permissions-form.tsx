@@ -34,16 +34,7 @@ export function SystemPermissionsForm({
     }
   }, [initialData]);
 
-  const systemRoles = [
-    "Admin",
-    "Teacher",
-    "HOD",
-    "Bursar",
-    "HR Admin",
-    "Academic Admin",
-    "Security Guard",
-    "JS 2 Science Teacher",
-  ];
+  const systemRoles = ["Admin", "Teacher", "Staff", "Parent", "Student"];
 
   const handleSubmit = () => {
     const payload: StaffEditSavePayload = {

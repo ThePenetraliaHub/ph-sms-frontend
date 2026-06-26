@@ -134,7 +134,7 @@ export default function UploadNewResource({ onOpenChange, open }: Props) {
         </div>
         <div className="space-y-6 w-full">
           <SelectField
-            label="Assign to Course"
+            label="Assign to Subject"
             value={newResource.courseAssigned}
             // onValueChange={setCourseAssigned}
             onValueChange={(e) => {
@@ -145,7 +145,7 @@ export default function UploadNewResource({ onOpenChange, open }: Props) {
                 };
               });
             }}
-            placeholder="Select Course"
+            placeholder="Select Subject"
           >
             {courseOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>
@@ -155,7 +155,7 @@ export default function UploadNewResource({ onOpenChange, open }: Props) {
           </SelectField>
 
           <SelectField
-            label="Assign to Unit"
+            label="Assign to Unit/Outline"
             value={newResource.unitAssigned}
             // onValueChange={setUnitAssigned}
             onValueChange={(e) => {
@@ -166,7 +166,7 @@ export default function UploadNewResource({ onOpenChange, open }: Props) {
                 };
               });
             }}
-            placeholder="Select Unit"
+            placeholder="Select Subject Unit/Outline"
           >
             {unitOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>

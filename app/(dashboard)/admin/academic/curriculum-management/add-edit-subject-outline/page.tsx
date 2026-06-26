@@ -189,6 +189,7 @@ function AddEditSubjectOutlineContent() {
     const d = (subjectsResponse as { data?: Subject[] })?.data;
     return Array.isArray(d) ? d : [];
   }, [subjectsResponse]);
+  console.log("Subjects", subjectsList)
 
   const schoolsList: School[] = useMemo(() => {
     const d = (schoolsResponse as { data?: School[] })?.data;
@@ -206,6 +207,9 @@ function AddEditSubjectOutlineContent() {
       })),
     [subjectsList],
   );
+
+  console.log("School ID", schoolsList);
+  console.log("Subject ID", formData.subjectId);
 
   const hodOptions = useMemo(
     () =>

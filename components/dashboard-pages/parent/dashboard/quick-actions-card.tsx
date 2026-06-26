@@ -28,11 +28,6 @@ export function QuickActionsCard({ parent }: Props) {
     useState(false);
   const [leaveRequestModalOpen, setLeaveRequestModalOpen] = useState(false);
 
-  // const { data: parentData } = useGetParentByUserIdQuery(user?.id ?? "", {
-  //   skip: !user?.id || !topUpModalOpen,
-  // });
-  // const parent = parentData?.data ?? null;
-  // console.log(parentData);
   const wards =
     (
       parent as {
@@ -108,10 +103,11 @@ export function QuickActionsCard({ parent }: Props) {
       <OutstandingFeesModal
         open={outstandingFeesModalOpen}
         totalOutstanding={
-          parent?.school_fees.total
+          parent?.school_fees?.total
             ? parent.school_fees.total.toString()
             : "₦ 0.00"
         }
+        // totalOutstanding="₦0.00"
         onOpenChange={setOutstandingFeesModalOpen}
         parent={parent}
       />

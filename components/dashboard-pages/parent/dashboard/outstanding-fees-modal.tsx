@@ -82,7 +82,7 @@ export function OutstandingFeesModal({
       size="xl"
       footer={
         <div
-          className={`gap-2 w-full ${parent?.school_fees.total ? "grid grid-cols-2" : "hidden"}`}
+          className={`gap-2 w-full ${parent?.school_fees?.total ? "grid grid-cols-2" : "hidden"}`}
         >
           <Button
             variant="outline"
@@ -113,7 +113,7 @@ export function OutstandingFeesModal({
           <Label className="text-sm font-medium text-gray-700">
             List of all active invoices:
           </Label>
-          {parent?.school_fees.total ? (
+          {parent?.school_fees?.total ? (
             <div className="border rounded-lg overflow-hidden">
               <Table>
                 <TableHeader className="bg-main-blue/5">

@@ -18,6 +18,7 @@ import {
 } from "@/services/stakeholders/stakeholders";
 import { useAppSelector } from "@/store/hooks";
 import { selectUser } from "@/store/slices/authSlice";
+import { toast } from "sonner";
 
 interface SubjectPerformance {
   subject: string;
@@ -33,14 +34,19 @@ interface ReportCard {
   id?: string;
 }
 
+interface Attendance {
+  date: string;
+  teacher: string;
+  status: "present" | "absent";
+  notes?: string;
+}
+
 export default function GradesReportCardPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const user = useAppSelector(selectUser);
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const { data: currParent, isLoading: isFetchingCurrParent } =
     useGetStudentByQueryParamQuery(user?.id ?? "");
-
-  console.log(currParent);
 
   const { data: resultsData } = useGetAllExamResultsQuery({ _all: true });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -235,6 +241,58 @@ export default function GradesReportCardPage() {
     },
   ];
 
+  const attendanceColumns: TableColumn<Attendance>[] = [
+    {
+      key: "date",
+      title: "Date",
+      render: (value) => (
+        <span className="font-medium text-gray-800">{value as string}</span>
+      ),
+    },
+    {
+      key: "teacher",
+      title: "Marked By",
+      render: (value) => (
+        <span className="font-medium text-gray-800">{value as string}</span>
+      ),
+    },
+    {
+      key: "status",
+      title: "Status",
+      render: (value) => {
+        const status = value as string;
+        return (
+          <span className="text-sm font-medium text-green-600">{status}</span>
+        );
+      },
+    },
+    {
+      key: "notes",
+      title: "Notes",
+      render: (value) => {
+        const status = value as string;
+        return (
+          <span className="text-sm font-medium text-green-600">{status}</span>
+        );
+      },
+    },
+    {
+      key: "action",
+      title: "Action",
+      render: (value, row) => {
+        return (
+          <Button
+            variant="link"
+            className="h-auto p-0 text-main-blue"
+            onClick={() => toast.error("Btn clicked!")}
+          >
+            Download PDF
+          </Button>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="space-y-4">
       <div className="bg-background rounded-md p-6">
@@ -266,6 +324,7 @@ export default function GradesReportCardPage() {
         />
       </div>
 
+      {/* Subject specifics current averages */}
       <Card>
         <CardHeader>
           <div>
@@ -297,6 +356,7 @@ export default function GradesReportCardPage() {
         </CardContent>
       </Card>
 
+      {/* official report card access */}
       <Card>
         <CardHeader>
           <div>
@@ -315,6 +375,37 @@ export default function GradesReportCardPage() {
             <DataTable
               columns={reportCardColumns}
               data={reportCards}
+              showActionsColumn={false}
+            />
+          </div>
+          {hasMoreReportCards && (
+            <div className="flex justify-center mt-4">
+              <Button variant="outline" onClick={loadMoreReportCards}>
+                Load More
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* attendance reports */}
+      <Card>
+        <CardHeader>
+          <div>
+            <CardTitle className="text-lg font-semibold text-gray-800 mb-2">
+              Attendance Reports
+            </CardTitle>
+            <p className="text-sm text-gray-600">
+              This table serves as the archive for the attendance records for
+              your wards across terms and sessions.
+            </p>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="border rounded-lg overflow-hidden">
+            <DataTable
+              columns={attendanceColumns}
+              data={[]}
               showActionsColumn={false}
             />
           </div>
