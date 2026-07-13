@@ -26,6 +26,22 @@ export interface CbtExamsQueryParams {
   limit?: number;
 }
 
+export interface CbtQuestion {
+  question: string;
+  answer_options: string[];
+  explanation: string; //answer explanation
+  subject: string;
+  correct_answer: number;
+  topic_covered: number;
+  question_type_covered?: number;
+  type: "multiple_choice" | "true/false" | "fill_in_the_blank";
+  category?: string; //e.g general
+  status?: "active" | "inactive";
+  // tag: string // nigeria
+  instruction: string;
+  term?: string;
+}
+
 export interface CreateCBTExamsPayload {
   school_id: string;
   title: string;
@@ -33,16 +49,20 @@ export interface CreateCBTExamsPayload {
   subject: string;
   /** Optional fields supported by backend */
   duration?: number;
+  questions?: CbtQuestion[];
+  assessment_type?: string;
   total_questions?: number;
   total_marks_available?: number;
   applicable_grades?: string;
+  applicable_subjects_ids?: string[];
   applicable_subjects?: string;
-  type?: string;
+  type?: string; //test || exam
   schedule_date?: string;
   schedule_time?: string;
   max_attempt?: number;
   display_result?: string;
   question_shuffle?: boolean;
+  status?: "published" | "draft"; // or draft
   answer_shuffle?: boolean;
   partial_credit?: boolean;
   question_ids?: string[];

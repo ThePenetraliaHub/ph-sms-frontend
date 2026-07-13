@@ -10,7 +10,7 @@ export interface Subject {
   head_of_department_id: string | null;
   name: string;
   code: string | null;
-  applicable_grade: string | null;
+  applicable_grade: string[];
   credit_units: number | null;
   continuous_assessment: number | null;
   final_exam: number | null;
@@ -18,12 +18,32 @@ export interface Subject {
   content_outline_table: ContentOutlineItem[];
   status: string | null;
   is_deleted: boolean;
+  attachment_ids: string[];
+  creator: {
+    id: string | null;
+    username: string | null;
+    first_name: string | null;
+    last_name: string | null;
+    email: string;
+  } | null;
+  school: {
+    id: string;
+    name: string;
+  };
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
-  head_of_department?: {
-    user?: { first_name?: string; last_name?: string };
-  } | null;
+  head_of_department?: { id: string; full_name: string; type: string } | null;
+  resource:
+    | {
+        id: string;
+        name: string;
+        file_link: string;
+        format: string;
+        type: string;
+        created_at: string;
+      }[]
+    | null;
   updated_by?: { first_name?: string; last_name?: string } | null;
 }
 

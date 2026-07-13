@@ -32,10 +32,19 @@ import { selectUser } from "@/store/slices/authSlice";
 
 type StepId = "identity" | "grading" | "curriculum" | "finalization";
 
+export type ExtResourceFile = {
+  id: string;
+  name: string;
+  file_link: string;
+  format: string;
+  type: string;
+  created_at: string;
+};
+
 const steps: Step[] = [
   {
     id: "identity",
-    label: "Subject Identity & Scope",
+    label: "Subject Identity, Materials & Scope",
     icon: AssignmentsIcon,
   },
   {
@@ -76,9 +85,10 @@ const initialData = {
   modifier: "Admin",
   dateOfModification: new Date() as Date | undefined,
   requiresHODApproval: false,
+  resource: [],
 };
 
-interface SubjectOutlineForm {
+export interface SubjectOutlineForm {
   subjectId: string;
   mode: "create" | "edit";
   selectedSubject: string;
@@ -99,16 +109,18 @@ interface SubjectOutlineForm {
   modifier: string;
   dateOfModification: Date | undefined;
   requiresHODApproval: boolean;
+  resource: ExtResourceFile[];
 }
 
 function subjectToForm(subject: Subject): Partial<SubjectOutlineForm> {
   const outline = subject.content_outline_table ?? [];
+  const resource = subject.resource ?? [];
   return {
     subjectId: subject.id,
     selectedSubject: subject.id,
     subjectName: subject.name,
     subjectCode: subject.code ?? "",
-    applicableGrade: subject.applicable_grade ?? "",
+    // applicableGrade: subject.applicable_grade ?? "",
     headOfDepartment: subject.head_of_department_id ?? "",
     creditUnits:
       subject.credit_units != null ? String(subject.credit_units) : "",
@@ -127,6 +139,8 @@ function subjectToForm(subject: Subject): Partial<SubjectOutlineForm> {
           }))
         : [{ unit: "", topic: "", plannedPeriods: "" }],
     plannedPacing: outline[0]?.planned_pacing ?? "",
+    // resource: resource.map((r) => new File([], r.name)) ?? [],
+    resource: resource,
   };
 }
 
@@ -142,15 +156,6 @@ function formToContentOutline(
       planned_pacing: o.plannedPeriods || plannedPacing || "1-week",
     }));
 }
-
-const gradeOptions = [
-  { value: "jss-1", label: "JSS 1" },
-  { value: "jss-2", label: "JSS 2" },
-  { value: "jss-3", label: "JSS 3" },
-  { value: "ss-1", label: "SS 1" },
-  { value: "ss-2", label: "SS 2" },
-  { value: "ss-3", label: "SS 3" },
-];
 
 const curriculumStandardOptions = [
   { value: "nerdc", label: "National (NERDC)" },
@@ -170,9 +175,10 @@ function AddEditSubjectOutlineContent() {
   const searchParams = useSearchParams();
   const editId = searchParams.get("id") ?? "";
   const user = useSelector(selectUser);
-
   const [activeStep, setActiveStep] = useState<StepId>("identity");
   const [formData, setFormData] = useState<SubjectOutlineForm>(initialData);
+  //for new subjects
+  const [attachments, setAttachments] = useState<File[]>([]);
 
   const { data: subjectsResponse } = useGetSubjectsQuery({ _all: true });
   const { data: schoolsResponse } = useGetSchoolsQuery({ _all: true });
@@ -189,7 +195,6 @@ function AddEditSubjectOutlineContent() {
     const d = (subjectsResponse as { data?: Subject[] })?.data;
     return Array.isArray(d) ? d : [];
   }, [subjectsResponse]);
-  console.log("Subjects", subjectsList)
 
   const schoolsList: School[] = useMemo(() => {
     const d = (schoolsResponse as { data?: School[] })?.data;
@@ -208,9 +213,6 @@ function AddEditSubjectOutlineContent() {
     [subjectsList],
   );
 
-  console.log("School ID", schoolsList);
-  console.log("Subject ID", formData.subjectId);
-
   const hodOptions = useMemo(
     () =>
       staffList.map((s) => ({
@@ -223,50 +225,6 @@ function AddEditSubjectOutlineContent() {
       })),
     [staffList],
   );
-
-  useEffect(() => {
-    if (editId && subjectResponse?.data) {
-      setFormData((prev) => ({
-        ...prev,
-        mode: "edit",
-        ...subjectToForm(subjectResponse.data as Subject),
-      }));
-    }
-  }, [editId, subjectResponse?.data]);
-
-  useEffect(() => {
-    if (editId && !subjectResponse?.data && subjectsList.length > 0) {
-      const found = subjectsList.find((s) => s.id === editId);
-      if (found) {
-        setFormData((prev) => ({
-          ...prev,
-          mode: "edit",
-          ...subjectToForm(found),
-        }));
-      }
-    }
-  }, [editId, subjectResponse?.data, subjectsList]);
-
-  useEffect(() => {
-    if (
-      formData.mode === "edit" &&
-      formData.selectedSubject &&
-      formData.selectedSubject !== formData.subjectId
-    ) {
-      const found = subjectsList.find((s) => s.id === formData.selectedSubject);
-      if (found) {
-        setFormData((prev) => ({
-          ...prev,
-          ...subjectToForm(found),
-        }));
-      }
-    }
-  }, [
-    formData.mode,
-    formData.selectedSubject,
-    formData.subjectId,
-    subjectsList,
-  ]);
 
   const handleStepChange = (stepId: string) => {
     setActiveStep(stepId as StepId);
@@ -286,20 +244,35 @@ function AddEditSubjectOutlineContent() {
       formData.contentOutline,
       formData.plannedPacing,
     );
-    return {
-      school_id: formData.subjectId ? undefined : schoolId,
-      name: formData.subjectName.trim(),
-      code: formData.subjectCode.trim() || undefined,
-      applicable_grade: formData.applicableGrade || undefined,
-      head_of_department_id: formData.headOfDepartment || null,
-      credit_units: isNaN(creditUnits) ? undefined : creditUnits,
-      continuous_assessment: isNaN(ca) ? undefined : ca,
-      final_exam: isNaN(fe) ? undefined : fe,
-      curriculum_standard: formData.curriculumStandard || undefined,
-      content_outline_table:
-        contentOutline.length > 0 ? contentOutline : undefined,
-      status,
-    };
+    const subject = new FormData();
+    // subject.append("school_id", formData.subjectId || schoolId);
+    subject.append("school_id", "01kbgdhe1q6m1n5pj0x8webhe5");
+    subject.append("name", formData.subjectName.trim());
+    subject.append("code", formData.subjectCode.trim());
+    // subject.append("applicable_grade", formData.applicableGrade);
+    subject.append(
+      "applicable_grade",
+      JSON.stringify(["JSS 1", "JSS 2", "JSS 3"]),
+    );
+    subject.append("head_of_department_id", formData.headOfDepartment ?? "");
+    subject.append("credit_units", JSON.stringify(creditUnits));
+    subject.append("continuous_assessment", JSON.stringify(ca));
+    subject.append("final_exam", JSON.stringify(fe));
+    subject.append("curriculum_standard", formData.curriculumStandard);
+    if (contentOutline.length > 0) {
+      subject.append("content_outline_table", JSON.stringify(contentOutline));
+    }
+    subject.append("status", status);
+    if (attachments.length > 0) {
+      attachments.forEach((file) => {
+        subject.append("files", file);
+      });
+    }
+    for (const [key, value] of subject.entries()) {
+      console.log("Listing formdata props");
+      console.log(`"${key}:"`, value);
+    }
+    return subject;
   };
 
   const handleSaveContinue = () => {
@@ -321,18 +294,19 @@ function AddEditSubjectOutlineContent() {
       if (formData.subjectId) {
         await updateSubject({
           id: formData.subjectId,
-          data: { ...buildPayload("approved") },
+          // data: { ...buildPayload("approved") },
+          data: buildPayload("approved"),
         }).unwrap();
       } else {
-        await createSubject({
-          ...buildPayload("approved"),
-          school_id: schoolId,
-        } as Parameters<typeof createSubject>[0]).unwrap();
+        //create a subject
+        const res = await createSubject(buildPayload("approved")).unwrap();
+        console.log("Response: ", res);
       }
       toast.success("Subject outline activated.");
-      router.push("/admin/academic/curriculum-management");
+      return;
+      // router.push("/admin/academic/curriculum-management");
     } catch {
-      toast.error("Failed to activate.");
+      console.error("Failed to activate.");
     }
   };
 
@@ -346,6 +320,7 @@ function AddEditSubjectOutlineContent() {
 
   const isSaving = isCreating || isUpdating;
 
+  //all pages
   const renderStepContent = () => {
     switch (activeStep) {
       case "identity":
@@ -358,12 +333,16 @@ function AddEditSubjectOutlineContent() {
               subjectCode: formData.subjectCode,
               applicableGrade: formData.applicableGrade,
               headOfDepartment: formData.headOfDepartment,
+              resource: formData.resource,
             }}
-            onFormDataChange={(data) =>
-              setFormData((prev) => ({ ...prev, ...data }))
-            }
+            // onFormDataChange={(data) =>
+            //   setFormData((prev) => ({ ...prev, ...data }))
+            // }
+            attachments={attachments}
+            setAttachments={setAttachments}
+            setFormData={setFormData}
             onSaveContinue={handleSaveContinue}
-            gradeOptions={gradeOptions}
+            gradeOptions={user?.school?.classes ?? []}
             hodOptions={hodOptions}
             subjectOptions={subjectOptions}
           />
@@ -417,6 +396,7 @@ function AddEditSubjectOutlineContent() {
             }
             onBack={handleBack}
             onActivate={handleActivate}
+            isLoading={isSaving}
           />
         );
 
@@ -424,6 +404,53 @@ function AddEditSubjectOutlineContent() {
         return null;
     }
   };
+
+  //check params, find subject and update the form field
+  useEffect(() => {
+    if (editId && subjectResponse?.data) {
+      setFormData((prev) => ({
+        ...prev,
+        mode: "edit",
+        ...subjectToForm(subjectResponse.data as Subject),
+      }));
+    }
+  }, [editId, subjectResponse?.data]);
+
+  //another effect to find subject from prev list of subject responses through params
+  useEffect(() => {
+    if (editId && !subjectResponse?.data && subjectsList.length > 0) {
+      const found = subjectsList.find((s) => s.id === editId);
+      if (found) {
+        setFormData((prev) => ({
+          ...prev,
+          mode: "edit",
+          ...subjectToForm(found),
+        }));
+      }
+    }
+  }, [editId, subjectResponse?.data, subjectsList]);
+
+  //call this when in edit mode and a subject has been selected from the dropdown. This will update the form with the selected subject's data.
+  useEffect(() => {
+    if (
+      formData.mode === "edit" &&
+      formData.selectedSubject &&
+      formData.selectedSubject !== formData.subjectId
+    ) {
+      const found = subjectsList.find((s) => s.id === formData.selectedSubject);
+      if (found) {
+        setFormData((prev) => ({
+          ...prev,
+          ...subjectToForm(found),
+        }));
+      }
+    }
+  }, [
+    formData.mode,
+    formData.selectedSubject,
+    formData.subjectId,
+    subjectsList,
+  ]);
 
   return (
     <div className="space-y-4">

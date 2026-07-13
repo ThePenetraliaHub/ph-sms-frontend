@@ -181,7 +181,7 @@ export function LogPaymentModal({ open, onOpenChange }: LogPaymentModalProps) {
       title="Log Payment (Manual Entry)"
       size="2xl"
     >
-      <div className="space-y-6 py-4">
+      <div className="space-y-6 py-4 lg:max-h-[500px]">
         <div className="space-y-2">
           <Label htmlFor="search-account" className="text-sm font-medium">
             Search Student Account

@@ -4,65 +4,61 @@ import { SelectField } from "@/components/ui/input-field";
 import { Label } from "@/components/ui/label";
 import { ModalContainer } from "@/components/ui/modal-container";
 import { SelectItem } from "@/components/ui/select";
-import React, { useState } from "react";
+import { useGetClassQuery } from "@/services/schools/schools";
+import { useUpdateSubjectMutation } from "@/services/subjects/subjects";
+import React, { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  assigned_classes: string[];
+  schoolId: string;
 }
 
 type ResourceForm = {
   document: File | undefined;
   courseAssigned: string;
-  unitAssigned: string;
+  // unitAssigned: string;
+  classAssigned: string;
 };
 
-export default function UploadNewResource({ onOpenChange, open }: Props) {
-  //dummy ops
-  const courseOptions = [
-    {
-      value: "Unit 3: Algebra",
-      label: "Unit 3: Algebra",
-    },
-    {
-      value: "Unit 3: Economics",
-      label: "Unit 3: Economics",
-    },
-    {
-      value: "Unit 3: English",
-      label: "Unit 3: English",
-    },
-  ];
-  const unitOptions = [
-    {
-      value: "JSS 1 Mathematics",
-      label: "JSS 1 Mathematics",
-    },
-    {
-      value: "JSS 2 Mathematics",
-      label: "JSS 2 Mathematics",
-    },
-    {
-      value: "JSS 3 Mathematics",
-      label: "JSS 3 Mathematics",
-    },
-  ];
-
-  //state handler
+export default function UploadNewResource({
+  onOpenChange,
+  open,
+  assigned_classes,
+  schoolId,
+}: Props) {
   const [newResource, setNewResource] = useState<ResourceForm>({
     document: undefined,
     courseAssigned: "",
-    unitAssigned: "",
+    classAssigned: assigned_classes[0] ?? "",
   });
+
+  //fetch class to get access to the subjects offered by that class
+  const { data: class_data, isLoading: isFetchingClass } = useGetClassQuery(
+    { id: schoolId ?? "", class_name: newResource.classAssigned },
+    { skip: !schoolId || !newResource.classAssigned },
+  );
+
+  //update subject endpoint
+  const [updateSubject, { isLoading: isUpdatingSubject }] =
+    useUpdateSubjectMutation();
+
+  const curr_class = useMemo(() => {
+    if (!class_data) return;
+    return class_data.data;
+  }, [class_data]);
 
   //handle mocal close
   const handleCancel = () => {
-    onOpenChange(false);
     setNewResource({
       document: undefined,
       courseAssigned: "",
-      unitAssigned: "",
+      // unitAssigned: "",
+      classAssigned: "",
     });
+    onOpenChange(false);
   };
 
   //handle file uploads
@@ -78,11 +74,25 @@ export default function UploadNewResource({ onOpenChange, open }: Props) {
   };
 
   //handle submission
-  const handleSubmit = () => {
-    console.log(newResource);
-    //validate
-    //call endpoint & effect change
+  const handleSubmit = async () => {
+    if (!newResource.document) return toast.error("Resource cannot be null");
+    const subject = new FormData();
+    if (!newResource.courseAssigned)
+      return toast.error("Please select a subject");
+    subject.append("files", newResource.document);
+
+    try {
+      const res = await updateSubject({
+        id: newResource.courseAssigned,
+        data: subject,
+      }).unwrap();
+      toast.success("Resource uploaded successfully");
+      handleCancel();
+    } catch (err) {
+      console.error(err);
+    }
   };
+
   return (
     <ModalContainer
       open={open}
@@ -95,9 +105,9 @@ export default function UploadNewResource({ onOpenChange, open }: Props) {
             Cancel
           </Button>
           <Button
-            className="bg-main-blue h-12 text-white hover:bg-main-blue/90"
+            className="bg-main-blue h-12 text-white hover:bg-main-blue/90 transition ease-in-out delay-100 opacity-100 disabled:opacity-50"
             onClick={handleSubmit}
-            // disabled={!isFormValid}
+            disabled={isUpdatingSubject || !newResource.document}
           >
             Upload & Submit
           </Button>
@@ -110,14 +120,6 @@ export default function UploadNewResource({ onOpenChange, open }: Props) {
       >
         <div className="flex flex-col gap-y-3 w-full">
           <Label htmlFor="password">Browse File</Label>
-          {/* <Input
-            type="file"
-            placeholder="Enter password"
-            className="lg:h-12 lg:px-5"
-            onChange={handleChange}
-            // value={passwordHandler.newPass}
-            name="newPass"
-          /> */}
           <div className="w-full h-10 border border-gray-200 rounded-lg flex items-center justify-center text-sm relative">
             <p>
               {newResource.document
@@ -134,9 +136,30 @@ export default function UploadNewResource({ onOpenChange, open }: Props) {
         </div>
         <div className="space-y-6 w-full">
           <SelectField
+            label="Assign to Class"
+            disabled={isFetchingClass}
+            value={newResource.classAssigned}
+            onValueChange={(e) => {
+              setNewResource((prevState) => {
+                return {
+                  ...prevState,
+                  classAssigned: e,
+                };
+              });
+            }}
+            placeholder="Select Class"
+          >
+            {assigned_classes.map((option, index) => (
+              <SelectItem key={index} value={option}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectField>
+
+          <SelectField
             label="Assign to Subject"
+            disabled={isFetchingClass}
             value={newResource.courseAssigned}
-            // onValueChange={setCourseAssigned}
             onValueChange={(e) => {
               setNewResource((prevState) => {
                 return {
@@ -147,14 +170,14 @@ export default function UploadNewResource({ onOpenChange, open }: Props) {
             }}
             placeholder="Select Subject"
           >
-            {courseOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
+            {curr_class?.subjects.map((subject, index) => (
+              <SelectItem key={index} value={subject.id}>
+                {subject.name}
               </SelectItem>
             ))}
           </SelectField>
 
-          <SelectField
+          {/* <SelectField
             label="Assign to Unit/Outline"
             value={newResource.unitAssigned}
             // onValueChange={setUnitAssigned}
@@ -173,7 +196,7 @@ export default function UploadNewResource({ onOpenChange, open }: Props) {
                 {option.label}
               </SelectItem>
             ))}
-          </SelectField>
+          </SelectField> */}
         </div>
       </div>
     </ModalContainer>

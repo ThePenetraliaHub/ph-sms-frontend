@@ -81,7 +81,9 @@ const rawBaseQuery = fetchBaseQuery({
     }
 
     const isMultipart =
-      endpoint === "admissionRegister" || endpoint === "createStakeholder";
+      endpoint === "admissionRegister" ||
+      endpoint === "createStakeholder" ||
+      endpoint === "createSubject";
     if (!isMultipart) {
       headers.set("Content-Type", "application/json");
       headers.set("Accept", "application/json");

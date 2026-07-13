@@ -272,7 +272,7 @@ export default function BulkInvoicesPage() {
         note: "",
       });
       setActiveStep("scope");
-      router.push("..");
+      router.push("/admin/finance/fee-revenue-management");
     } catch (e) {
       toast.error(
         getApiErrorMessage(e, "Could not generate invoices. Try again."),

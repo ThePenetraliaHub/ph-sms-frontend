@@ -29,14 +29,15 @@ export const subjectsApi = baseApi.injectEndpoints({
       providesTags: (_, __, id) => [{ type: "Subject", id }],
     }),
 
-    createSubject: build.mutation<ApiResponse<Subject>, CreateSubjectsRequest>({
-      query: (body) => ({ url: BASE, method: "POST", body }),
+    createSubject: build.mutation<ApiResponse<Subject>, FormData>({
+      query: (formData) => ({ url: BASE, method: "POST", body: formData, formData: true }),
       invalidatesTags: ["Subject"],
     }),
 
     updateSubject: build.mutation<
       ApiResponse<Subject>,
-      { id: string; data: UpdateSubjectPayload }
+      // { id: string; data: UpdateSubjectPayload }
+      { id: string; data: FormData }
     >({
       query: ({ id, data }) => ({
         url: `${BASE}/${id}`,

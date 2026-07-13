@@ -58,13 +58,13 @@ const SECTION_COLORS: Record<string, string> = {
   jss: "bg-green-500",
 };
 
-function classifySection(grade: string): (typeof SECTION_KEYS)[number] | null {
-  const g = grade.toLowerCase();
-  if (g.startsWith("ss") || g.includes("ss-")) return "ss";
-  if (g.startsWith("js") || g.includes("jss") || g.includes("js-"))
-    return "jss";
-  return null;
-}
+// function classifySection(grade: string): (typeof SECTION_KEYS)[number] | null {
+//   const g = grade.toLowerCase();
+//   if (g.startsWith("ss") || g.includes("ss-")) return "ss";
+//   if (g.startsWith("js") || g.includes("jss") || g.includes("js-"))
+//     return "jss";
+//   return null;
+// }
 
 function deriveCoverage(subjects: Subject[]): CoverageStatus[] {
   const bySection: Record<string, { total: number; withOutline: number }> = {
@@ -72,14 +72,14 @@ function deriveCoverage(subjects: Subject[]): CoverageStatus[] {
     jss: { total: 0, withOutline: 0 },
   };
   for (const s of subjects) {
-    const section = classifySection(s.applicable_grade ?? "");
+    const section = s.applicable_grade;
     if (!section) continue;
     const outline = s.content_outline_table ?? [];
     const hasOutline =
       outline.length > 0 &&
       outline.some((o) => o.unit_definition || o.topic_definition);
-    bySection[section].total++;
-    if (hasOutline) bySection[section].withOutline++;
+    bySection[section[0]].total++;
+    if (hasOutline) bySection[section[0]].withOutline++;
   }
   const pct = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 100) : 0);
   return SECTION_KEYS.filter((key) => bySection[key].total > 0).map((key) => ({

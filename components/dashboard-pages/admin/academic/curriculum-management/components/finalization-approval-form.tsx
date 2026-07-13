@@ -18,6 +18,7 @@ interface FinalizationApprovalFormProps {
   ) => void;
   onBack: () => void;
   onActivate: () => void;
+  isLoading: boolean;
 }
 
 export function FinalizationApprovalForm({
@@ -25,6 +26,7 @@ export function FinalizationApprovalForm({
   onFormDataChange,
   onBack,
   onActivate,
+  isLoading
 }: FinalizationApprovalFormProps) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
 
@@ -90,7 +92,7 @@ export function FinalizationApprovalForm({
         <Button variant="outline" onClick={onBack}>
           Back
         </Button>
-        <Button className="w-60" onClick={onActivate}>
+        <Button disabled={isLoading} className="w-60 transition ease-in-out delay-100 disabled:opacity-50" onClick={onActivate}>
           Activate Subject
         </Button>
       </div>

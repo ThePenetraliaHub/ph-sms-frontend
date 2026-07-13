@@ -20,6 +20,11 @@ import UploadNewResource from "@/components/dashboard-pages/teacher/my-courses/m
 import { useRouter } from "next/navigation";
 import ViewAssignmentSubmissions from "@/components/dashboard-pages/teacher/my-courses/modals/view-assignment-submissions";
 import ScoreInputGrid from "@/components/dashboard-pages/teacher/my-courses/modals/score-input-grid";
+import { selectUser } from "@/store/slices/authSlice";
+import {
+  useGetStakeholderByIdQuery,
+  useGetStudentByQueryParamQuery,
+} from "@/services/stakeholders/stakeholders";
 
 export type AssignmentSubmission = {
   id: string;
@@ -76,6 +81,7 @@ export default function MyCoursesPage() {
 
   // const tableData = (data ?? mockCourses) || [];
   const tableData = mockCourses;
+  const user = useAppSelector(selectUser);
 
   const columns: TableColumn<TeacherCourse>[] = [
     {
@@ -129,6 +135,18 @@ export default function MyCoursesPage() {
       },
     },
   ];
+
+  //get stakeholder
+  const { data: staffDataResponse } = useGetStudentByQueryParamQuery(
+    user?.id ?? "",
+    {
+      skip: !user?.id,
+    },
+  );
+
+  const stakeholder = staffDataResponse?.data[0];
+
+  //get class
 
   useEffect(() => {
     if (!selectedAssignment) return;
@@ -243,6 +261,8 @@ export default function MyCoursesPage() {
 
       {/* upload new resource modal */}
       <UploadNewResource
+        schoolId={user?.school.id ?? ""}
+        assigned_classes={stakeholder?.assigned_classes ?? []}
         open={openNewResourceModal}
         onOpenChange={setOpenNewResourceModal}
       />

@@ -463,4 +463,21 @@ export interface Class {
     user_id: string;
   }[];
   timetable: TimeTableFormat[];
+  // subjects: Partial<Subject>
+  subjects: {
+    id: string;
+    name: string;
+    code: string;
+    credit_units: string;
+    continuous_assessment: string;
+    final_exam: number;
+    curriculum_standard: string;
+    status: string;
+    head_of_department_id: string;
+    content_outline_table?: {
+      planned_pacing: string;
+      unit_definition: string;
+      topic_definition: string;
+    }[];
+  }[];
 }

@@ -115,7 +115,7 @@ export function SetFeeStructureModal({
       title="Set Fee Structures"
       size="2xl"
     >
-      <div className="space-y-6 py-4">
+      <div className="space-y-6 py-4 lg:max-h-[500px]">
         <InputField
           label="Fee Name"
           placeholder="E.g 'Full SS1 Fee Structure (2025/2026)"

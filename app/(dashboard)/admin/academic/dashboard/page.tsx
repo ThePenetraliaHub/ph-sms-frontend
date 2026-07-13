@@ -222,7 +222,7 @@ export default function AcademicManagementPage() {
                   <div className="w-full flex flex-col items-center justify-end h-full">
                     <div
                       className={cn(
-                        "w-full rounded-t transition-all min-h-[4px]",
+                        "w-full rounded-t transition-all min-h-1",
                         grade.color,
                       )}
                       style={{ height: `${grade.barHeight}%` }}
