@@ -8,7 +8,8 @@ import { InputField, SelectField } from "@/components/ui/input-field";
 import { Label } from "@/components/ui/label";
 import { SelectItem } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { useEffect, useState } from "react";
+import { Subject } from "@/services/subjects/subject-types";
+import { useState } from "react";
 import { toast } from "sonner";
 
 export interface Question {
@@ -22,29 +23,37 @@ export interface Question {
   instruction: string;
 }
 
-const initialData: Question = {
-  type: "multiple_choice",
-  explanation: "",
-  question: "",
-  answer_options: [""] as string[],
-  correct_answer: "", //NUMBER
-  subject: "",
-  topic_covered: "", //NUMBER
-  instruction: "",
-};
-
 export interface Props {
   updateQuestion: React.Dispatch<React.SetStateAction<QuestionBuilder>>;
   isLoading: boolean;
-  submit: (questionStatus: "published" | "draft") => Promise<string | number | undefined>
+  submit: (
+    questionStatus: "approved" | "draft",
+  ) => Promise<string | number | undefined>;
+  setShowAllQuestions: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowImpQuestions: React.Dispatch<React.SetStateAction<boolean>>;
+  selectedSubject: Subject | undefined;
 }
 
 export default function ContentBuilder({
   updateQuestion,
   isLoading,
   submit,
+  setShowAllQuestions,
+  selectedSubject,
+  setShowImpQuestions,
 }: Props) {
-  const [questions, setQuestions] = useState<Question[]>([]);
+  //initial data
+  const initialData: Question = {
+    type: "multiple_choice",
+    explanation: "",
+    question: "",
+    answer_options: [""] as string[],
+    correct_answer: "", //NUMBER
+    subject: selectedSubject?.name ?? "",
+    topic_covered: "", //NUMBER
+    instruction: "Choose the right answer carefully",
+  };
+
   const [question, setQuestion] = useState<Question>(initialData);
 
   const handleOptionsChange = (index: number, value: string) => {
@@ -78,28 +87,33 @@ export default function ContentBuilder({
       return toast.error(
         "'Correct Answer', 'Topics Covered' can only be numbers",
       );
-    setQuestions((prev) => [
-      ...prev,
-      {
-        ...question,
-        correct_answer: Number(question.correct_answer),
-        topic_covered: Number(question.topic_covered),
-      },
-    ]);
+    updateQuestion((prev) => {
+      return {
+        ...prev,
+        all_questions: [
+          ...prev.all_questions,
+          {
+            ...question,
+            correct_answer: Number(question.correct_answer),
+            topic_covered: Number(question.topic_covered),
+          },
+        ],
+      };
+    });
     setQuestion(initialData);
     toast.success("Question added to list");
   };
-
-  useEffect(() => {
-    updateQuestion((prev) => ({ ...prev, all_questions: questions }));
-  }, [questions]);
 
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold text-gray-800">Content Builder</h2>
       <div className="flex flex-col gap-y-4">
         <Label>Add questions from Question Bank</Label>
-        <Button className="h-11" variant={"outline"}>
+        <Button
+          onClick={() => setShowImpQuestions(true)}
+          className="h-11"
+          variant={"outline"}
+        >
           + Add Questions
         </Button>
       </div>
@@ -228,7 +242,11 @@ export default function ContentBuilder({
       />
       {/* view question listings & add another questions btn */}
       <div className="flex items-center gap-x-3 w-full mt-3">
-        <Button className="w-1/2 h-12" variant="outline">
+        <Button
+          onClick={() => setShowAllQuestions(true)}
+          className="w-1/2 h-12"
+          variant="outline"
+        >
           View Question Listings
         </Button>
         <Button
@@ -250,7 +268,7 @@ export default function ContentBuilder({
         </Button>
         <Button
           disabled={isLoading}
-          onClick={() => submit("published")}
+          onClick={() => submit("approved")}
           className="w-60 disabled:opacity-50 transition ease-in-out delay-100 opacity-100"
         >
           {isLoading ? "Saving..." : "Save & Publish to Students"}

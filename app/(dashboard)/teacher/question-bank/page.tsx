@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { MetricCard } from "@/components/dashboard-pages/admin/admissions/components/metric-card";
 import { usePagination } from "@/hooks/use-pagination";
 import {
@@ -22,103 +22,74 @@ import { AddSquareIcon } from "@hugeicons/core-free-icons";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CreateQuestionModal } from "@/components/dashboard-pages/teacher/question-bank/create-question-modal";
+import {
+  useDeleteCbtQuestionMutation,
+  useGetCbtQuestionsQuery,
+} from "@/services/cbt-questions/cbt-questions";
+import { CbtQuestion } from "@/services/cbt-questions/cbt-question-types";
+import { useAppSelector } from "@/store/hooks";
+import { selectUser } from "@/store/slices/authSlice";
+import { Pagination } from "@/common/types";
+import { getStatusColor } from "@/utils/helpers";
+import { toast } from "sonner";
 
 interface Question {
   id: string;
   questionSnippet: string;
   subjectTopic: string;
   class: string;
-  status: "Approved" | "Pending" | "Draft" | "Rejected";
+  status: "appproved" | "pending" | "draft" | "rejected";
 }
 
-const allQuestions: Question[] = [
-  {
-    id: "Q152",
-    questionSnippet: "Which color of light is least effective in...",
-    subjectTopic: "Biology / Photosynthesis",
-    class: "SS2",
-    status: "Approved",
-  },
-  {
-    id: "Q153",
-    questionSnippet: "Define the concept of cultural hybridization.",
-    subjectTopic: "Arts & Crafts / Culture",
-    class: "JSS3",
-    status: "Pending",
-  },
-  {
-    id: "Q154",
-    questionSnippet: "Calculate the velocity of the moving object...",
-    subjectTopic: "Physics / Motion",
-    class: "SS2",
-    status: "Draft",
-  },
-  {
-    id: "Q155",
-    questionSnippet: "What is the formula for calculating work done?",
-    subjectTopic: "Physics / Work",
-    class: "SS2",
-    status: "Rejected",
-  },
-  {
-    id: "Q156",
-    questionSnippet: "Explain the process of photosynthesis in plants.",
-    subjectTopic: "Biology / Photosynthesis",
-    class: "SS2",
-    status: "Approved",
-  },
-  {
-    id: "Q157",
-    questionSnippet: "What are the main components of the cell?",
-    subjectTopic: "Biology / Cell Biology",
-    class: "SS1",
-    status: "Pending",
-  },
-  {
-    id: "Q158",
-    questionSnippet: "Calculate the force required to move an object.",
-    subjectTopic: "Physics / Mechanics",
-    class: "SS2",
-    status: "Draft",
-  },
-  {
-    id: "Q159",
-    questionSnippet: "Describe the water cycle process.",
-    subjectTopic: "Geography / Climate",
-    class: "JSS2",
-    status: "Approved",
-  },
-];
-
-const getStatusColor = (status: Question["status"]) => {
-  switch (status) {
-    case "Approved":
-      return "text-green-600";
-    case "Pending":
-      return "text-orange-600";
-    case "Draft":
-      return "text-gray-600";
-    case "Rejected":
-      return "text-red-600";
-    default:
-      return "text-gray-600";
-  }
-};
-
 export default function QuestionBankPage() {
+  const user = useAppSelector(selectUser);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [pagination, setPagination] = useState<Pagination>();
 
-  const filteredQuestions = allQuestions.filter((question) => {
+  //get all questions
+  const {
+    data: all_questions,
+    isLoading: isFetchingQuestions,
+    isError: isFetchingQuestionsErr,
+  } = useGetCbtQuestionsQuery();
+
+  const [deleteCbtQuestion, { isLoading: isDeletingCbtQuestion }] =
+    useDeleteCbtQuestionMutation();
+
+  //delete question
+  const eliminateQuestion = async (id: string) => {
+    try {
+      //RETURNS PERMISSION ERR
+      // const res = await deleteCbtQuestion(id);
+      // toast.success("Question successfully deleted!")
+      await deleteCbtQuestion(id);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  //save to state
+  const myQuestions: CbtQuestion[] = useMemo(() => {
+    if (!all_questions) return [];
+    //filter by ID
+    const my_questions = all_questions.data.filter(
+      (quest) => quest.creator?.id === user?.id,
+    );
+    //set pagination
+    setPagination(all_questions.pagination);
+    return my_questions;
+  }, [all_questions]);
+
+  const filteredQuestions = myQuestions.filter((question) => {
     const matchesSearch =
       !searchQuery ||
-      question.questionSnippet
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      question.subjectTopic.toLowerCase().includes(searchQuery.toLowerCase());
+      question.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      question.subject.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus =
-      statusFilter === "all" || question.status.toLowerCase() === statusFilter;
+      statusFilter === "all" ||
+      question?.status?.toLowerCase() === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -132,31 +103,31 @@ export default function QuestionBankPage() {
     itemsPerPage: 4,
   });
 
-  const columns: TableColumn<Question>[] = [
+  const columns: TableColumn<CbtQuestion>[] = [
     {
-      key: "id",
-      title: "Question ID",
+      key: "question",
+      title: "Question",
       render: (value) => (
         <span className="font-medium text-gray-800">{value as string}</span>
       ),
     },
     {
-      key: "questionSnippet",
-      title: "Question Snippet",
+      key: "category",
+      title: "Category",
+      render: (value) => (
+        <span className="text-gray-700 capitalize">{value as string}</span>
+      ),
+    },
+    {
+      key: "correct_answer",
+      title: "Correct Answer",
       render: (value) => (
         <span className="text-gray-700">{value as string}</span>
       ),
     },
     {
-      key: "subjectTopic",
-      title: "Subject/Topic",
-      render: (value) => (
-        <span className="text-gray-700">{value as string}</span>
-      ),
-    },
-    {
-      key: "class",
-      title: "Class",
+      key: "type",
+      title: "Type",
       render: (value) => (
         <span className="text-gray-700">{value as string}</span>
       ),
@@ -165,9 +136,14 @@ export default function QuestionBankPage() {
       key: "status",
       title: "Status",
       render: (value) => {
-        const status = value as Question["status"];
+        const status = value as "approved" | "pending" | "draft" | "rejected";
         return (
-          <span className={cn("text-sm font-medium", getStatusColor(status))}>
+          <span
+            className={cn(
+              "text-sm font-medium capitalize",
+              getStatusColor(status),
+            )}
+          >
             {status}
           </span>
         );
@@ -175,7 +151,7 @@ export default function QuestionBankPage() {
     },
   ];
 
-  const actions: TableAction<Question>[] = [
+  const actions: TableAction<CbtQuestion>[] = [
     {
       type: "dropdown",
       config: {
@@ -196,7 +172,7 @@ export default function QuestionBankPage() {
           {
             label: "Delete Question",
             onClick: (row) => {
-              console.log("Delete question:", row.id);
+              eliminateQuestion(row.id);
             },
             variant: "destructive",
           },
@@ -221,13 +197,13 @@ export default function QuestionBankPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <MetricCard
           title="Total Questions Created"
-          value="150 Questions"
+          value={`${myQuestions.length} Questions`}
           trend="up"
           trendColor="text-main-blue"
         />
         <MetricCard
           title="Pending Approval"
-          value="15 Questions"
+          value={`${myQuestions.filter((question) => question.status === "pending").length} Questions`}
           trend="up"
           trendColor="text-main-blue"
         />
@@ -277,6 +253,12 @@ export default function QuestionBankPage() {
           <DataTable
             columns={columns}
             data={questions}
+            isLoading={isFetchingQuestions || isDeletingCbtQuestion}
+            emptyMessage={
+              isFetchingQuestionsErr
+                ? "Failed to fetch questions"
+                : "No data available"
+            }
             actions={actions}
             showActionsColumn={true}
             actionsColumnTitle="Action"

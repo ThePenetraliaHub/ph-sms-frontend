@@ -19,6 +19,7 @@ interface Props {
   question: QuestionBuilder;
   setQuestion: React.Dispatch<React.SetStateAction<QuestionBuilder>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<StepId>>;
+  setSelectedSubject: React.Dispatch<React.SetStateAction<Subject | undefined>>;
 }
 
 const typeOps: string[] = ["test", "quiz", "practice", "homework"]; //HOW
@@ -29,6 +30,7 @@ export default function AssignmentConfiguration({
   question,
   setQuestion,
   setCurrentStep,
+  setSelectedSubject,
 }: Props) {
   const { data: subjectsResponse, isLoading } = useGetSubjectsQuery({
     _all: true,
@@ -60,6 +62,8 @@ export default function AssignmentConfiguration({
     const selSubjectId = question.subjectId;
     //fetch the subject
     const subject = subjectsList.filter((item) => item.id === selSubjectId)[0];
+    //update subject from parent
+    setSelectedSubject(subject);
     //set target grade
     const targetGrade = subject.applicable_grade?.join(", ") ?? "";
     setQuestion((prev) => ({ ...prev, targetStudents: targetGrade }));
@@ -88,7 +92,7 @@ export default function AssignmentConfiguration({
         />
         {/* assign to course */}
         <SelectField
-          label="Assign to Subject"
+          label={`Assign to Subject ${isLoading ? "(Loading...)" : ""}`}
           value={question.subjectId}
           onValueChange={(value) =>
             setQuestion((prev) => ({ ...prev, subjectId: value }))

@@ -31,7 +31,7 @@ export function DatePickerDropDown({ date, setDate, placeholder }: DatePicker) {
         <Button
           variant="outline"
           data-empty={!date}
-          className="data-[empty=true]:text-muted-foreground w-[280px] justify-start text-left font-normal w-full"
+          className="data-[empty=true]:text-muted-foreground justify-start text-left font-normal w-full"
         >
           <CalendarIcon />
           {date ? format(date, "PPP") : <span>Pick a date</span>}

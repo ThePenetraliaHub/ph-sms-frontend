@@ -117,7 +117,7 @@ export default function ViewAssignmentSubmissions({
       onOpenChange={handleCancel}
       size="3xl"
       footer={
-        <div className="grid grid-cols-2 gap-3 w-full hidden">
+        <div className="grid-cols-2 gap-3 w-full hidden">
           <Button className="h-12" variant="outline" onClick={handleCancel}>
             Cancel
           </Button>

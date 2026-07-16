@@ -76,3 +76,18 @@ export const decryptToken = (token: string): DecryptTokenResult => {
 
   return tokenData;
 };
+
+export const getStatusColor = (status: "approved" | "pending" | "draft" | "rejected") => {
+  switch (status) {
+    case "approved":
+      return "text-green-600";
+    case "pending":
+      return "text-orange-600";
+    case "draft":
+      return "text-gray-600";
+    case "rejected":
+      return "text-red-600";
+    default:
+      return "text-gray-600";
+  }
+};

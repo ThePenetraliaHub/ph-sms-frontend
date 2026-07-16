@@ -15,6 +15,9 @@ import { selectUser } from "@/store/slices/authSlice";
 import { CbtQuestion } from "@/services/cbt-exams/cbt-exam-types";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import ViewQuestionListings from "@/components/dashboard-pages/teacher/my-courses/modals/view-question-listings";
+import { Subject } from "@/services/subjects/subject-types";
+import QuestionBankTable from "@/components/dashboard-pages/teacher/my-courses/modals/question-bank-table";
 
 export type QuestionModel =
   | "multiple_choice"
@@ -70,6 +73,8 @@ export default function CreateNewQuestionsPage() {
   const [currentStep, setCurrentStep] = useState<StepId>(
     "assignment-configuration",
   );
+  const [showAllQuestions, setShowAllQuestions] = useState<boolean>(false);
+  const [showImpQuestions, setShowImpQuestions] = useState<boolean>(false);
   const { replace } = useRouter();
   const user = useAppSelector(selectUser);
   const [question, setQuestion] = useState<QuestionBuilder>({
@@ -92,10 +97,9 @@ export default function CreateNewQuestionsPage() {
     question_ids: [],
     scheduled_time: "",
   });
+  const [selectedSubject, setSelectedSubject] = useState<Subject>();
   const [createExam, { isLoading: isCreatingExam }] =
     useCreateCbtExamMutation();
-
-  console.log(question);
 
   //view change handler
   const handleStepChange = (stepId: string) => {
@@ -109,7 +113,7 @@ export default function CreateNewQuestionsPage() {
     setQuestion((prev) => ({ ...prev, [name]: value }));
   };
 
-  const publishExam = async (questionStatus: "published" | "draft") => {
+  const publishExam = async (questionStatus: "approved" | "draft") => {
     if (!user?.school_id) return;
     if (!question.subjectId || !question.targetStudents)
       return toast.error("Subject and Target Students are necessary");
@@ -156,6 +160,7 @@ export default function CreateNewQuestionsPage() {
       case "assignment-configuration":
         return (
           <AssignmentConfiguration
+            setSelectedSubject={setSelectedSubject}
             setCurrentStep={setCurrentStep}
             question={question}
             setQuestion={setQuestion}
@@ -174,20 +179,16 @@ export default function CreateNewQuestionsPage() {
       case "content-builder":
         return (
           <ContentBuilder
+            selectedSubject={selectedSubject}
             submit={publishExam}
             isLoading={isCreatingExam}
             updateQuestion={setQuestion}
+            setShowAllQuestions={setShowAllQuestions}
+            setShowImpQuestions={setShowImpQuestions}
           />
         );
       default:
-        return (
-          <AssignmentConfiguration
-            setCurrentStep={setCurrentStep}
-            question={question}
-            setQuestion={setQuestion}
-            handleChange={handleChange}
-          />
-        );
+        <></>;
     }
   };
 
@@ -224,6 +225,21 @@ export default function CreateNewQuestionsPage() {
           </Card>
         </div>
       </div>
+      {/* view manually added questions */}
+      <ViewQuestionListings
+        open={showAllQuestions}
+        updateQuestion={setQuestion}
+        onOpenChange={setShowAllQuestions}
+        question={question}
+      />
+      {/* view imported questions */}
+      <QuestionBankTable
+        setQuestion={setQuestion}
+        question={question}
+        open={showImpQuestions}
+        userId={user?.id ?? ""}
+        onOpenChange={setShowImpQuestions}
+      />
     </div>
   );
 }

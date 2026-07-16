@@ -42,6 +42,8 @@ export interface CbtQuestion {
   term?: string;
 }
 
+export type QuestionStatus = "approved" | "draft" | "pending" | "rejected";
+
 export interface CreateCBTExamsPayload {
   school_id: string;
   title: string;
@@ -62,7 +64,7 @@ export interface CreateCBTExamsPayload {
   max_attempt?: number;
   display_result?: string;
   question_shuffle?: boolean;
-  status?: "published" | "draft"; // or draft
+  status?: QuestionStatus;
   answer_shuffle?: boolean;
   partial_credit?: boolean;
   question_ids?: string[];

@@ -1,8 +1,10 @@
 import { ResponseStatus } from "@/common/types";
+import { School } from "../schools/schools-type";
 
 export type CBTQuestionResponse = { data: [] } & ResponseStatus;
 
-/** Question as returned by list/detail API */
+export type CBTQuestionStatus = "approved" | "pending" | "draft" | "rejected";
+
 export interface CbtQuestion {
   id: string;
   question: string;
@@ -14,7 +16,6 @@ export interface CbtQuestion {
   type?: string | null;
   category?: string | null;
   tag?: string | null;
-  status?: string | null;
   creator_id?: string | null;
   creator?: {
     id: string;
@@ -22,8 +23,17 @@ export interface CbtQuestion {
     first_name?: string;
     last_name?: string;
   } | null;
-  created_at?: string;
-  [key: string]: unknown;
+  school_id: string;
+  image: string | null;
+  question_type_covered: number | null;
+  status: CBTQuestionStatus | null;
+  instruction: string | null;
+  term: string | null;
+  is_deleted: boolean;
+  school: School;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
 }
 
 export interface CbtQuestionsQueryParams {
@@ -37,6 +47,15 @@ export interface CreateCBTQuestionPayload {
   question: string;
   subject: string;
   correct_answer: number;
+  status: "approved" | "pending" | "draft" | "rejected";
+  category: string;
+  type: "multiple_choice" | "fill_in_the_blank" | "true/false";
+  instruction: string;
+  answer_options: string[];
+  topic_covered: number;
+  explanation: string;
+  tag?: string;
+  term: string;
 }
 
 export interface UpdateCBTQuestionPayload {

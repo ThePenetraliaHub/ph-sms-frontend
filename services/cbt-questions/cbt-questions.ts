@@ -17,7 +17,7 @@ export const cbtQuestionsApi = baseApi.injectEndpoints({
   overrideExisting: true,
   endpoints: (build) => ({
     getCbtQuestions: build.query<
-      ApiListResponse<CbtQuestion> | ApiResponse<CbtQuestion[]>,
+      ApiListResponse<CbtQuestion>,
       CbtQuestionsQueryParams | void
     >({
       query: (params) => ({
