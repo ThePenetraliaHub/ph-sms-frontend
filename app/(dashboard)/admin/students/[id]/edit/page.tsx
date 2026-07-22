@@ -67,7 +67,6 @@ export default function EditStudentPage({
   } = useGetStudentByIdQuery(studentId ?? "", { skip: !studentId });
 
   const student = studentData?.data;
-  console.log(student);
 
   // Initialise form state once student data arrives
   useEffect(() => {
@@ -128,9 +127,6 @@ export default function EditStudentPage({
       toast.success("Student updated successfully");
       router.push(`/admin/students/${student.id}`);
     } catch (err: any) {
-      const message =
-        err?.data?.message || err?.message || "Failed to update student oh";
-      toast.error(message);
       console.error("Edit student failed:", err);
     } finally {
       setIsSubmitting(false);

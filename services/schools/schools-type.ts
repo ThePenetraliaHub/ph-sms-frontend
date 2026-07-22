@@ -8,6 +8,7 @@ import type {
 } from "../shared-types";
 import { Stakeholders } from "../stakeholders/stakeholder-types";
 import { Subject } from "../subjects/subject-types";
+import { CbtExam } from "../cbt-exams/cbt-exam-types";
 
 export interface AcademicCalendarConfig {
   name: string;
@@ -39,7 +40,7 @@ export type School = {
   email: string;
   website: string;
 
-  term: Term[];
+  term: Term;
   bank: Record<string, unknown>;
   score: Score;
 
@@ -480,4 +481,5 @@ export interface Class {
       topic_definition: string;
     }[];
   }[];
+  cbt_exams: CbtExam[];
 }

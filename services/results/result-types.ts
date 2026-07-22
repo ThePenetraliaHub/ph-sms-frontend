@@ -2,7 +2,7 @@ import type { ApiResponse, ApiListResponse } from "../shared-types";
 import { Stakeholders } from "../stakeholders/stakeholder-types";
 
 export interface SubjectResult {
-  id: string;
+  id?: string;
   subject: string;
   class_score: number;
   exam_score: number;
@@ -11,7 +11,7 @@ export interface SubjectResult {
   total_score: number;
   grade: string;
   remarks: string;
-  teacher: Stakeholders;
+  teacher_id: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -44,12 +44,13 @@ export interface ExamResult extends Result {
 
 export interface CreateResultParams {
   student_id: string;
-  exam_id: string;
+  exam_id?: string;
   term: string;
   session: string;
   class_name: string;
   grade: string;
   subject_results: Array<SubjectResult>;
+  // subject_results: SubjectResult;
   total_score: number;
   average_score: number;
   position: number;
@@ -133,4 +134,7 @@ export interface ResultMetrics {
   total_students: number;
 }
 
-export type ResultResponse = ApiResponse<Result>;
+// export type ResultResponse = ApiResponse<Result>;
+export type ResultResponse = {
+  data: { status: boolean; status_code: number; message: string; data: Result };
+};

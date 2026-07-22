@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { usePagination } from "@/hooks/use-pagination";
 import { Input } from "@/components/ui/input";
@@ -12,12 +12,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DataTable, TableColumn } from "@/components/ui/data-table";
+import { DataTable } from "@/components/ui/data-table";
 import { StepNavigation, Step } from "@/components/ui/step-navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { AssignmentsIcon, ResourcesAddIcon } from "@hugeicons/core-free-icons";
 import { Calendar } from "lucide-react";
 import Link from "next/link";
+import { useAppSelector } from "@/store/hooks";
+import { selectUser } from "@/store/slices/authSlice";
+import { useGetCbtExamsQuery } from "@/services/cbt-exams/cbt-exams";
+import { CbtExam } from "@/services/cbt-exams/cbt-exam-types";
+import { format } from "date-fns";
+import { useGetClassQuery } from "@/services/schools/schools";
+import { Class } from "@/services/schools/schools-type";
+import { useGetCbtResultByIdQuery } from "@/services/cbt-results/cbt-results";
 
 interface Student {
   id: string;
@@ -28,72 +36,76 @@ interface Student {
   teacherRemarks: string;
 }
 
-const allStudents: Student[] = [
-  {
-    id: "1",
-    name: "Sola Adebayo",
-    studentId: "adebayo.m178031",
-    computeScore: 20,
-    scoreEntry: "",
-    teacherRemarks: "",
-  },
-  {
-    id: "2",
-    name: "Helen Davies",
-    studentId: "davies.m178032",
-    computeScore: 14,
-    scoreEntry: "",
-    teacherRemarks: "",
-  },
-  {
-    id: "3",
-    name: "Tolu Adebayo",
-    studentId: "adebayo.m170833",
-    computeScore: 17,
-    scoreEntry: "",
-    teacherRemarks: "",
-  },
-  {
-    id: "4",
-    name: "Biodun Eke",
-    studentId: "eke.m178033",
-    computeScore: 19,
-    scoreEntry: "",
-    teacherRemarks: "",
-  },
-  {
-    id: "5",
-    name: "Uche Nwachukwu",
-    studentId: "nwachukwu.m170844",
-    computeScore: 22,
-    scoreEntry: "",
-    teacherRemarks: "",
-  },
-  {
-    id: "6",
-    name: "Adebisi Femi",
-    studentId: "femi.m170844",
-    computeScore: 18,
-    scoreEntry: "",
-    teacherRemarks: "",
-  },
-  {
-    id: "7",
-    name: "Oluwole Tunde",
-    studentId: "oluwole.m170844",
-    computeScore: 21,
-    scoreEntry: "",
-    teacherRemarks: "",
-  },
-  {
-    id: "8",
-    name: "Zara Amani",
-    studentId: "amani.m170844",
-    computeScore: 19,
-    scoreEntry: "",
-    teacherRemarks: "",
-  },
-];
+//GET ALL EXAMS TEACHER'S CREATED
+//GET CBT Results
+//OPERATE BASED ON THAT
+
+// const allStudents: Student[] = [
+//   {
+//     id: "1",
+//     name: "Sola Adebayo",
+//     studentId: "adebayo.m178031",
+//     computeScore: 20,
+//     scoreEntry: "",
+//     teacherRemarks: "",
+//   },
+//   {
+//     id: "2",
+//     name: "Helen Davies",
+//     studentId: "davies.m178032",
+//     computeScore: 14,
+//     scoreEntry: "",
+//     teacherRemarks: "",
+//   },
+//   {
+//     id: "3",
+//     name: "Tolu Adebayo",
+//     studentId: "adebayo.m170833",
+//     computeScore: 17,
+//     scoreEntry: "",
+//     teacherRemarks: "",
+//   },
+//   {
+//     id: "4",
+//     name: "Biodun Eke",
+//     studentId: "eke.m178033",
+//     computeScore: 19,
+//     scoreEntry: "",
+//     teacherRemarks: "",
+//   },
+//   {
+//     id: "5",
+//     name: "Uche Nwachukwu",
+//     studentId: "nwachukwu.m170844",
+//     computeScore: 22,
+//     scoreEntry: "",
+//     teacherRemarks: "",
+//   },
+//   {
+//     id: "6",
+//     name: "Adebisi Femi",
+//     studentId: "femi.m170844",
+//     computeScore: 18,
+//     scoreEntry: "",
+//     teacherRemarks: "",
+//   },
+//   {
+//     id: "7",
+//     name: "Oluwole Tunde",
+//     studentId: "oluwole.m170844",
+//     computeScore: 21,
+//     scoreEntry: "",
+//     teacherRemarks: "",
+//   },
+//   {
+//     id: "8",
+//     name: "Zara Amani",
+//     studentId: "amani.m170844",
+//     computeScore: 19,
+//     scoreEntry: "",
+//     teacherRemarks: "",
+//   },
+// ];
 
 type StepId = "assessment-selection" | "score-input-grid";
 
@@ -115,44 +127,117 @@ export default function GradeEntryPortalEntryPage() {
     "assessment-selection",
   );
   const [assessmentSelector, setAssessmentSelector] = useState("");
+  const [selectedExam, setSelectedExam] = useState<CbtExam>();
+  const [studentsClass, setStudentsClass] = useState<string>();
+  const [students, setStudents] = useState<Student[]>([]);
+  const user = useAppSelector(selectUser);
+
+  //get all exams
+  const {
+    data: all_exams,
+    isLoading: isFetchingExams,
+    isError: isFetchingExamsErr,
+  } = useGetCbtExamsQuery();
+
+  //get selected exam results
+  const {
+    data: exam_result,
+    isLoading: isFetchingExamResults,
+    isError: examResultsErr,
+  } = useGetCbtResultByIdQuery(selectedExam?.id ?? "", {
+    skip: !selectedExam,
+  });
+
+  console.log("Exam Results: ", exam_result?.data);
+  console.log("isFetchingExamResults: ", isFetchingExamResults);
+  console.log("Students: ", students);
+
+  //get class details
+  const {
+    data: class_data,
+    isLoading: isFetchingClass,
+    isError: isFetchingClassErr,
+  } = useGetClassQuery(
+    { id: user?.school_id ?? "", class_name: "JSS 2" }, //class_name: studentsClass
+    { skip: !studentsClass || !user?.school_id },
+  );
+
+  const myExams: CbtExam[] = useMemo(() => {
+    if (!all_exams) return [];
+    if (!user?.id) return [];
+    const created_exams = all_exams.data.filter(
+      (exam) => exam.creator_id === user?.id,
+    );
+    return created_exams;
+  }, [all_exams]);
+
+  const class_attached: Class = useMemo(() => {
+    if (!class_data) return {} as Class;
+    return class_data.data;
+  }, [class_data]);
 
   const {
     displayedData: studentData,
     hasMore,
     loadMore,
   } = usePagination({
-    data: allStudents,
+    data: students,
     initialItemsPerPage: 5,
     itemsPerPage: 5,
   });
-
-  const [allStudentScores, setAllStudentScores] = useState<
-    Record<string, { scoreEntry: string; teacherRemarks: string }>
-  >({});
 
   const handleStepChange = (stepId: string) => {
     setCurrentStep(stepId as StepId);
   };
 
   const handleScoreChange = (studentId: string, value: string) => {
-    setAllStudentScores((prev) => ({
-      ...prev,
-      [studentId]: { ...prev[studentId], scoreEntry: value },
-    }));
+    setStudents((prev) => {
+      return prev.map((item) => {
+        return item.id === studentId ? { ...item, scoreEntry: value } : item;
+      });
+    });
   };
 
   const handleRemarksChange = (studentId: string, value: string) => {
-    setAllStudentScores((prev) => ({
-      ...prev,
-      [studentId]: { ...prev[studentId], teacherRemarks: value },
-    }));
+    setStudents((prev) => {
+      return prev.map((item) => {
+        return item.id === studentId
+          ? { ...item, teacherRemarks: value }
+          : item;
+      });
+    });
   };
 
-  const studentDataWithScores = studentData.map((student) => ({
-    ...student,
-    scoreEntry: allStudentScores[student.id]?.scoreEntry || "",
-    teacherRemarks: allStudentScores[student.id]?.teacherRemarks || "",
-  }));
+  const handleScoreSubmission = async () => {
+    console.log();
+  };
+
+  //track exam id changes to fetch class attached using applicable_grade key
+  useEffect(() => {
+    if (!assessmentSelector) return;
+    const pickedExam = myExams.find((exam) => exam.id === assessmentSelector);
+    if (pickedExam?.applicable_grades)
+      setStudentsClass(pickedExam?.applicable_grades);
+    setSelectedExam(pickedExam);
+  }, [assessmentSelector]);
+
+  //track class data changes to fetch students
+  useEffect(() => {
+    if (!class_attached.students) return;
+    const studentsInClass: Student[] = class_attached.students.map(
+      (student) => {
+        return {
+          id: student.id ?? "",
+          name: student.full_name,
+          studentId: student.user_id,
+          computeScore: 0, //⚠️
+          scoreEntry: "", // TEACHER FILLS
+          teacherRemarks: "", // TEACHER FILLS
+        };
+      },
+    );
+    setStudents(studentsInClass);
+  }, [class_attached]);
 
   return (
     <div className="space-y-4">
@@ -194,28 +279,29 @@ export default function GradeEntryPortalEntryPage() {
                       htmlFor="assessmentSelector"
                       className="text-sm font-medium text-gray-700"
                     >
-                      Assessment Selector
+                      Assessment Selector{" "}
+                      {isFetchingExams
+                        ? "( 🟠 Loading exams... )"
+                        : isFetchingExamsErr
+                          ? "( ❌ Exams Fetch Failed )"
+                          : ""}
                     </Label>
                     <Select
                       value={assessmentSelector}
                       onValueChange={setAssessmentSelector}
+                      disabled={isFetchingExams || isFetchingExamsErr}
                     >
                       <SelectTrigger id="assessmentSelector" className="w-full">
-                        <SelectValue placeholder="Filter by Assessment Name (e.g., JSS2 Maths, Mid-Term Exam)" />
+                        <SelectValue placeholder="Filter by Assessment Name (e.g., Biology Test)" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="jss2-math-midterm">
-                          JSS2 Maths - Mid-Term Exam
-                        </SelectItem>
-                        <SelectItem value="jss2-english-ca1">
-                          JSS2 English - CA 1
-                        </SelectItem>
-                        <SelectItem value="jss3-science-quiz">
-                          JSS3 Science - Unit 2 Quiz
-                        </SelectItem>
-                        <SelectItem value="ss1-physics-final">
-                          SS1 Physics - Final Exam
-                        </SelectItem>
+                        {myExams.map((exam) => {
+                          return (
+                            <SelectItem key={exam.id} value={exam.id}>
+                              {exam.subject || exam.assessment_name}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                   </div>
@@ -234,7 +320,7 @@ export default function GradeEntryPortalEntryPage() {
                       id="totalMarks"
                       type="text"
                       placeholder="Based off from assessment selector"
-                      value={assessmentSelector ? "100" : ""}
+                      value={selectedExam?.total_marks_available ?? "N/A"}
                       readOnly
                       className="bg-gray-50 cursor-not-allowed"
                     />
@@ -246,7 +332,7 @@ export default function GradeEntryPortalEntryPage() {
                         htmlFor="submissionDeadline"
                         className="text-sm font-medium text-gray-700"
                       >
-                        Submission Deadline
+                        Scheduled Date & Time
                       </Label>
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-gray-400" />
@@ -256,7 +342,11 @@ export default function GradeEntryPortalEntryPage() {
                     <Input
                       id="submissionDeadline"
                       type="text"
-                      value="Nov. 15, 2025"
+                      value={
+                        !selectedExam
+                          ? "N/A"
+                          : `${format(selectedExam?.schedule_date, "dd MMM, yyyy.")} : ${selectedExam?.schedule_time}`
+                      }
                       readOnly
                       className="bg-gray-50 cursor-not-allowed"
                     />
@@ -268,7 +358,7 @@ export default function GradeEntryPortalEntryPage() {
                         htmlFor="submissionStatus"
                         className="text-sm font-medium text-gray-700"
                       >
-                        Submission Status
+                        Exam Status
                       </Label>
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-gray-400" />
@@ -278,7 +368,7 @@ export default function GradeEntryPortalEntryPage() {
                     <Input
                       id="submissionStatus"
                       type="text"
-                      value="Nov. 13, 2025; 10:45AM"
+                      value={selectedExam?.status ?? "N/A"}
                       readOnly
                       className="bg-gray-50 cursor-not-allowed"
                     />
@@ -342,6 +432,7 @@ export default function GradeEntryPortalEntryPage() {
                             <Input
                               type="number"
                               placeholder="placeholder"
+                              // value={constructValue(row.id, "score")}
                               value={row.scoreEntry}
                               onChange={(e) =>
                                 handleScoreChange(row.id, e.target.value)
@@ -357,6 +448,7 @@ export default function GradeEntryPortalEntryPage() {
                             <Input
                               type="text"
                               placeholder="placeholder"
+                              // value={constructValue(row.id, "remark")}
                               value={row.teacherRemarks}
                               onChange={(e) =>
                                 handleRemarksChange(row.id, e.target.value)
@@ -366,7 +458,7 @@ export default function GradeEntryPortalEntryPage() {
                           ),
                         },
                       ]}
-                      data={studentDataWithScores}
+                      data={students}
                       showActionsColumn={false}
                     />
                   </div>

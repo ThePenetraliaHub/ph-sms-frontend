@@ -245,15 +245,18 @@ function AddEditSubjectOutlineContent() {
       formData.plannedPacing,
     );
     const subject = new FormData();
-    // subject.append("school_id", formData.subjectId || schoolId);
-    subject.append("school_id", "01kbgdhe1q6m1n5pj0x8webhe5");
+    subject.append("school_id", formData.subjectId || schoolId);
+    // subject.append("school_id", "01kbgdhe1q6m1n5pj0x8webhe5");
     subject.append("name", formData.subjectName.trim());
     subject.append("code", formData.subjectCode.trim());
-    // subject.append("applicable_grade", formData.applicableGrade);
     subject.append(
       "applicable_grade",
-      JSON.stringify(["JSS 1", "JSS 2", "JSS 3"]),
+      JSON.stringify([`${formData.applicableGrade}`]),
     );
+    // subject.append(
+    //   "applicable_grade",
+    //   JSON.stringify(["JSS 1", "JSS 2", "JSS 3"]),
+    // );
     subject.append("head_of_department_id", formData.headOfDepartment ?? "");
     subject.append("credit_units", JSON.stringify(creditUnits));
     subject.append("continuous_assessment", JSON.stringify(ca));
@@ -268,10 +271,10 @@ function AddEditSubjectOutlineContent() {
         subject.append("files", file);
       });
     }
-    for (const [key, value] of subject.entries()) {
-      console.log("Listing formdata props");
-      console.log(`"${key}:"`, value);
-    }
+    // for (const [key, value] of subject.entries()) {
+    //   console.log("Listing formdata props");
+    //   console.log(`"${key}:"`, value);
+    // }
     return subject;
   };
 
@@ -300,11 +303,11 @@ function AddEditSubjectOutlineContent() {
       } else {
         //create a subject
         const res = await createSubject(buildPayload("approved")).unwrap();
-        console.log("Response: ", res);
+        // console.log("Response: ", res);
       }
       toast.success("Subject outline activated.");
+      router.push("/admin/academic/curriculum-management");
       return;
-      // router.push("/admin/academic/curriculum-management");
     } catch {
       console.error("Failed to activate.");
     }

@@ -47,8 +47,6 @@ export function StaffTable({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
-  console.log(staffData);
-
   const staff: Staff[] = useMemo(() => {
     if (!staffData || staffData.length === 0) return [];
 

@@ -1,23 +1,59 @@
 import { ResponseStatus } from "@/common/types";
+import { School } from "../schools/schools-type";
+import { Question } from "@/components/dashboard-pages/teacher/my-courses/views/content-builder";
+import { User } from "../users/users-type";
 
 export type CBTExamsResponse = { data: [] } & ResponseStatus;
 
 /** Exam as returned by list/detail API (relation serializer) */
 export interface CbtExam {
   id: string;
-  title: string;
-  category: string;
-  subject: string;
+  creator_id: string;
+  updated_by_id: string | null;
+  user_id: string | null;
+  school_id: string | null;
+  title: string | null;
+  category: string | null;
+  subject: string | null;
+  questions: Question[];
+  duration: number;
+  total_questions: number;
   completed: boolean;
-  schedule_date: string | null;
-  schedule_time: string | null;
-  location_venue?: string | null;
+  assessment_name: string | null;
+  assessment_type: string | null;
+  applicable_grades: string | null;
+  applicable_subjects: string | null;
+  applicable_subjects_ids: string[];
+  question_ids: string[];
+  total_marks_available: number;
+  type: string | null;
+  schedule_date: string;
+  schedule_time: string;
+  location_venue: string | null;
+  assigned_invigilators_ids: string[];
+  paper_submission_time: string | null;
+  paper_submission_date: string | null;
+  score_submission_date: string | null;
+  score_submission_time: string | null;
+  final_grade: string | null;
+  scale_type: string | null;
+  question_shuffle: boolean;
+  answer_shuffle: boolean;
+  partial_credit: boolean;
+  max_attempt: number | null;
+  display_result: string | null;
+  is_deleted: boolean;
+  status: null;
+  creator: User;
+  updated_by: string | null;
+  user: string | null;
+  school: School;
+  assigned_invigilators_details: any[];
+  applicable_subjects_details: any[];
+  questions_details: any[];
   created_at: string;
   updated_at: string;
-  total_questions?: number | null;
-  duration?: number | null;
-  status?: string | null;
-  [key: string]: unknown;
+  deleted_at: string | null;
 }
 
 export interface CbtExamsQueryParams {

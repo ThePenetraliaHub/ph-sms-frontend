@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
-import { InputField, SelectField } from "@/components/ui/input-field";
+import { InputField } from "@/components/ui/input-field";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/select";
 import DatePickerIcon from "@/components/ui/date-picker";
 import type { StudentPersonalState } from "./student-edit-form-state";
+import { useAppSelector } from "@/store/hooks";
+import { selectUser } from "@/store/slices/authSlice";
 
 export function PersonalInfoForm({
   value,
@@ -27,6 +29,8 @@ export function PersonalInfoForm({
   onNext: () => void;
   onCancel: () => void;
 }) {
+  const user = useAppSelector(selectUser);
+  const SCH_CLASSES: string[] = user?.school.classes || [];
   const formData = value;
   const setFormData = onChange;
   const [datePickerOpen, setDatePickerOpen] = useState(false);
@@ -129,12 +133,18 @@ export function PersonalInfoForm({
               <SelectValue placeholder="Select current class" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="js1">Junior Secondary 1 (JS1)</SelectItem>
-              <SelectItem value="js2">Junior Secondary 2 (JS2)</SelectItem>
+              {SCH_CLASSES.map((clx, index) => {
+                return (
+                  <SelectItem key={index} value={clx}>
+                    {clx}
+                  </SelectItem>
+                );
+              })}
+              {/* <SelectItem value="js2">Junior Secondary 2 (JS2)</SelectItem>
               <SelectItem value="js3">Junior Secondary 3 (JS3)</SelectItem>
               <SelectItem value="ss1">Senior Secondary 1 (SS1)</SelectItem>
               <SelectItem value="ss2">Senior Secondary 2 (SS2)</SelectItem>
-              <SelectItem value="ss3">Senior Secondary 3 (SS3)</SelectItem>
+              <SelectItem value="ss3">Senior Secondary 3 (SS3)</SelectItem> */}
             </SelectContent>
           </Select>
         </div>

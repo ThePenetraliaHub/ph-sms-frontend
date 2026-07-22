@@ -65,7 +65,7 @@ export default function AssignmentConfiguration({
     //update subject from parent
     setSelectedSubject(subject);
     //set target grade
-    const targetGrade = subject.applicable_grade?.join(", ") ?? "";
+    const targetGrade = subject.applicable_grade[0] ?? "";
     setQuestion((prev) => ({ ...prev, targetStudents: targetGrade }));
   }, [subjectsList, question.subjectId]);
 

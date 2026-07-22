@@ -16,10 +16,12 @@ import {
 import { useUpdateUserMutation } from "@/services/users/users";
 import type { StaffEditSavePayload } from "@/components/dashboard-pages/admin/staff/forms/staff-edit-types";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 type TabId = "contact" | "employment" | "permissions" | "financial";
 
 export default function EditStaffPage({ params }: { params: { id: string } }) {
+  const { replace } = useRouter();
   const [staffId, setStaffId] = useState<string | null>(null);
   const [hasChecked, setHasChecked] = useState(false);
 
@@ -144,8 +146,8 @@ export default function EditStaffPage({ params }: { params: { id: string } }) {
       }
       if (promises.length > 0) {
         await Promise.all(promises);
-        // window.history.back();
         toast.success("Staff information updated successfully!");
+        replace("/admin/staff-management/all");
       }
     } catch (err) {
       console.error("Failed to save staff:", err);

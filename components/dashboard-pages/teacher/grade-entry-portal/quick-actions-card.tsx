@@ -6,6 +6,8 @@ import {
   TransactionHistoryIcon,
   PayByCheckIcon,
   FileImportIcon,
+  Book02Icon,
+  Edit01Icon,
 } from "@hugeicons/core-free-icons";
 import { useRouter } from "next/navigation";
 
@@ -20,6 +22,20 @@ export function GradeEntryQuickActionsCard() {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
+        <QuickActionCard
+          title="Grade Student"
+          description="Enter CA and Exam scores for a particular student in your class."
+          icon={Book02Icon}
+          onClick={() => router.push("/teacher/grade-entry-portal/grade-student")}
+          className="border-b"
+        />
+        <QuickActionCard
+          title="Record Results for Students"
+          description="Record the complete result for each student in a class"
+          icon={Edit01Icon}
+          onClick={() => router.push("/teacher/grade-entry-portal/record-results")}
+          className="border-b"
+        />
         <QuickActionCard
           title="Score Assignment"
           description="Opens the score entry grid for a selected assignment."

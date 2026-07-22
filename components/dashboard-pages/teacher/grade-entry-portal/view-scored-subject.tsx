@@ -35,7 +35,7 @@ interface CreateQuestionModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function CreateQuestionModal({
+export function ViewScoredSubject({
   open,
   onOpenChange,
 }: CreateQuestionModalProps) {
