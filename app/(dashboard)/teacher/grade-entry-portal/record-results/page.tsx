@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,22 +25,18 @@ import { Class, School } from "@/services/schools/schools-type";
 import { useGetStudentByQueryParamQuery } from "@/services/stakeholders/stakeholders";
 import { Stakeholders } from "@/services/stakeholders/stakeholder-types";
 import { toast } from "sonner";
-import { useCreateResultsMutation } from "@/services/results/results";
-// import {
-//   CreateResultParams,
-//   SubjectResult,
-// } from "@/services/results/result-types";
-// import { Separator } from "@/components/ui/separator";
+import {
+  useRecordResultsMutation,
+} from "@/services/results/results";
 import { useRouter } from "next/navigation";
 import {
   DataTable,
   TableAction,
   TableColumn,
 } from "@/components/ui/data-table";
-import ScoreInputGrid from "@/components/dashboard-pages/teacher/my-courses/modals/score-input-grid";
 import { AddSubjectScores } from "@/components/dashboard-pages/teacher/grade-entry-portal/add-subject-scores";
+import { RecordResultsParams } from "@/services/results/result-types";
 import { ViewScoredSubject } from "@/components/dashboard-pages/teacher/grade-entry-portal/view-scored-subject";
-import { register } from "module";
 
 interface Subject {
   subject: string;
@@ -52,21 +48,21 @@ interface Subject {
   remarks: string;
 }
 
-// interface Result {
-//   student_id: string;
-//   student: string;
-//   exam_id: string;
-//   term: string;
-//   session: string;
-//   class_name: string;
-//   grade: string;
-//   subject_results: Subject[];
-//   total_score: number | string;
-//   average_score: number | string;
-//   position: number | string;
-//   teacher_remarks: string;
-//   principal_remarks: string;
-// }
+interface Result {
+  student_id: string;
+  student: string;
+  exam_id: string;
+  term: string;
+  session: string;
+  class_name: string;
+  grade: string;
+  subject_results: Subject[];
+  total_score: number;
+  average_score: number;
+  position: number;
+  teacher_remarks: string;
+  principal_remarks: string;
+}
 
 interface GeneralConfig {
   session: string;
@@ -119,7 +115,6 @@ export default function GradeStudent() {
     class_name: "",
   });
   const [tableData, setTableData] = useState<TableData[]>([]);
-  console.log("Table Data: ", tableData);
   const [subjectResults, setSubjectResults] = useState<Subject>({
     subject: "",
     teacher_id: "",
@@ -133,13 +128,13 @@ export default function GradeStudent() {
   const [addScoresMod, setAddScoresMod] = useState<boolean>(false);
   const [viewScoredMod, setViewScoredMod] = useState<boolean>(false);
 
+  //record results
+  const [recordResults, { isLoading: isSubmittingResult }] =
+    useRecordResultsMutation();
+
   //TOTAL MARKS
   const totalMarks: number =
     Number(subjectResults.class_score) + Number(subjectResults.exam_score);
-
-  //record/create results
-  const [createResult, { isLoading: isCreatingResult }] =
-    useCreateResultsMutation();
 
   //get teacher's details
   const { data: currTeacher, isLoading: isFetchingTeacher } =
@@ -165,22 +160,11 @@ export default function GradeStudent() {
   }, [class_data]);
 
   //handle teacher remarks change
-  const handleTeacherRemarksChange = (studentId: string, value: string) => {
+  const handleChange = (studentId: string, name: string, value: string) => {
     setTableData((prev) => {
       return prev.map((item) => {
         return item.student_id === studentId
-          ? { ...item, teacher_remarks: value }
-          : item;
-      });
-    });
-  };
-
-  //handle principal remarks change
-  const handlePrincipalRemarksChange = (studentId: string, value: string) => {
-    setTableData((prev) => {
-      return prev.map((item) => {
-        return item.student_id === studentId
-          ? { ...item, principal_remarks: value }
+          ? { ...item, [name]: value }
           : item;
       });
     });
@@ -190,7 +174,8 @@ export default function GradeStudent() {
   const registerSubject = () => {
     if (!selectedStudent?.student_id)
       return toast.error("Student not selected");
-    if (!subjectResults.subject) return toast.error("Select subject");
+    if (!subjectResults.subject) return toast.error("Subject not selected");
+    if (!subjectResults.teacher_id) return toast.error("Teacher not selected");
     const subjectCAScore = Number(subjectResults.class_score);
     const subjectExamScore = Number(subjectResults.exam_score);
     const subjectTotalScore = Number(subjectResults.total_score);
@@ -261,11 +246,6 @@ export default function GradeStudent() {
     });
   };
 
-  function getTotalPrice(subjects: Subject[]): number {
-    console.log("Subjects Calculated: ", subjects);
-    return subjects.reduce((total, subject) => total + subject.total_score, 0);
-  }
-
   const assignGrade = (score: number): string => {
     // if (currentSchool.grading_scales_config.length > 0) {
     //   //use set grade to set functionality
@@ -293,6 +273,71 @@ export default function GradeStudent() {
     setCurrentStep(stepId as StepId);
   };
 
+  const clearResult = (studentId: string) => {
+    if (!studentId) return;
+    setTableData((prevState) => {
+      return prevState.map((pv) => {
+        return pv.student_id === studentId
+          ? {
+              ...pv,
+              grade: "",
+              total_score: 0,
+              average_score: 0,
+              position: 0,
+              teacher_remarks: "",
+              principal_remarks: "",
+              subject_results: [],
+            }
+          : pv;
+      });
+    });
+  };
+
+  //remove subject from subject results for a particular student
+  const removeResultFromList = (subject: string, studentId: string) => {
+    if (!subject.trim() || !studentId.trim()) return;
+    setTableData((table_datas) => {
+      return table_datas.map((table_data) => {
+        return table_data.student_id === studentId
+          ? {
+              ...table_data,
+              subject_results: table_data.subject_results.filter(
+                (prevSubject) => prevSubject.subject !== subject,
+              ),
+            }
+          : table_data;
+      });
+    });
+    toast.success("Result removed from list");
+  };
+
+  const submitResults = async () => {
+    const class_result: Result[] = tableData.map((prev) => {
+      return {
+        ...prev,
+        exam_id: config.exam,
+        term: config.term,
+        session: config.session,
+        class_name: config.class_name,
+        average_score: Number(prev.average_score),
+        position: Number(prev.position),
+        total_score: Number(prev.total_score),
+      };
+    });
+    const payload: RecordResultsParams = {
+      results: class_result,
+    };
+    try {
+      const res = await recordResults(payload).unwrap();
+      toast.success(
+        res.data.message ? res.data.message : "Result submitted successfully",
+      );
+      replace("/teacher/grade-entry-portal");
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   //DATA TABLE
   const columns: TableColumn<TableData>[] = [
     {
@@ -308,27 +353,61 @@ export default function GradeStudent() {
     {
       key: "grade",
       title: "Grade",
-      render: (_v, row) => <span className="text-gray-800">{row.grade}</span>,
+      render: (value, row) => (
+        <Input
+          type="text"
+          placeholder="e.g A, B, C"
+          value={row.grade}
+          onChange={(e) =>
+            handleChange(row.student_id, "grade", e.target.value)
+          }
+          className="w-full"
+        />
+      ),
     },
     {
       key: "total_score",
       title: "Tot. Score",
-      render: (_v, row) => (
-        <span className="text-gray-800">{row.total_score as number}</span>
+      render: (value, row) => (
+        <Input
+          type="number"
+          placeholder="Enter Score"
+          value={row.total_score}
+          onChange={(e) =>
+            handleChange(row.student_id, "total_score", e.target.value)
+          }
+          className="w-full"
+        />
       ),
     },
     {
       key: "average_score",
       title: "Avg. Score",
-      render: (_v, row) => (
-        <span className="text-gray-800">{row.average_score as number}</span>
+      render: (value, row) => (
+        <Input
+          type="number"
+          placeholder="Enter Score"
+          value={row.average_score}
+          onChange={(e) =>
+            handleChange(row.student_id, "average_score", e.target.value)
+          }
+          className="w-full"
+        />
       ),
     },
     {
       key: "position",
       title: "Position",
-      render: (_v, row) => (
-        <span className="text-gray-800">{`${row.position as number}/${tableData.length}`}</span>
+      render: (value, row) => (
+        <Input
+          type="number"
+          placeholder="Enter Score"
+          value={row.position}
+          onChange={(e) =>
+            handleChange(row.student_id, "position", e.target.value)
+          }
+          className="w-full"
+        />
       ),
     },
     {
@@ -340,7 +419,7 @@ export default function GradeStudent() {
           placeholder="placeholder"
           value={row.teacher_remarks}
           onChange={(e) =>
-            handleTeacherRemarksChange(row.student_id, e.target.value)
+            handleChange(row.student_id, "teacher_remarks", e.target.value)
           }
           className="w-full"
         />
@@ -355,7 +434,7 @@ export default function GradeStudent() {
           placeholder="placeholder"
           value={row.principal_remarks}
           onChange={(e) =>
-            handlePrincipalRemarksChange(row.student_id, e.target.value)
+            handleChange(row.student_id, "principal_remarks", e.target.value)
           }
           className="w-full"
         />
@@ -377,14 +456,15 @@ export default function GradeStudent() {
           {
             label: "View Scored Subjects",
             onClick: (row) => {
-              console.log("View details for:", row.student);
+              setSelectedStudent(row);
+              setViewScoredMod(true);
             },
             separator: true,
           },
           {
             label: "Clear Result",
             onClick: (row) => {
-              console.log("Edit question:", row.student);
+              clearResult(row.student_id);
             },
             separator: true,
             variant: "destructive",
@@ -394,6 +474,7 @@ export default function GradeStudent() {
     },
   ];
 
+  //set teacher and class
   useEffect(() => {
     if (!teacher) return;
     setAssignedClasses(teacher.assigned_classes);
@@ -401,6 +482,7 @@ export default function GradeStudent() {
     setSubjectResults((prev) => ({ ...prev, teacher_id: teacher.id }));
   }, [teacher]);
 
+  //set table data and general config
   useEffect(() => {
     if (!class_attached) return;
     //set table data - initialize it
@@ -415,7 +497,7 @@ export default function GradeStudent() {
           position: 0,
           teacher_remarks: "",
           principal_remarks: "",
-          grade: assignGrade(0),
+          grade: "",
         };
       },
     );
@@ -427,31 +509,19 @@ export default function GradeStudent() {
     }));
   }, [class_attached]);
 
-  //total score
+  //set total score for subjects
   useEffect(() => {
     if (totalMarks < 0) return;
     setSubjectResults((prev) => ({ ...prev, total_score: totalMarks }));
-    console.log("Calculating total score...");
-    setTableData((prev) => {
-      return prev.map((prevSt) => {
-        return prevSt.student_id === selectedStudent?.student_id
-          ? { ...prevSt, total_score: getTotalPrice(prevSt.subject_results) }
-          : prevSt;
-      });
-    });
   }, [totalMarks]);
 
-  //grades
+  //set grades for subjects
   useEffect(() => {
     if (
       isNaN(Number(subjectResults.class_score)) ||
       isNaN(Number(subjectResults.exam_score))
     )
       return;
-    // setResult((prev) => ({
-    //   ...prev,
-    //   grade: assignGrade(),
-    // }));
     setSubjectResults((prev) => ({
       ...prev,
       grade: assignGrade(prev.total_score),
@@ -503,7 +573,7 @@ export default function GradeStudent() {
                     </Label>
                     <Input
                       type="text"
-                      //   value={result.session}
+                      value={config.session}
                       className="cursor-not-allowed"
                       readOnly
                     />
@@ -519,7 +589,7 @@ export default function GradeStudent() {
                     </Label>
                     <Input
                       type="text"
-                      //   value={result.term}
+                      value={config.term}
                       className="cursor-not-allowed capitalize"
                       readOnly
                     />
@@ -535,9 +605,11 @@ export default function GradeStudent() {
                     </Label>
                     <Input
                       type="text"
-                      //   value={result.exam_id}
+                      value={config.exam}
                       placeholder="E.g. 2022/2023 Promotional Exams"
-                      onChange={(e) => {}}
+                      onChange={(e) =>
+                        setConfig((prev) => ({ ...prev, exam: e.target.value }))
+                      }
                     />
                   </div>
 
@@ -595,12 +667,6 @@ export default function GradeStudent() {
                     <DataTable
                       columns={columns}
                       data={tableData}
-                      // isLoading={isFetchingQuestions || isDeletingCbtQuestion}
-                      // emptyMessage={
-                      //   isFetchingQuestionsErr
-                      //     ? "Failed to fetch questions"
-                      //     : "No data available"
-                      // }
                       isLoading={false}
                       emptyMessage={"No student in this class"}
                       actions={actions}
@@ -609,13 +675,13 @@ export default function GradeStudent() {
                     />
                   </div>
 
-                  <div className="flex items-center justify-end gap-3 pt-4">
+                  <div className="flex items-center justify-end gap-3 pt-4 disabled:opacity-50 disabled:cursor-not-allowed">
                     <Button
-                      //   disabled={!result.class_name}
-                      onClick={() => setCurrentStep("score-input-grid")}
+                      disabled={isSubmittingResult}
+                      onClick={submitResults}
                       className="w-60"
                     >
-                      Submit Result
+                      {isSubmittingResult ? "Submitting..." : "Submit Result"}
                     </Button>
                   </div>
                 </div>
@@ -637,7 +703,13 @@ export default function GradeStudent() {
         setSubjectResults={setSubjectResults}
         setSelectedStudent={setSelectedStudent}
       />
-      {/* <ViewScoredSubject /> */}
+      <ViewScoredSubject
+        selectedStudent={selectedStudent}
+        open={viewScoredMod}
+        onOpenChange={setViewScoredMod}
+        setSelectedStudent={setSelectedStudent}
+        removeResultFromList={removeResultFromList}
+      />
     </div>
   );
 }

@@ -19,26 +19,36 @@ interface SubjectResult {
   remarks: string;
 }
 
+interface Result {
+  student_id: string;
+  exam_id: string;
+  term: string;
+  session: string;
+  class_name: string;
+  grade: string;
+  subject_results: SubjectResult[];
+  total_score: number | string;
+  average_score: number | string;
+  position: number | string;
+  teacher_remarks: string;
+  principal_remarks: string;
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedStudent: TableData | undefined;
-  setSelectedStudent: React.Dispatch<
-    React.SetStateAction<TableData | undefined>
-  >;
-  removeResultFromList: (subject: string, studentId: string) => void;
+  result: Result;
+  removeSubjectResult: (subject: string) => void;
 }
 
-export function ViewScoredSubject({
+export function ViewAddedScores({
   open,
   onOpenChange,
-  selectedStudent,
-  setSelectedStudent,
-  removeResultFromList,
+  result,
+  removeSubjectResult,
 }: Props) {
   const handleClose = (isOpen: boolean) => {
     onOpenChange(false);
-    setSelectedStudent(undefined);
   };
 
   //DATA TABLE
@@ -86,10 +96,7 @@ export function ViewScoredSubject({
           {
             label: "Clear Result",
             onClick: (row) => {
-              removeResultFromList(
-                row.subject,
-                selectedStudent?.student_id ?? "",
-              );
+              removeSubjectResult(row.subject);
             },
             variant: "destructive",
           },
@@ -102,16 +109,13 @@ export function ViewScoredSubject({
     <ModalContainer
       open={open}
       onOpenChange={handleClose}
-      title={`Scored Subjects for ${selectedStudent ? selectedStudent?.student : ""}`}
+      title={"Scored Subjects"}
       size="3xl"
       maxHeight="lg"
       footer={
         <div className="grid grid-cols-1 mt-3 gap-3 w-full">
           <Button
-            onClick={() => {
-              onOpenChange(false);
-              setSelectedStudent(undefined);
-            }}
+            onClick={() => onOpenChange(false)}
             variant={"outline"}
             className="flex-1 opacity-100 disabled:opacity-50"
           >
@@ -124,7 +128,7 @@ export function ViewScoredSubject({
         <div className="border rounded-lg overflow-hidden">
           <DataTable
             columns={columns}
-            data={selectedStudent?.subject_results ?? ([] as SubjectResult[])}
+            data={result.subject_results}
             emptyMessage={"No subject result recorded yet."}
             actions={actions}
             showActionsColumn={true}

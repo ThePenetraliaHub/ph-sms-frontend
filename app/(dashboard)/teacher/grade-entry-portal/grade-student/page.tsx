@@ -29,6 +29,7 @@ import { useCreateResultsMutation } from "@/services/results/results";
 import { CreateResultParams } from "@/services/results/result-types";
 import { Separator } from "@/components/ui/separator";
 import { useRouter } from "next/navigation";
+import { ViewAddedScores } from "@/components/dashboard-pages/teacher/grade-entry-portal/view-added-scores";
 
 interface Subject {
   subject: string;
@@ -113,6 +114,7 @@ export default function GradeStudent() {
   const [selectedClass, setSelectedClass] = useState<string>(
     assignedClasses[0],
   );
+  const [viewScores, setViewScores] = useState<boolean>(false);
 
   //record/create results
   const [createResult, { isLoading: isCreatingResult }] =
@@ -239,11 +241,6 @@ export default function GradeStudent() {
     setCurrentStep("remarks");
   };
 
-  const viewAddedScores = () => {
-    //show a modal with results table
-    console.log("Result: ", result);
-  };
-
   const addNewScores = () => {
     //reset subjectResults
     setSubjectResults({
@@ -257,6 +254,19 @@ export default function GradeStudent() {
     });
     //proceed
     setCurrentStep("subject-results");
+  };
+
+  const removeSubjectResult = (subject: string) => {
+    if (!subject) return;
+    setResult((prev) => {
+      return {
+        ...prev,
+        subject_results: prev.subject_results.filter(
+          (item) => item.subject !== subject,
+        ),
+      };
+    });
+    toast.success("Result removed from list");
   };
 
   const handleScoreSubmission = async () => {
@@ -294,12 +304,9 @@ export default function GradeStudent() {
     };
 
     try {
-      const { data, error } = await createResult(resultPayload);
-      if (error) {
-        return;
-      }
+      const res = await createResult(resultPayload).unwrap();
       toast.success(
-        data.data.message ? data.data.message : "Result uploaded successfully",
+        res.data.message ? res.data.message : "Result uploaded successfully",
       );
       replace("/teacher/grade-entry-portal");
     } catch (err) {
@@ -710,17 +717,12 @@ export default function GradeStudent() {
                   {/* add or read results */}
                   <div className="grid grid-cols-2 gap-3">
                     <Button
-                      onClick={viewAddedScores}
+                      onClick={() => setViewScores(true)}
                       variant={"outline"}
-                      className=""
                     >
                       View Added Scores
                     </Button>
-                    <Button
-                      onClick={addNewScores}
-                      variant={"outline"}
-                      className=""
-                    >
+                    <Button onClick={addNewScores} variant={"outline"}>
                       Add New Scores
                     </Button>
                   </div>
@@ -741,6 +743,14 @@ export default function GradeStudent() {
           </Card>
         </div>
       </div>
+
+      {/* view scores */}
+      <ViewAddedScores
+        result={result}
+        removeSubjectResult={removeSubjectResult}
+        open={viewScores}
+        onOpenChange={setViewScores}
+      />
     </div>
   );
 }

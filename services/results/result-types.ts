@@ -110,13 +110,12 @@ export interface RecordResultsParams {
     session: string;
     class_name: string;
     grade: string;
-    subject_results: SubjectResult;
+    subject_results: SubjectResult[];
     total_score: number;
     average_score: number;
     position: number;
     teacher_remarks: string;
     principal_remarks: string;
-    is_deleted: boolean;
   }>;
 }
 

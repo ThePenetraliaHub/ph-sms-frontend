@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import { ModalContainer } from "@/components/ui/modal-container";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,11 +49,8 @@ export function AddSubjectScores({
   registerSubject,
   setSelectedStudent,
 }: Props) {
+  
   const handleClose = (isOpen: boolean) => {
-    // if (!isOpen) {
-    //   //do something
-    // }
-
     onOpenChange(isOpen);
     setSubjectResults({
       subject: "",
@@ -70,7 +66,6 @@ export function AddSubjectScores({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-
     setSubjectResults((prev) => ({ ...prev, [name]: value }));
     return;
   };
@@ -124,6 +119,43 @@ export function AddSubjectScores({
                     className="w-full"
                   >
                     {subject.name}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Teacher */}
+        <div className="space-y-2 w-full">
+          <Label
+            htmlFor="assessmentSelector"
+            className="text-sm font-medium text-gray-700"
+          >
+            Teacher
+          </Label>
+          <Select
+            value={subjectResults.teacher_id}
+            onValueChange={(value) =>
+              setSubjectResults((prev) => ({
+                ...prev,
+                teacher_id: value,
+              }))
+            }
+            disabled={isFetchingClass}
+          >
+            <SelectTrigger className="w-full capitalize">
+              <SelectValue placeholder="Select Teacher" />
+            </SelectTrigger>
+            <SelectContent className="">
+              {studentsClass?.teachers.map((teacher) => {
+                return (
+                  <SelectItem
+                    key={teacher.id}
+                    value={teacher.id}
+                    className="w-full"
+                  >
+                    {teacher.full_name}
                   </SelectItem>
                 );
               })}
