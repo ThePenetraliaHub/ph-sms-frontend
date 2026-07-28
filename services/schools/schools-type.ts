@@ -194,7 +194,7 @@ export interface CreateSchoolRequest {
   linkedin_url: string;
 
   is_active: boolean;
-  term: Term[];
+  term: Term;
 }
 
 export interface TimetableUpdatePayload {
@@ -258,7 +258,7 @@ export interface UpdateSchoolRequest {
   linkedin_url: string;
 
   is_active: boolean;
-  term: Term[];
+  term: Term;
 
   bank: Bank;
   score: Score;
@@ -275,7 +275,7 @@ export interface UpdateSchoolRequest {
   classes: string[];
   subjects: string[];
   timetable_name: string;
-  timetable: TimeTableFormat[];
+  timetable?: TimeTableFormat[];
   applicable_school_grade: string;
   academic_term: string;
   school_days: string[];

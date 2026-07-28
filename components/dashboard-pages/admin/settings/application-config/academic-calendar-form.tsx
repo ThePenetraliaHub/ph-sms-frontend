@@ -108,7 +108,7 @@ export const AcademicCalendarForm = ({
     try {
       const res = await updateSchool({
         id: schoolId,
-        data: { term: modifiedTermArr },
+        data: { term: modifiedTermArr[0] },
       }).unwrap();
       console.log(res);
       toast.success(

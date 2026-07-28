@@ -119,6 +119,46 @@ export interface RecordResultsParams {
   }>;
 }
 
+export interface GenerateReportPayload {
+  school_id: string;
+  class_name: string;
+  term: string;
+  session: string;
+}
+
+export interface PublishGradeReportsPayload {
+  school_id: string;
+  class_name: string;
+  term: string;
+  session: string;
+  action: "publish";
+}
+
+//publish for specific students
+export interface GetResultsParams {
+  school_id: string;
+  class_name: string;
+  term: string;
+  session: string;
+}
+
+export interface PublishStudentsResultPayload {
+  school_id: string;
+  class_name: string;
+  term: string;
+  session: string;
+  action: "publish";
+  student_ids: string[];
+}
+
+export interface UnpublishStudentResultPayload {
+  school_id: string;
+  class_name: string;
+  term: string;
+  session: string;
+  action: "unpublish";
+}
+
 export interface GradeDistributionItem {
   label: string;
   grade: string;
@@ -136,4 +176,28 @@ export interface ResultMetrics {
 // export type ResultResponse = ApiResponse<Result>;
 export type ResultResponse = {
   data: { status: boolean; status_code: number; message: string; data: Result };
+};
+
+export type Report = {
+  academic_grade: any | null;
+  date_generated: string;
+  id: string;
+  report_status: "unpublished" | "published";
+  student_id: string;
+  student_name: string;
+  time_generated: string;
+};
+
+type ReportData = {
+  generated_reports: Report[];
+  skipped_students: { id: string; message: string; name: string }[];
+  total_generated: number;
+  total_skipped: number;
+};
+
+export type ReportResponse = {
+  status: boolean;
+  status_code: number;
+  message: string;
+  data: ReportData;
 };

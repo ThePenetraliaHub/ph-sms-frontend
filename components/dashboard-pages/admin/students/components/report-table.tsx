@@ -27,7 +27,7 @@ interface StudentReport {
   name: string;
   schoolId: string;
   academicGrade: string;
-  reportStatus: "completed" | "in-progress";
+  reportStatus: "published" | "unpublished";
   progress?: number;
   dateGenerated: string;
   timeGenerated: string;
@@ -73,7 +73,7 @@ export function ReportTable({ students }: ReportTableProps) {
               <TableHead>Academic Grade</TableHead>
               <TableHead>Report Status</TableHead>
               <TableHead>Date Generated</TableHead>
-              <TableHead className="w-12"></TableHead>
+              <TableHead className="w-12">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -89,11 +89,12 @@ export function ReportTable({ students }: ReportTableProps) {
                   {student.name} ({student.schoolId})
                 </TableCell>
                 <TableCell>{student.academicGrade}</TableCell>
-                <TableCell>
-                  <ReportStatus
+                <TableCell className={`capitalize ${student.reportStatus === "published" ? "text-green-600" : "text-red-600"}`}>
+                  {/* <ReportStatus
                     status={student.reportStatus}
                     progress={student.progress}
-                  />
+                  /> */}
+                  {student.reportStatus}
                 </TableCell>
                 <TableCell className="text-sm text-gray-600">
                   {student.dateGenerated}, {student.timeGenerated}

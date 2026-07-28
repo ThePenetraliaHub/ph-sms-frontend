@@ -201,7 +201,7 @@ export default function MonitorTestSessionsPage() {
               : "—";
         return {
           id: exam.id,
-          examTitle: exam.title,
+          examTitle: exam.title ?? "",
           class: classDisplay,
           invigilator: getInvigilatorDisplay(exam),
           startTime,

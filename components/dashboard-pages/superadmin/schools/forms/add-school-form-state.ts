@@ -196,7 +196,10 @@ export function buildCreateSchoolPayload(
     image_url: primaryLogoUrl,
     image_public_id: primaryLogoPublicId,
   };
-  const term = defaultTerm(identity.academicSession, identity.defaultTerms);
+  const term: Term = defaultTerm(
+    identity.academicSession,
+    identity.defaultTerms,
+  );
   const now = new Date().toISOString().slice(0, 10);
   return {
     name: identity.schoolName,

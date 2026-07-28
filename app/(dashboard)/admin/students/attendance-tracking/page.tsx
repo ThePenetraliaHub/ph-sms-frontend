@@ -31,7 +31,7 @@ export default function AttendanceTrackingPage() {
   const user = useAppSelector(selectUser);
   const all_school_classes = user ? user.school.classes : [];
   const session = user ? user.school.term.session : "";
-  const [selectedDate, setSelectedDate] = useState<Date>("");
+  const [selectedDate, setSelectedDate] = useState<Date>();
   const [status, setStatus] = useState("all");
   const [selectedClass, setSelectedClass] = useState("JSS 1");
   const [formattedAttendance, setFormattedAttendance] = useState<
@@ -61,7 +61,7 @@ export default function AttendanceTrackingPage() {
       const res = await getFilteredAttendance({
         class_name: selectedClass,
         status: status as "present" | "absent" | "late" | "excused",
-        date: formatDate(selectedDate),
+        date: selectedDate ? formatDate(selectedDate) : "",
         session: session,
       }).unwrap();
       console.log(res);

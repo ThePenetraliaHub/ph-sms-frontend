@@ -54,7 +54,7 @@ function mapExamToRecentActivity(exam: CbtExam): RecentTestActivity {
       : "in-progress";
   return {
     id: exam.id,
-    testName: exam.title,
+    testName: exam.title ?? "",
     dateTime,
     status,
   };
@@ -321,7 +321,7 @@ export default function CBTManagementDashboardPage() {
           onOpenChange={setScheduleModalOpen}
           examOptions={examsList
             .filter((e) => !e.completed)
-            .map((e) => ({ value: e.id, label: e.title }))}
+            .map((e) => ({ value: e.id, label: e.title ?? "" }))}
           venueSuggestions={venueSuggestions}
           invigilatorOptions={invigilatorOptions}
           onScheduleAndActivate={() => {

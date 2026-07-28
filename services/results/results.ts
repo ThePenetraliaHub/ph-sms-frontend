@@ -12,6 +12,12 @@ import type {
   ExamResult,
   ExamResultsQueryParams,
   ExamResultsListResponse,
+  GenerateReportPayload,
+  PublishGradeReportsPayload,
+  GetResultsParams,
+  PublishStudentsResultPayload,
+  UnpublishStudentResultPayload,
+  ReportResponse,
 } from "./result-types";
 import { computeResultMetrics } from "./result-metrics";
 
@@ -133,6 +139,71 @@ export const resultsApi = baseApi.injectEndpoints({
         };
       },
     }),
+
+    generateGradeReports: build.mutation<ReportResponse, GenerateReportPayload>(
+      {
+        query: (body) => ({
+          url: `${BASE}/grade-reports/generate`,
+          method: "POST",
+          body,
+        }),
+        invalidatesTags: [{ type: "ExamResult", id: "LIST" }],
+      },
+    ),
+
+    publishGradeReports: build.mutation<
+      ResultResponse,
+      PublishGradeReportsPayload
+    >({
+      query: (body) => ({
+        url: `${BASE}/grade-reports/publish`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: [{ type: "ExamResult", id: "LIST" }],
+    }),
+
+    publishSelectedResults: build.mutation<
+      ResultResponse,
+      PublishStudentsResultPayload
+    >({
+      query: (body) => ({
+        url: `${BASE}/grade-reports/publish`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: [{ type: "ExamResult", id: "LIST" }],
+    }),
+
+    unpublishSelectedResults: build.mutation<
+      ResultResponse,
+      UnpublishStudentResultPayload
+    >({
+      query: (body) => ({
+        url: `${BASE}/grade-reports/publish`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: [{ type: "ExamResult", id: "LIST" }],
+    }),
+
+    downloadResult: build.query<string, GetResultsParams>({
+      query: ({ school_id, class_name, term, session }) => ({
+        url: `${BASE}/grade-reports/download`,
+        method: "GET",
+        params: { school_id, class_name, term, session },
+        responseHandler: "text",
+      }),
+    }),
+
+    getFilteredGradeReports: build.query<ResultResponse, GetResultsParams>({
+      query: ({ school_id, class_name, term, session }) => ({
+        url: `${BASE}/grade-reports`,
+        method: "GET",
+        params: { school_id, class_name, term, session },
+      }),
+      providesTags: ["ExamResult"],
+    }),
   }),
 });
 
@@ -144,6 +215,13 @@ export const {
   useUpdateResultsMutation,
   useDeleteResultMutation,
   useGetResultMetricsQuery,
+  //start
+  useGenerateGradeReportsMutation,
+  useLazyDownloadResultQuery,
+  usePublishGradeReportsMutation,
+  usePublishSelectedResultsMutation,
+  useUnpublishSelectedResultsMutation,
+  useGetFilteredGradeReportsQuery,
 } = resultsApi;
 
 export const useGetAllExamResultsQuery = useGetAllResultsQuery;

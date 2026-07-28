@@ -39,7 +39,7 @@ interface DraftOutline {
 }
 
 function subjectToDraftOutline(s: Subject): DraftOutline {
-  const grades = s.applicable_grade ? [s.applicable_grade] : [];
+  const grades = s.applicable_grade ? [...s.applicable_grade] : [];
   const ub = s.updated_by;
   const lastEditedBy =
     ub && typeof ub === "object"
