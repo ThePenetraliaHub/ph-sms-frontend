@@ -46,7 +46,7 @@ export function SetFeeStructureModal({
   onOpenChange,
 }: SetFeeStructureModalProps) {
   const user = useAppSelector(selectUser);
-  console.log("Admin School: ", user?.school);
+  // console.log("Admin School: ", user?.school);
   const [formData, setFormData] = useState<FeeStructureForm>(initialData);
   const [openDatePicker, setOpenDatePicker] = useState<boolean>(false);
 
