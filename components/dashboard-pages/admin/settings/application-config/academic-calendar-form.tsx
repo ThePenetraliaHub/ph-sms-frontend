@@ -104,7 +104,6 @@ export const AcademicCalendarForm = ({
         end_date: term.endDate ? term.endDate.toISOString().split("T")[0] : "",
       };
     });
-    console.log(modifiedTermArr);
     try {
       const res = await updateSchool({
         id: schoolId,

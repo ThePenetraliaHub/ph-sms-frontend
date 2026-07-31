@@ -1,8 +1,8 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Suspense, useEffect, useMemo, useState } from "react";
+// import { useSearchParams } from "next/navigation";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ReportTable } from "@/components/dashboard-pages/admin/students/components/report-table";
 import { Icon } from "@/components/general/huge-icon";
@@ -38,36 +38,6 @@ interface Filter {
   action: "generate" | "publish" | "fetch";
 }
 
-// const initialData: StudentReport[] = [
-//   {
-//     id: "1",
-//     name: "Chinedu Nwokodi",
-//     schoolId: "178023",
-//     academicGrade: "B+",
-//     reportStatus: "published",
-//     dateGenerated: "Oct. 10, 2025",
-//     timeGenerated: "08:15AM",
-//   },
-//   {
-//     id: "2",
-//     name: "Adebisi Deborah",
-//     schoolId: "178024",
-//     academicGrade: "B-",
-//     reportStatus: "unpublished",
-//     dateGenerated: "Oct. 10, 2025",
-//     timeGenerated: "08:15AM",
-//   },
-//   {
-//     id: "3",
-//     name: "Dauda Afhiz",
-//     schoolId: "178025",
-//     academicGrade: "A+",
-//     reportStatus: "published",
-//     dateGenerated: "Oct. 10, 2025",
-//     timeGenerated: "08:15AM",
-//   },
-// ];
-
 const TERM_OPTIONS = [
   { value: "first-term", label: "First Term" },
   { value: "second-term", label: "Second Term" },
@@ -85,8 +55,14 @@ function ReportGenerationContent() {
     action: "generate",
   });
   const [sessions, setSessions] = useState<string[]>([]);
+  const [getClassReport, setGetClassReport] = useState<boolean>(false);
 
-  const { data: fetchGradeReports } = useGetFilteredGradeReportsQuery(
+  //fetch reports
+  const {
+    data: fetchGradeReports,
+    isLoading: isFetchingGradeReports,
+    isError: isGetClassReportErr,
+  } = useGetFilteredGradeReportsQuery(
     {
       term: filter.term,
       session: filter.session,
@@ -94,13 +70,22 @@ function ReportGenerationContent() {
       school_id: currSchool?.id ?? "",
     },
     {
-      skip: !currSchool?.id || !filter.grade || !filter.term || !filter.session,
+      skip:
+        !currSchool?.id ||
+        !filter.grade ||
+        !filter.term ||
+        !filter.session ||
+        !getClassReport,
     },
   );
 
-  console.log(fetchGradeReports);
+  const classGrades = useMemo(() => {
+    if (!fetchGradeReports) return;
+    setGetClassReport(false);
+    return fetchGradeReports.data;
+  }, [fetchGradeReports]);
 
-  const [fetchReports, { isLoading: isFetchingReports }] =
+  const [generateClassReport, { isLoading: isFetchingReports }] =
     useGenerateGradeReportsMutation();
 
   const [downloadReport] = useLazyDownloadResultQuery();
@@ -125,16 +110,16 @@ function ReportGenerationContent() {
     return sessions;
   }
 
+  //generate class report
   const generateReport = async () => {
     if (!currSchool?.id) return toast.warning("School not found");
     try {
-      const res = await fetchReports({
+      const res = await generateClassReport({
         term: filter.term,
         session: filter.session,
         class_name: filter.grade,
         school_id: currSchool.id,
       }).unwrap();
-      console.log(res);
       toast.success(
         res.message ? res.message : "Report generated successfully",
       );
@@ -157,8 +142,10 @@ function ReportGenerationContent() {
     }
   };
 
+  //download class report
   const handleDownload = async () => {
     if (!currSchool) return;
+    if(!filter.grade) return toast.error("Class not selected")
     const csvText = await downloadReport({
       school_id: currSchool.id,
       class_name: filter.grade,
@@ -177,6 +164,7 @@ function ReportGenerationContent() {
     window.URL.revokeObjectURL(url);
   };
 
+  //publish class reports
   const exposeReports = async () => {
     if (!currSchool?.id) return toast.warning("School not found");
     try {
@@ -187,14 +175,18 @@ function ReportGenerationContent() {
         school_id: currSchool.id,
         action: "publish",
       }).unwrap();
-      console.log("Res from Pubblish: ", res);
-      // toast.success(
-      //   res.message ? res.message : "Report generated successfully",
-      // );
+      toast.success(
+        res.message ? res.message : "Class report published successfully",
+      );
     } catch (err) {
       console.error(err);
     }
   };
+
+  useEffect(() => {
+    if (!isGetClassReportErr) return;
+    setGetClassReport(false);
+  }, [isGetClassReportErr]);
 
   useEffect(() => {
     if (!currSchool) return;
@@ -218,7 +210,10 @@ function ReportGenerationContent() {
       <Card>
         <CardHeader>
           <div className="space-y-2">
-            <h2 className="text-lg font-semibold">Filter Results</h2>
+            <h2 className="text-lg font-bold xl:text-xl">
+              Generate, Publish or Fetch Class Reports
+            </h2>
+            <Separator />
             <div className="space-y-4 w-full py-3">
               <div className="grid grid-cols-1 w-full gap-3 sm:grid-cols-3">
                 <SelectField
@@ -282,7 +277,7 @@ function ReportGenerationContent() {
                 >
                   {[
                     { label: "Generate Report", value: "generate" },
-                    { label: "Publish Bulk Reports", value: "publish" },
+                    { label: "Publish Class Report", value: "publish" },
                     { label: "Get Grade Reports", value: "fetch" },
                   ].map((opt, index) => (
                     <SelectItem
@@ -295,14 +290,20 @@ function ReportGenerationContent() {
                   ))}
                 </SelectField>
                 <Button
-                  // onClick={generateReport}
-                  onClick={handleDownload}
+                  onClick={
+                    filter.action === "publish"
+                      ? exposeReports
+                      : filter.action === "fetch"
+                        ? () => setGetClassReport(true)
+                        : generateReport
+                  }
                   disabled={
                     !filter.session ||
                     !filter.term ||
                     !filter.grade ||
                     isFetchingReports ||
-                    isPublishingGrades
+                    isPublishingGrades ||
+                    isFetchingGradeReports
                   }
                   className="w-full capitalize disabled:opacity-70 mt-2 sm:mt-0"
                 >
@@ -341,7 +342,9 @@ function ReportGenerationContent() {
             </p>
           ) : studentsReport.length === 0 ? (
             <p className="text-sm text-gray-500 py-8 text-center">
-              No report cards found for the selected term and class.
+              {filter.grade
+                ? "No report cards found for the selected term and class"
+                : "No grade selected"}
             </p>
           ) : (
             <ReportTable students={studentsReport} />

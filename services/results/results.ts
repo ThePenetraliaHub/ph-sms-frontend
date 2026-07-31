@@ -18,6 +18,8 @@ import type {
   PublishStudentsResultPayload,
   UnpublishStudentResultPayload,
   ReportResponse,
+  PublishGradeReportResponse,
+  ClassReport,
 } from "./result-types";
 import { computeResultMetrics } from "./result-metrics";
 
@@ -152,7 +154,7 @@ export const resultsApi = baseApi.injectEndpoints({
     ),
 
     publishGradeReports: build.mutation<
-      ResultResponse,
+      PublishGradeReportResponse,
       PublishGradeReportsPayload
     >({
       query: (body) => ({
@@ -196,7 +198,7 @@ export const resultsApi = baseApi.injectEndpoints({
       }),
     }),
 
-    getFilteredGradeReports: build.query<ResultResponse, GetResultsParams>({
+    getFilteredGradeReports: build.query<ClassReport, GetResultsParams>({
       query: ({ school_id, class_name, term, session }) => ({
         url: `${BASE}/grade-reports`,
         method: "GET",

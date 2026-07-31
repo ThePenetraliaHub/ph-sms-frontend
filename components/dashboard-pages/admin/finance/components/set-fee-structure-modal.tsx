@@ -9,6 +9,8 @@ import { SelectItem } from "@/components/ui/select";
 import DatePickerIcon from "@/components/ui/date-picker";
 import { Icon } from "@/components/general/huge-icon";
 import { Cancel01Icon } from "@hugeicons/core-free-icons";
+import { useAppSelector } from "@/store/hooks";
+import { selectUser } from "@/store/slices/authSlice";
 
 const initialData = {
   feeName: "",
@@ -43,6 +45,8 @@ export function SetFeeStructureModal({
   open,
   onOpenChange,
 }: SetFeeStructureModalProps) {
+  const user = useAppSelector(selectUser);
+  console.log("Admin School: ", user?.school);
   const [formData, setFormData] = useState<FeeStructureForm>(initialData);
   const [openDatePicker, setOpenDatePicker] = useState<boolean>(false);
 

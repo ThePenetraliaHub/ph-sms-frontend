@@ -9,6 +9,7 @@ import type {
 import { Stakeholders } from "../stakeholders/stakeholder-types";
 import { Subject } from "../subjects/subject-types";
 import { CbtExam } from "../cbt-exams/cbt-exam-types";
+import { Notes } from "../notes/note-types";
 
 export interface AcademicCalendarConfig {
   name: string;
@@ -467,14 +468,25 @@ export interface Class {
   // subjects: Partial<Subject>
   subjects: {
     id: string;
+    applicable_grade: string[];
+    teachers: Partial<Stakeholders>[];
     name: string;
     code: string;
-    credit_units: string;
-    continuous_assessment: string;
+    credit_units: number;
+    continuous_assessment: number;
     final_exam: number;
     curriculum_standard: string;
     status: string;
     head_of_department_id: string;
+    notes: Notes[];
+    resources: {
+      created_at: string;
+      file_link: string;
+      format: string;
+      id: string;
+      name: string;
+      type: string;
+    }[];
     content_outline_table?: {
       planned_pacing: string;
       unit_definition: string;

@@ -49,6 +49,15 @@ export function CourseCard({
           <Separator className="my-2" />
 
           <div>
+            <p className="text-xs text-gray-500 mb-1">Current Status:</p>
+            <p className="text-sm font-medium text-gray-800 capitalize">
+              approved
+            </p>
+          </div>
+
+          <Separator className="my-2" />
+
+          <div>
             <p className="text-xs text-gray-500 mb-1">My Latest Activity</p>
             <p className="text-sm text-gray-600">{latestActivity}</p>
           </div>

@@ -13,10 +13,14 @@ import {
   ViewIcon,
   Download01Icon,
 } from "@hugeicons/core-free-icons";
+import { useGetSubjectByIdQuery } from "@/services/subjects/subjects";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 interface Resource {
   name: string;
-  type: "pdf" | "mp4";
+  format: string;
+  link: string;
 }
 
 interface CourseContent {
@@ -26,58 +30,51 @@ interface CourseContent {
   status: "In progress" | "Not Started" | "Nil";
 }
 
-const courseData: Record<
-  string,
-  { title: string; teacher: string; currentUnit: string; lastActivity: string }
-> = {
-  "1": {
-    title: "JSS 2 Mathematics",
-    teacher: "Mr. Femi T.",
-    currentUnit: "Unit 10: Introduction to Geometry",
-    lastActivity: "Viewed Video: Algebra Review (5 min ago)",
-  },
-};
-
-const courseContents: CourseContent[] = [
-  {
-    unitTopic: "Unit 1: Algebra Fundamentals",
-    topicLessonName:
-      "Topic 1.1: Linear Equations\nTopic 1.2: Simultaneous Equations",
-    resources: [
-      { name: "Algebra Fundamental.pdf", type: "pdf" },
-      { name: "Algebra Fundamental.pt 1.mp4", type: "mp4" },
-      { name: "Algebra Fundamental.pt 2.mp4", type: "mp4" },
-    ],
-    status: "In progress",
-  },
-  {
-    unitTopic: "Unit 2: Introduction to Geometry",
-    topicLessonName:
-      "Topic 2.1: Types of Shapes\nTopic 2.2: Perimeter and Area",
-    resources: [
-      { name: "Geometry Fundamental.pdf", type: "pdf" },
-      { name: "Geometry Fundamental.mp4", type: "mp4" },
-    ],
-    status: "Not Started",
-  },
-  {
-    unitTopic: "Unit 3: Statistics",
-    topicLessonName: "Topic 3.1: Data Collection",
-    resources: [],
-    status: "Nil",
-  },
-  {
-    unitTopic: "Unit 4: Financial Mathematics",
-    topicLessonName: "Topic 4.1: Simple Interest",
-    resources: [],
-    status: "Nil",
-  },
-];
-
 export default function CourseDetailPage() {
   const params = useParams();
   const id = params.id as string;
-  const course = courseData[id] || courseData["1"];
+  const [courseContents, setCourseContents] = useState<CourseContent[]>([]);
+
+  const {
+    data: subject,
+    isLoading: isFetchingSubject,
+    isError: isFecthingSubjectErr,
+  } = useGetSubjectByIdQuery(id, { skip: !id });
+
+  const course = useMemo(() => {
+    if (!subject) return;
+    const courseOutline: CourseContent[] =
+      subject.data.content_outline_table.map((prev) => ({
+        unitTopic: prev.unit_definition,
+        topicLessonName: prev.topic_definition,
+        resources: subject.data.resource
+          ? subject.data.resource?.map((item) => ({
+              name: item.name,
+              format: item.format,
+              link: item.file_link,
+            }))
+          : [],
+        status: subject.data.status as "In progress" | "Not Started" | "Nil",
+      }));
+    setCourseContents(courseOutline);
+    return subject.data;
+  }, [subject]);
+
+  async function handleResourceDownload(url: string, filename: string) {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = filename;
+      a.click();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error(err);
+      toast.error("An error occured. Please try again.");
+    }
+  }
 
   const columns: TableColumn<CourseContent>[] = [
     {
@@ -115,14 +112,22 @@ export default function CourseDetailPage() {
               >
                 <span>{resource.name}</span>
                 <div className="flex items-center gap-1">
-                  <button
+                  {/* view */}
+                  <a
+                    href={resource.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-gray-400 hover:text-gray-600 transition-colors"
                     title="View"
                   >
                     <Icon icon={ViewIcon} size={16} />
-                  </button>
+                  </a>
+                  {/* download */}
                   <button
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    onClick={() =>
+                      handleResourceDownload(resource.link, resource.name)
+                    }
+                    className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                     title="Download"
                   >
                     <Icon icon={Download01Icon} size={16} />
@@ -145,32 +150,49 @@ export default function CourseDetailPage() {
             : status === "Not Started"
               ? "text-gray-600"
               : "text-gray-400";
-        return <span className={`text-sm ${colorClass}`}>{status}</span>;
+        return (
+          <span className={`text-sm capitalize ${colorClass}`}>{status}</span>
+        );
       },
     },
   ];
+
+  if (isFetchingSubject)
+    return (
+      <div className="text-muted-foreground min-h-[80vh] flex items-center justify-center">
+        Loading course...
+      </div>
+    );
+
+  if (isFecthingSubjectErr)
+    return (
+      <div className="text-muted-foreground min-h-[80vh] flex items-center justify-center">
+        {" "}
+        ❌ Failed to get course. Try again.
+      </div>
+    );
 
   return (
     <div className="space-y-4">
       {/* Course Header */}
       <div className="bg-background rounded-md p-6">
         <h1 className="text-2xl font-bold text-gray-800 mb-4">
-          {course.title}
+          {course?.name}
         </h1>
         <div className="flex flex-wrap gap-3">
           <div className="bg-gray-100 rounded-md px-4 py-2">
             <span className="text-sm text-gray-700">
-              Assigned Teacher: {course.teacher}
+              Assigned Teacher: {course?.head_of_department_id ?? ""}
             </span>
           </div>
           <div className="bg-gray-100 rounded-md px-4 py-2">
             <span className="text-sm text-gray-700">
-              Currently Teaching: {course.currentUnit}
+              Curriculum Standard: {course?.curriculum_standard ?? ""}
             </span>
           </div>
           <div className="bg-gray-100 rounded-md px-4 py-2">
             <span className="text-sm text-gray-700">
-              My last activity: {course.lastActivity}
+              Course Status: {course?.status ?? ""}
             </span>
           </div>
         </div>

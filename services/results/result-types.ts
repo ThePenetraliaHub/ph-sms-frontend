@@ -201,3 +201,27 @@ export type ReportResponse = {
   message: string;
   data: ReportData;
 };
+
+export type PublishGradeReportResponse = {
+  data: {
+    action: string;
+    total_updated: number;
+    updated_reports: {
+      id: string;
+      published_at: string;
+      report_status: string;
+      student_name: string;
+      unpublished_at: null;
+    }[];
+  };
+  message: string;
+  status: boolean;
+  status_code: number;
+};
+
+export type ClassReport = {
+  status: boolean;
+  status_code: number;
+  message: string;
+  data: any;
+};
