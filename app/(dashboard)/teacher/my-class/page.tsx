@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MetricCard } from "@/components/dashboard-pages/admin/admissions/components/metric-card";
 import { usePagination } from "@/hooks/use-pagination";
 import {
@@ -44,6 +44,14 @@ export interface Student {
   parent_name: string;
   parent_email: string;
   parent_phone: string;
+  fee_summary: {
+    block_result_access: boolean;
+    fee_records: any[];
+    has_outstanding: boolean;
+    total_fees: number;
+    total_owed: number;
+    total_paid: number;
+  };
 }
 
 const getStatusColor = (status: Student["status"]) => {
@@ -106,6 +114,14 @@ export default function MyClassPage() {
           parent_name: student.parent_name ?? "",
           parent_email: student.parent_email ?? "",
           parent_phone: student.parent_phone ?? "",
+          fee_summary: student.fee_summary ?? {
+            block_result_access: false,
+            fee_records: [],
+            has_outstanding: false,
+            total_fees: 0,
+            total_owed: 0,
+            total_paid: 0,
+          },
         };
       })
     : [];
@@ -158,12 +174,46 @@ export default function MyClassPage() {
       title: "Parent Information",
       render: (value, row) => (
         <div className="flex flex-col">
-          <span className="text-gray-800 font-semibold">{row.parent_name}</span>
-          <span className="text-sm text-gray-500">
-            Parent Phone: {row.parent_phone ?? "N/A"}
+          <span className="text-gray-800 font-semibold">
+            {row.parent_name
+              ? row.parent_name === ""
+                ? "None Registered"
+                : row.parent_name
+              : "None Registered"}
           </span>
           <span className="text-sm text-gray-500">
-            Parent Email: {row.parent_email ?? "N/A"}
+            Parent Phone:{" "}
+            {row.parent_phone
+              ? row.parent_phone === ""
+                ? "N/A"
+                : row.parent_phone
+              : "N/A"}
+          </span>
+          <span className="text-sm text-gray-500">
+            Parent Email:{" "}
+            {row.parent_email
+              ? row.parent_email === ""
+                ? "N/AN/A"
+                : row.parent_email
+              : "N/A"}
+          </span>
+        </div>
+      ),
+    },
+    //school fees record
+    {
+      key: "school_fees",
+      title: "School Fees Record",
+      render: (value, row) => (
+        <div className="flex flex-col">
+          <span className="text-sm text-gray-500">
+            Total Fees: ₦{row.fee_summary.total_fees.toFixed(2)}
+          </span>
+          <span className="text-sm text-gray-500">
+            Total Paid: ₦{row.fee_summary.total_paid.toFixed(2)}
+          </span>
+          <span className="text-sm text-gray-500">
+            Total Owed: ₦{row.fee_summary.total_owed.toFixed(2)}
           </span>
         </div>
       ),
@@ -228,6 +278,13 @@ export default function MyClassPage() {
       console.error(err);
     }
   };
+
+  const isLoading = isFetchingClass || isFetchingTeacher;
+
+  useEffect(() => {
+    if (!class_data) return;
+    setClassFilter(class_data.data.class_details.class_name);
+  }, [class_data]);
 
   return (
     <div className="space-y-4">
@@ -324,7 +381,9 @@ export default function MyClassPage() {
             actions={actions}
             showActionsColumn={true}
             actionsColumnTitle="Action"
-            emptyMessage={"No student in this class yet"}
+            emptyMessage={
+              isLoading ? "Loading..." : "No student in this class yet"
+            }
           />
         </div>
 

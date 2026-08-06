@@ -406,8 +406,10 @@ export interface Class {
   class_details: {
     average_attendance_percentage: number;
     class_name: string;
+    total_exams: number;
     present_today: number;
     total_students: number;
+    total_subjects: number;
     total_teachers: number;
   };
   school: {
@@ -431,7 +433,16 @@ export interface Class {
     email: string;
     first_name: string;
     full_name: string;
+    fee_summary: {
+      block_result_access: boolean;
+      fee_records: any[];
+      has_outstanding: boolean;
+      total_fees: number;
+      total_owed: number;
+      total_paid: number;
+    };
     gender: "male" | "female";
+    grade: any;
     hostel: any;
     id: string | null;
     last_name: string | null;
@@ -445,7 +456,7 @@ export interface Class {
       total_paid: number;
     };
     status: "active" | "inactive";
-    transport: {};
+    transport: any;
     user_id: string;
   }[];
   teachers: {
@@ -495,3 +506,16 @@ export interface Class {
   }[];
   cbt_exams: CbtExam[];
 }
+
+export interface FeeStructurePayload {
+  feeName: string;
+  applicableTerm: string;
+  applicableClass: string;
+  items: { itemName: string; itemPrice: string }[];
+  dueDate: string;
+  school_id: string;
+  assignToAll: boolean;
+  session: string;
+}
+
+export type FeeStructureResponse = ApiListResponse<any>;

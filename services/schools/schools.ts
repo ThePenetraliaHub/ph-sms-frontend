@@ -9,6 +9,8 @@ import type {
   DiscountRule,
   Term,
   SchoolClassResponse,
+  FeeStructurePayload,
+  FeeStructureResponse,
 } from "./schools-type";
 
 const BASE = "/schools";
@@ -60,11 +62,26 @@ export const schoolsApi = baseApi.injectEndpoints({
         response.data.classes ?? [],
     }),
 
-    getClass: build.query<SchoolClassResponse, { id: string; class_name: string }>({
+    getClass: build.query<
+      SchoolClassResponse,
+      { id: string; class_name: string }
+    >({
       query: ({ id, class_name }) => ({
         url: `${BASE}/${id}/classes/${class_name}`,
       }),
       providesTags: (_, __, { id }) => [{ type: "School", id }],
+    }),
+
+    createFeeStructure: build.mutation<
+      FeeStructureResponse,
+      FeeStructurePayload
+    >({
+      query: (body) => ({
+        url: `${BASE}/fees/structures`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["School"],
     }),
 
     // getTerm: build.query<Term | null, string>({
@@ -85,4 +102,5 @@ export const {
   useUpdateSchoolMutation,
   useDeleteSchoolMutation,
   useGetClassQuery,
+  useCreateFeeStructureMutation,
 } = schoolsApi;

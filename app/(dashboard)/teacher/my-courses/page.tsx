@@ -6,25 +6,52 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable, TableColumn } from "@/components/ui/data-table";
 import { useAppSelector } from "@/store/hooks";
 import {
-  TeacherCourse,
-  useGetTeacherCoursesQuery,
-} from "@/services/teacherCourses";
-import {
   Upload05Icon,
   AssignmentsIcon,
   LibrariesIcon,
 } from "@hugeicons/core-free-icons";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import UploadNewResource from "@/components/dashboard-pages/teacher/my-courses/modals/upload-new-resource";
 import { useRouter } from "next/navigation";
 import ViewAssignmentSubmissions from "@/components/dashboard-pages/teacher/my-courses/modals/view-assignment-submissions";
 import ScoreInputGrid from "@/components/dashboard-pages/teacher/my-courses/modals/score-input-grid";
 import { selectUser } from "@/store/slices/authSlice";
+import { useGetStudentByQueryParamQuery } from "@/services/stakeholders/stakeholders";
 import {
-  useGetStakeholderByIdQuery,
-  useGetStudentByQueryParamQuery,
-} from "@/services/stakeholders/stakeholders";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useGetClassQuery } from "@/services/schools/schools";
+import { Button } from "@/components/ui/button";
+import ViewSubject from "@/components/dashboard-pages/teacher/my-courses/modals/view-subject";
+import { Subject } from "@/services/subjects/subject-types";
+
+export interface TeacherCourse {
+  id: string;
+  subject: string;
+  class: string;
+  studentsEnrolled: number;
+  code: string;
+  status: string;
+  applicableGrade: string[];
+  ca_score: number;
+  exam_score: number;
+  credit_units: number;
+  curriculumStandard: string;
+  resources: {
+    created_at: string;
+    file_link: string;
+    format: string;
+    id: string;
+    name: string;
+    type: string;
+  }[];
+  teachers: any[];
+}
 
 export type AssignmentSubmission = {
   id: string;
@@ -34,42 +61,8 @@ export type AssignmentSubmission = {
   marks: string;
 };
 
-const mockCourses: TeacherCourse[] = [
-  {
-    id: "1",
-    subject: "Integrated Science",
-    class: "JS 3",
-    studentsEnrolled: 45,
-    contentStatus: "8/10 Units Published",
-  },
-  {
-    id: "2",
-    subject: "Chemistry",
-    class: "SS 2",
-    studentsEnrolled: 45,
-    contentStatus: "8/10 Units Published",
-  },
-  {
-    id: "3",
-    subject: "Arts & Crafts",
-    class: "SS 1",
-    studentsEnrolled: 45,
-    contentStatus: "8/10 Units Published",
-  },
-  {
-    id: "4",
-    subject: "History",
-    class: "JS 3",
-    studentsEnrolled: 45,
-    contentStatus: "8/10 Units Published",
-  },
-];
-
 export default function MyCoursesPage() {
   const { push } = useRouter();
-  // const { data, isLoading, isError } = useGetTeacherCoursesQuery();
-  const isLoading = false;
-  const isError = false;
   const appError = useAppSelector((state) => state.error.lastError);
   const [openNewResourceModal, setOpenNewResourceModal] =
     useState<boolean>(false);
@@ -79,8 +72,12 @@ export default function MyCoursesPage() {
   const [selectedAssignment, setSelectedAssignment] =
     useState<AssignmentSubmission>();
 
-  // const tableData = (data ?? mockCourses) || [];
-  const tableData = mockCourses;
+  const [classFilter, setClassFilter] = useState<string[]>([]);
+  const [selectedClass, setSelectedClass] = useState<string>();
+  const [myCourses, setMyCourses] = useState<TeacherCourse[]>([]);
+  const [openViewSubMod, setOpenViewSubMod] = useState<boolean>(false);
+  const [selectedSubject, setSelectedSubject] = useState<TeacherCourse>();
+
   const user = useAppSelector(selectUser);
 
   const columns: TableColumn<TeacherCourse>[] = [
@@ -106,10 +103,21 @@ export default function MyCoursesPage() {
       ),
     },
     {
-      key: "contentStatus",
-      title: "Content Status",
+      key: "code",
+      title: "Subject Code",
       render: (value) => (
         <span className="text-gray-700">{value as string}</span>
+      ),
+    },
+    {
+      key: "status",
+      title: "Status",
+      render: (value) => (
+        <span
+          className={`${value === "approved" ? "text-green-600" : value === "rejected" ? "text-red-600" : "text-gray-700"} capitalize`}
+        >
+          {value as string}
+        </span>
       ),
     },
     {
@@ -117,42 +125,71 @@ export default function MyCoursesPage() {
       title: "Action",
       render: (value, row) => {
         return (
-          <div className="flex items-center gap-3">
-            <Link
-              href={`/teacher/my-class?course=${row.id}`}
-              className="text-main-blue hover:underline text-sm font-medium"
-            >
-              View Class Roster
-            </Link>
-            <Link
-              href={`/teacher/my-courses/${row.id}`}
-              className="text-main-blue hover:underline text-sm font-medium"
-            >
-              View Course
-            </Link>
-          </div>
+          <Button
+            // href={`/teacher/my-courses/${row.id}`}
+            variant={"outline"}
+            onClick={() => {
+              setSelectedSubject(row);
+              setOpenViewSubMod(true);
+            }}
+            className="text-main text-sm font-medium"
+          >
+            View More
+          </Button>
         );
       },
     },
   ];
 
   //get stakeholder
-  const { data: staffDataResponse } = useGetStudentByQueryParamQuery(
-    user?.id ?? "",
-    {
+  const { data: staffDataResponse, isLoading: isFetchingStakeholder } =
+    useGetStudentByQueryParamQuery(user?.id ?? "", {
       skip: !user?.id,
-    },
-  );
-
+    });
   const stakeholder = staffDataResponse?.data[0];
 
-  //get class
+  //get class details
+  const {
+    data: class_data,
+    isLoading: isFetchingClass,
+    isError: isFetchingClassError,
+  } = useGetClassQuery(
+    { id: user?.school_id ?? "", class_name: selectedClass ?? "" },
+    { skip: !user?.school_id || !selectedClass },
+  );
 
   useEffect(() => {
     if (!selectedAssignment) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setOpenScoreInputModal(true);
   }, [selectedAssignment]);
+
+  useEffect(() => {
+    if (!stakeholder) return;
+    setClassFilter(stakeholder.assigned_classes ?? []);
+  }, [stakeholder]);
+
+  useEffect(() => {
+    if (!class_data) return;
+    const rebranded_courses: TeacherCourse[] = class_data.data.subjects.map(
+      (subject) => ({
+        id: subject.id ?? "",
+        subject: subject.name ?? "",
+        class: selectedClass ?? "",
+        studentsEnrolled: class_data.data.students.length,
+        code: subject.code,
+        status: subject.status,
+        applicableGrade: subject.applicable_grade,
+        ca_score: subject.continuous_assessment,
+        exam_score: subject.final_exam,
+        credit_units: subject.credit_units,
+        curriculumStandard: subject.curriculum_standard,
+        resources: subject.resources,
+        teachers: subject.teachers,
+      }),
+    );
+    setMyCourses(rebranded_courses);
+  }, [class_data]);
 
   return (
     <div className="space-y-4">
@@ -233,23 +270,49 @@ export default function MyCoursesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-800">
-            My Courses
+          <CardTitle className="text-lg font-semibold text-gray-800 flex justify-between items-center">
+            <p>My Courses</p>
+            <Select
+              value={""}
+              disabled={isFetchingClass || isFetchingStakeholder}
+              onValueChange={(value) => setSelectedClass(value)}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue
+                  placeholder={selectedClass ? selectedClass : "Select Class"}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {classFilter.map((clx, idx) => {
+                  return (
+                    <SelectItem key={idx} value={clx}>
+                      {clx}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
+          {isFetchingClass ? (
             <div className="flex items-center justify-center py-8">
               <span className="text-muted-foreground">Loading courses...</span>
+            </div>
+          ) : !selectedClass ? (
+            <div className="flex items-center justify-center py-8">
+              <span className="text-muted-foreground">
+                Kindly select a class.
+              </span>
             </div>
           ) : (
             <div className="border rounded-lg overflow-hidden">
               <DataTable
                 columns={columns}
-                data={tableData}
+                data={myCourses}
                 showActionsColumn={true}
                 emptyMessage={
-                  isError
+                  isFetchingClassError
                     ? "Unable to load courses at the moment."
                     : "No courses found."
                 }
@@ -281,6 +344,14 @@ export default function MyCoursesPage() {
           onOpenChange={setOpenScoreInputModal}
         />
       )}
+
+      {/* view course modal */}
+      <ViewSubject
+        subject={selectedSubject}
+        setSubject={setSelectedSubject}
+        open={openViewSubMod}
+        onOpenChange={setOpenViewSubMod}
+      />
     </div>
   );
 }
