@@ -64,12 +64,12 @@ export function AcademicDetailsForm({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">None</SelectItem>
-              <SelectItem value="JS 1">Junior Secondary 1 (JS1)</SelectItem>
-              <SelectItem value="JS 2">Junior Secondary 2 (JS2)</SelectItem>
-              <SelectItem value="JS 3">Junior Secondary 3 (JS3)</SelectItem>
-              <SelectItem value="SS 1">Senior Secondary 1 (SS1)</SelectItem>
-              <SelectItem value="SS 2">Senior Secondary 2 (SS2)</SelectItem>
-              <SelectItem value="SS 3">Senior Secondary 3 (SS3)</SelectItem>
+              <SelectItem value="JSS 1">JSS 1</SelectItem>
+              <SelectItem value="JSS 2">JSS 2</SelectItem>
+              <SelectItem value="JSS 3">JSS 3</SelectItem>
+              <SelectItem value="SSS 1">SSS 1</SelectItem>
+              <SelectItem value="SSS 2">SSS 2</SelectItem>
+              <SelectItem value="SSS 3">SSS 3</SelectItem>
             </SelectContent>
           </Select>
         </div>

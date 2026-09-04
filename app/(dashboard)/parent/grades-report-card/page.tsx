@@ -48,9 +48,13 @@ export default function GradesReportCardPage() {
   const { data: currParent, isLoading: isFetchingCurrParent } =
     useGetStudentByQueryParamQuery(user?.id ?? "");
 
+  console.log("Current Parent: ", currParent);
+
   const { data: resultsData } = useGetAllExamResultsQuery({ _all: true });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const examResults = resultsData?.data ?? [];
+
+  console.log("Exam Results", examResults);
 
   const allSubjectPerformances = useMemo(() => {
     const bySubject = new Map<
@@ -72,9 +76,9 @@ export default function GradesReportCardPage() {
                 teacher?: { first_name?: string; last_name?: string };
               }
             ).teacher
-              ? `${(sr as SubjectResult & { teacher?: { first_name?: string; last_name?: string } }).teacher?.first_name ?? ""} ${(sr as SubjectResult & { teacher?: { first_name?: string; last_name?: string } }).teacher?.last_name ?? ""}`.trim() ||
-                "—"
-              : "—",
+              ? `${(sr as SubjectResult & { teacher?: { first_name?: string; last_name?: string; user?: { username?: string } } }).teacher?.user?.username ?? ""} ${(sr as SubjectResult & { teacher?: { first_name?: string; last_name?: string } }).teacher?.last_name ?? ""}`.trim() ||
+                "N/A"
+              : "N/A",
             scores: [],
             grades: [],
           });
@@ -108,6 +112,8 @@ export default function GradesReportCardPage() {
       },
     );
   }, [examResults]);
+
+  console.log("All Subject Performance", allSubjectPerformances);
 
   const allReportCards = useMemo(() => {
     return examResults.map((er) => ({

@@ -66,19 +66,15 @@ export function CurriculumStructurePacingForm({
   };
 
   const handleAddTopic = () => {
-    setUnits((prev) => {
-      const newUnits = [...prev, ""];
-      updateContentOutlineWithData(newUnits, topics);
-      return newUnits;
-    });
+    const newUnits = [...units, ""];
+    setUnits(newUnits);
+    updateContentOutlineWithData(newUnits, topics);
   };
 
   const handleAddUnit = () => {
-    setTopics((prev) => {
-      const newTopics = [...prev, ""];
-      updateContentOutlineWithData(units, newTopics);
-      return newTopics;
-    });
+    const newTopics = [...topics, ""];
+    setTopics(newTopics);
+    updateContentOutlineWithData(units, newTopics);
   };
 
   return (

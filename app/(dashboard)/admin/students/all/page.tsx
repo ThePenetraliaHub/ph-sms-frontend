@@ -29,7 +29,7 @@ export default function AllStudentsPage() {
     };
   }, [studentsData]);
 
-  const totalStudents = enrolledStudents.length;
+  // const totalStudents = enrolledStudents.length;
 
   return (
     <div className="space-y-6">

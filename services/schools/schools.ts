@@ -11,6 +11,8 @@ import type {
   SchoolClassResponse,
   FeeStructurePayload,
   FeeStructureResponse,
+  BlockUnblockResultAccessResponse,
+  CheckResultAccessStatusResponse,
 } from "./schools-type";
 
 const BASE = "/schools";
@@ -84,6 +86,28 @@ export const schoolsApi = baseApi.injectEndpoints({
       invalidatesTags: ["School"],
     }),
 
+    changeResultAccess: build.mutation<
+      BlockUnblockResultAccessResponse,
+      { student_id: string; action: "auto" | "block" | "unblock" }
+    >({
+      query: (body) => ({
+        url: `${BASE}/fees/block-access`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["School"],
+    }),
+
+    checkResultAccess: build.query<
+      CheckResultAccessStatusResponse,
+      { studentId: string }
+    >({
+      query: ({ studentId }) => ({
+        url: `${BASE}/fees/block-access?student_id=${studentId}`,
+      }),
+      providesTags: (_, __, { studentId }) => [{ type: "School", studentId }],
+    }),
+
     // getTerm: build.query<Term | null, string>({
     //   query: (id) => ({ url: `${BASE}/${id}` }),
     //   transformResponse: (response: SchoolResponse): Term | null =>
@@ -103,4 +127,6 @@ export const {
   useDeleteSchoolMutation,
   useGetClassQuery,
   useCreateFeeStructureMutation,
+  useChangeResultAccessMutation,
+  useCheckResultAccessQuery,
 } = schoolsApi;

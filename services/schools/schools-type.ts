@@ -511,7 +511,7 @@ export interface FeeStructurePayload {
   feeName: string;
   applicableTerm: string;
   applicableClass: string;
-  items: { itemName: string; itemPrice: string }[];
+  items: { itemName: string; itemPrice: number }[];
   dueDate: string;
   school_id: string;
   assignToAll: boolean;
@@ -519,3 +519,23 @@ export interface FeeStructurePayload {
 }
 
 export type FeeStructureResponse = ApiListResponse<any>;
+
+interface ChangeResultAccessData {
+  action: "block" | "unblock" | "auto";
+  block_result_access: boolean;
+  outstanding_fees: number;
+  student_id: string;
+  total_fees: number;
+}
+
+export type BlockUnblockResultAccessResponse =
+  ApiResponse<ChangeResultAccessData>;
+
+interface ResultAccessData {
+  block_result_access: boolean;
+  has_outstanding: boolean;
+  student_id: string;
+  student_name: string;
+  total_owed: number;
+}
+export type CheckResultAccessStatusResponse = ApiResponse<ResultAccessData>;

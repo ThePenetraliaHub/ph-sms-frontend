@@ -30,7 +30,7 @@ export function PersonalInfoForm({
   onCancel: () => void;
 }) {
   const user = useAppSelector(selectUser);
-  const SCH_CLASSES: string[] = user?.school.classes || [];
+  const SCH_CLASSES: string[] = user?.school?.classes || [];
   const formData = value;
   const setFormData = onChange;
   const [datePickerOpen, setDatePickerOpen] = useState(false);

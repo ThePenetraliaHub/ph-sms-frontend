@@ -14,18 +14,59 @@ export interface StakeholderChildDetails {
   class_assigned?: string | null;
 }
 
+export interface SkChildDetails {
+  fee_summary: {
+    block_result_access: boolean;
+    has_outstanding: boolean;
+    total_fees: number;
+    total_owed: number;
+    total_paid: number;
+  };
+  full_name: string;
+  id: string;
+  parent_info: {
+    email: string;
+    full_name: string;
+    id: string;
+    type: string;
+  };
+  status: string;
+  type: string;
+}
+
 export interface Stakeholders {
   id: string;
   user_id: string;
+  full_name?: string;
   creator_id: string;
   updated_by_id: string | null;
   school_id: string;
   primary_contact_id: string | null;
+  primary_contact: string | null;
   emergency_contact_id: string | null;
   type: Roles;
   status: string;
   position: string | null;
   admission_number: string | null;
+  fee_summary?: {
+    block_result_access: boolean;
+    fee_records: any[];
+    has_outstanding: boolean;
+    total_fees: number;
+    total_owed: number;
+    total_paid: number;
+  };
+
+  parent_info: {
+    email: string;
+    full_name: string;
+    id: string;
+    occupation: string | null;
+    phone_number: string;
+    status: string;
+    type: string;
+    user_id: string;
+  } | null;
 
   school_fees: SchoolFees | null;
   hostel: Record<string, any>;
@@ -52,10 +93,9 @@ export interface Stakeholders {
   teaching_duty_details?: TeachingDutyDetails | null;
   non_teaching_duty_details?: NonTeachingDutyDetails | null;
 
-  children?: Stakeholders[] | string[];
-  children_details?: StakeholderChildDetails[];
+  children?: string[];
+  children_details?: SkChildDetails[];
   relationship_to_student: string | null;
-
   occupation: string | null;
   stage: number;
   stage_text: string;
@@ -81,8 +121,8 @@ export interface Stakeholders {
   creator: User;
   updated_by: User | null;
   school: School;
-  primary_contact: Stakeholders | null;
-  emergency_contact: Stakeholders | null;
+  // emergency_contact: Stakeholders | null;
+  emergency_contact: string | null;
   attachments: any[];
   notes: Notes[];
 
@@ -125,7 +165,9 @@ export interface CreateStakeholdersRequest {
   type: "student" | "teacher" | "parent" | "vendor" | string;
   status: "active" | "inactive" | "suspended";
 
-  phone: string;
+  primary_contact?: string;
+  emergency_contact?: string;
+  full_name?: string;
   bank?: Bank;
 
   // Staff / academic
@@ -196,6 +238,8 @@ export interface UpdateStakeholdersRequest {
   school_id?: string;
   guardian_id?: string;
   admission_number?: string;
+  primary_contact?: string;
+  emergency_contact?: string;
   school_fees?: {
     paid: number;
     total: number;

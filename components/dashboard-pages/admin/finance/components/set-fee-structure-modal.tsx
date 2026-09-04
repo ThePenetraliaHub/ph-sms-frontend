@@ -136,7 +136,7 @@ export function SetFeeStructureModal({
       applicableClass,
       applicableTerm,
       applicableSession: session,
-      item: items,
+      item,
       dueDate,
     } = formData;
     if (!schoolId) return toast.error("School is missing");
@@ -145,18 +145,18 @@ export function SetFeeStructureModal({
     if (!isValidSession(session)) return toast.error("Invalid session");
 
     //if typeof price is number
-    // const updatedArr = item.map((prev) => ({
-    //   ...prev,
-    //   itemName: prev.itemName,
-    //   itemPrice: Number(prev.itemPrice),
-    // }));
+    const updatedArr = item.map((prev) => ({
+      ...prev,
+      itemName: prev.itemName,
+      itemPrice: Number(prev.itemPrice),
+    }));
 
     const payload: FeeStructurePayload = {
       feeName,
       applicableClass,
       applicableTerm,
-      // items: updatedArr,
-      items,
+      items: updatedArr,
+      // items,
       dueDate: format(dueDate, "yyyy-MM-dd"),
       school_id: schoolId,
       assignToAll: true,

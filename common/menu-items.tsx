@@ -28,6 +28,7 @@ import {
   BankIcon,
   GraduationScrollIcon,
   MailSend01Icon,
+  UserShieldIcon,
 } from "@hugeicons/core-free-icons";
 
 import { MenuItem } from "../lib/types";
@@ -124,6 +125,13 @@ export const menuItems: MenuItem[] = [
     label: "Admissions",
     icon: GraduateMaleIcon,
     href: "/admissions",
+    roles: ["admin", "staff"],
+  },
+  {
+    id: "guardians",
+    label: "Guardians",
+    icon: UserShieldIcon,
+    href: "/guardians",
     roles: ["admin", "staff"],
   },
   {

@@ -38,7 +38,6 @@ export const stakeholdersApi = baseApi.injectEndpoints({
       query: (params) => ({ url: BASE, params: params ?? {} }),
       providesTags: ["Stakeholder"],
     }),
-
     getParentByUserId: build.query<ApiResponse<Stakeholders>, string>({
       query: (userId) => ({
         url: BASE,
@@ -90,7 +89,6 @@ export const stakeholdersApi = baseApi.injectEndpoints({
       },
       providesTags: ["Stakeholder"],
     }),
-
     getAllStudents: build.query<AllStudentStakeholdersResponse, void>({
       query: () => ({ url: BASE }),
       transformResponse: (
@@ -106,7 +104,6 @@ export const stakeholdersApi = baseApi.injectEndpoints({
       },
       providesTags: ["Stakeholder"],
     }),
-
     getStudentStakeholderMetrics: build.query<
       StudentStakeholderListResponseWithMetrics,
       void
@@ -126,7 +123,6 @@ export const stakeholdersApi = baseApi.injectEndpoints({
       },
       providesTags: ["Stakeholder"],
     }),
-
     getStakeholderMetrics: build.query<
       StakeholderListResponseWithMetrics,
       void
@@ -147,7 +143,6 @@ export const stakeholdersApi = baseApi.injectEndpoints({
       },
       providesTags: ["Stakeholder"],
     }),
-
     getStudentMetrics: build.query<ApiResponse<StudentMetrics>, void>({
       query: () => ({ url: BASE }),
       transformResponse: (
@@ -158,7 +153,6 @@ export const stakeholdersApi = baseApi.injectEndpoints({
       }),
       providesTags: ["Stakeholder"],
     }),
-
     getStaffUtilization: build.query<
       ApiResponse<{
         breakdown: { label: string; value: number; color: string }[];
@@ -178,12 +172,10 @@ export const stakeholdersApi = baseApi.injectEndpoints({
       }),
       providesTags: ["Stakeholder"],
     }),
-
     getStakeholderById: build.query<ApiResponse<Stakeholders>, string>({
       query: (id) => ({ url: `${BASE}/${id}` }),
       providesTags: (_, __, id) => [{ type: "Stakeholder", id }],
     }),
-
     getStudentById: build.query<ApiResponse<Stakeholders>, string>({
       query: (id) => ({ url: `${BASE}/${id}` }),
       transformResponse: (
@@ -202,7 +194,6 @@ export const stakeholdersApi = baseApi.injectEndpoints({
       },
       providesTags: (_, __, id) => [{ type: "Stakeholder", id }],
     }),
-
     //JUST ADDED
     getStudentByQueryParam: build.query<ApiResponse<Stakeholders[]>, string>({
       query: (id) => ({
@@ -213,7 +204,6 @@ export const stakeholdersApi = baseApi.injectEndpoints({
       }),
       providesTags: (_, __, id) => [{ type: "Stakeholder", id }],
     }),
-
     createStakeholder: build.mutation<
       ApiResponse<Stakeholders>,
       CreateStakeholdersRequest | FormData
@@ -232,12 +222,10 @@ export const stakeholdersApi = baseApi.injectEndpoints({
       },
       invalidatesTags: ["Stakeholder"],
     }),
-
     assignDuty: build.mutation<ApiResponse<unknown>, AssignDutyStakeholder>({
       query: (body) => ({ url: `${BASE}/assign/duty`, method: "POST", body }),
       invalidatesTags: ["Stakeholder"],
     }),
-
     updateStakeholder: build.mutation<
       ApiResponse<Stakeholders>,
       { id: string; data: UpdateStakeholdersRequest }
@@ -252,7 +240,48 @@ export const stakeholdersApi = baseApi.injectEndpoints({
         "Stakeholder",
       ],
     }),
-
+    assignChildToParent: build.mutation<
+      ApiResponse<Stakeholders>,
+      { parent_id: string; data: { children: string[] } }
+    >({
+      query: ({ parent_id, data }) => ({
+        url: `${BASE}/${parent_id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: (_, __, { parent_id }) => [
+        { type: "Stakeholder", parent_id },
+        "Stakeholder",
+      ],
+    }),
+    assignParentToChild: build.mutation<
+      ApiResponse<Stakeholders>,
+      { parent_id: string; child_ids: string[] }
+    >({
+      query: (data) => ({
+        url: `${BASE}/link/parent-child`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: (_, __, { parent_id }) => [
+        { type: "Stakeholder", parent_id },
+        "Stakeholder",
+      ],
+    }),
+    unlinkChildFromParent: build.mutation<
+      ApiDeleteResponse,
+      { parent_id: string; child_ids: string[] }
+    >({
+      query: (data) => ({
+        url: `${BASE}/link/parent-child`,
+        method: "DELETE",
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { parent_id }) => [
+        { type: "Stakeholder", id: parent_id },
+        "Stakeholder",
+      ],
+    }),
     deleteStakeholder: build.mutation<ApiDeleteResponse, string>({
       query: (id) => ({ url: `${BASE}/${id}`, method: "DELETE" }),
       invalidatesTags: (_, __, id) => [
@@ -281,4 +310,7 @@ export const {
   useGetStudentByQueryParamQuery,
   useUpdateStakeholderMutation,
   useDeleteStakeholderMutation,
+  useAssignChildToParentMutation,
+  useAssignParentToChildMutation,
+  useUnlinkChildFromParentMutation,
 } = stakeholdersApi;

@@ -1,6 +1,6 @@
 "use client";
 
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   DataTable,
@@ -21,9 +21,18 @@ import {
   Csv02Icon,
   PrinterIcon,
   FilterIcon,
+  StopCircleIcon,
+  User02FreeIcons,
 } from "@hugeicons/core-free-icons";
+import { format } from "date-fns";
+import {
+  useChangeResultAccessMutation,
+  useCheckResultAccessQuery,
+} from "@/services/schools/schools";
+import { toast } from "sonner";
+import { AssignParent } from "../modals/assign-parent";
 
-interface Student {
+export interface Student {
   id: string;
   first_name: string;
   last_name: string;
@@ -33,7 +42,14 @@ interface Student {
   academicAvg: string;
   outstandingFees: string | number;
   status: "active" | "on-leave" | "suspended" | "graduated" | "withdrawn";
-  latestActivity: string;
+  dateJoined: string;
+  gender: string;
+  age: string;
+  parent_info: {
+    full_name: string;
+    phone_number: string;
+    id: string;
+  };
 }
 
 interface StudentTableProps {
@@ -50,6 +66,9 @@ export function StudentTable({
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const [selStudId, setSelStudId] = useState<string>();
+  const [showAssignParMod, setShowAssignParMod] = useState<boolean>(false);
+  const [selectedStudent, setSelectedStudent] = useState<Student>();
 
   const toggleRowSelection = (id: string) => {
     setSelectedRows((prev) =>
@@ -57,26 +76,85 @@ export function StudentTable({
     );
   };
 
+  function calculateAge(dateOfBirth: string): string {
+    const dob = new Date(dateOfBirth);
+    const now = new Date();
+
+    let age = now.getFullYear() - dob.getFullYear();
+    const monthDiff = now.getMonth() - dob.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < dob.getDate())) {
+      age--;
+    }
+
+    return age.toString();
+  }
+
+  //check result access
+  const {
+    data: studentsResultAccess,
+    isLoading: isFetchingResAccStat,
+    isError: isFetchingResAccStatErr,
+  } = useCheckResultAccessQuery(
+    { studentId: selStudId ?? "" },
+    { skip: !selStudId },
+  );
+
+  //change result access status
+  const [changeResultAccess, { isLoading: isChangingResultAccess }] =
+    useChangeResultAccessMutation();
+
   const apiStudents =
     studentsData?.data?.map(
       (student: {
         id?: string;
-        user?: { first_name?: string; last_name?: string };
+        user?: {
+          first_name?: string;
+          last_name?: string;
+          gender?: string;
+          date_of_birth: string | null;
+        };
         studentId?: string;
         className?: string;
+        class_assigned: string | null;
+        date_joined?: string;
         class?: { name?: string };
+        fee_summary?: {
+          block_result_access: boolean;
+          fee_records: any[];
+          has_outstanding: boolean;
+          total_fees: number;
+          total_owed: number;
+          total_paid: number;
+        };
+        parent_info: {
+          full_name: string;
+          phone_number: string;
+          id: string;
+        } | null;
         status?: string;
       }) => ({
         id: student?.id ?? "",
         first_name: student?.user?.first_name ?? "",
         last_name: student?.user?.last_name ?? "",
         schoolId: student?.studentId || student?.id || "",
-        grade: student?.className || student?.class?.name || "N/A",
+        grade: student?.class_assigned || "N/A",
         attendance: "N/A",
         academicAvg: "N/A",
-        outstandingFees: "N/A",
+        outstandingFees: student?.fee_summary?.total_owed ?? "N/A",
         status: (student?.status || "active") as Student["status"],
-        latestActivity: "N/A",
+        dateJoined: student.date_joined
+          ? format(student.date_joined, "MMM dd, yyyy")
+          : "N/A",
+        gender: student?.user?.gender ?? "N/A",
+        age: student.user?.date_of_birth
+          ? calculateAge(student.user?.date_of_birth)
+          : "N/A",
+        parent_info: {
+          full_name: student.parent_info?.full_name ?? "N/A",
+          phone_number: student.parent_info?.phone_number ?? "N/A",
+          id: student.parent_info?.id ?? "N/A",
+        },
       }),
     ) ?? [];
 
@@ -134,6 +212,19 @@ export function StudentTable({
     }
   };
 
+  const effectResultAccess = async (action: "block" | "auto" | "unblock") => {
+    // console.log(studentId);
+    if (isFetchingResAccStatErr) return toast.error("Update failed");
+    try {
+      const res = await changeResultAccess({
+        student_id: selStudId ?? "",
+        action,
+      }).unwrap();
+      toast.success(res.message ? res.message : "Result access status updated");
+      if (selStudId) setSelStudId(undefined);
+    } catch {}
+  };
+
   const columns: TableColumn<Student>[] = [
     {
       key: "name",
@@ -152,12 +243,26 @@ export function StudentTable({
       title: "Grade/Class",
     },
     {
-      key: "attendance",
-      title: "Attendance per month.",
+      key: "gender",
+      title: "Gender",
+      render: (_, row) => <span className="capitalize">{row.gender}</span>,
     },
     {
-      key: "academicAvg",
-      title: "Academic Avg.",
+      key: "age",
+      title: "Age",
+    },
+    {
+      key: "parent_info",
+      title: "Parent Info",
+      render: (_, row) =>
+        row.parent_info ? (
+          <div className="flex flex-col">
+            <p>Name: {row.parent_info.full_name}</p>
+            <p>Number: {row.parent_info.phone_number}</p>
+          </div>
+        ) : (
+          <span>N/A</span>
+        ),
     },
     {
       key: "outstandingFees",
@@ -178,8 +283,8 @@ export function StudentTable({
       ),
     },
     {
-      key: "latestActivity",
-      title: "Latest major activity",
+      key: "dateJoined",
+      title: "Date Joined",
       className: "text-sm text-gray-600",
     },
   ];
@@ -202,8 +307,26 @@ export function StudentTable({
           },
           {
             separator: true,
-            label: "Log majority activity",
-            onClick: (row) => console.log("Print", row),
+            disabled: () => isChangingResultAccess || isFetchingResAccStat,
+            label: "Block/Unblock Result",
+            onClick: (row) => setSelStudId(row.id),
+            icon: <Icon icon={StopCircleIcon} size={16} />,
+          },
+          {
+            separator: true,
+            disabled: (row) => (row.parent_info.id !== "N/A" ? true : false),
+            label: "Assign Parent",
+            onClick: (row) => {
+              (setSelectedStudent(row), setShowAssignParMod(true));
+            },
+            icon: <Icon icon={User02FreeIcons} size={16} />,
+          },
+          {
+            separator: true,
+            label: "View Parent Info",
+            disabled: (row) => (row.parent_info.id === "N/A" ? true : false),
+            onClick: (row) =>
+              router.push(`/admin/guardians/${row.parent_info.id}`),
             icon: <Icon icon={ElearningExchangeIcon} size={16} />,
           },
           {
@@ -256,6 +379,23 @@ export function StudentTable({
     },
   ];
 
+  useEffect(() => {
+    if (!studentsResultAccess) return;
+    if (!selStudId) return;
+    //do something
+    const block_result_access: boolean =
+      studentsResultAccess.data.block_result_access;
+    const outstanding_status: boolean =
+      studentsResultAccess.data.has_outstanding;
+
+    const action: "block" | "unblock" = outstanding_status
+      ? "block"
+      : block_result_access
+        ? "unblock"
+        : "block";
+    effectResultAccess(action);
+  }, [studentsResultAccess]);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
@@ -298,6 +438,14 @@ export function StudentTable({
       <div className="flex justify-center">
         <Button variant="outline">Load More</Button>
       </div>
+
+      {/* assign parent modal */}
+      <AssignParent
+        open={showAssignParMod}
+        onOpenChange={setShowAssignParMod}
+        selectedStudent={selectedStudent}
+        setSelectedStudent={setSelectedStudent}
+      />
     </div>
   );
 }

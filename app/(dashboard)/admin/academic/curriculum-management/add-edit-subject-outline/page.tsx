@@ -246,17 +246,12 @@ function AddEditSubjectOutlineContent() {
     );
     const subject = new FormData();
     subject.append("school_id", formData.subjectId || schoolId);
-    // subject.append("school_id", "01kbgdhe1q6m1n5pj0x8webhe5");
     subject.append("name", formData.subjectName.trim());
     subject.append("code", formData.subjectCode.trim());
     subject.append(
       "applicable_grade",
       JSON.stringify([`${formData.applicableGrade}`]),
     );
-    // subject.append(
-    //   "applicable_grade",
-    //   JSON.stringify(["JSS 1", "JSS 2", "JSS 3"]),
-    // );
     subject.append("head_of_department_id", formData.headOfDepartment ?? "");
     subject.append("credit_units", JSON.stringify(creditUnits));
     subject.append("continuous_assessment", JSON.stringify(ca));
@@ -271,10 +266,6 @@ function AddEditSubjectOutlineContent() {
         subject.append("files", file);
       });
     }
-    // for (const [key, value] of subject.entries()) {
-    //   console.log("Listing formdata props");
-    //   console.log(`"${key}:"`, value);
-    // }
     return subject;
   };
 

@@ -71,15 +71,19 @@ export interface User {
 }
 
 export interface CreateUserRequest {
-  user_name: string;
+  username: string;
   first_name: string;
   last_name: string;
+  middle_name: string;
   gender: string;
   email: string;
   password: string;
   role: Roles;
-  phone?: string;
-  theme: "dark" | "light" | string;
+  status: string;
+  phone_number: string;
+  residential_address: string;
+  school_id: string;
+  theme?: "dark" | "light" | string;
   permissions: string[];
 }
 
@@ -88,10 +92,14 @@ export type { Roles, Gender, UserStatus } from "../shared-types";
 export interface UpdateUserRequest {
   school_id: string;
   username: string;
+  email?: string;
   first_name: string;
+  phone_number?: string;
   last_name: string;
+  middle_name?: string;
   birthday?: string | null;
   gender: string;
+  residential_address?: string;
   status: UserStatus;
   is_active: false;
   is_staff: false;

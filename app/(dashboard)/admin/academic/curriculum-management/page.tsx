@@ -71,15 +71,21 @@ function deriveCoverage(subjects: Subject[]): CoverageStatus[] {
     ss: { total: 0, withOutline: 0 },
     jss: { total: 0, withOutline: 0 },
   };
+
   for (const s of subjects) {
-    const section = s.applicable_grade;
-    if (!section) continue;
+    const grades = s.applicable_grade;
+    if (!grades || grades.length === 0) continue;
+
+    const grade = grades[0]; // e.g. "JSS 1"
+    const section = grade.toLowerCase().startsWith("jss") ? "jss" : "ss";
+
     const outline = s.content_outline_table ?? [];
     const hasOutline =
       outline.length > 0 &&
       outline.some((o) => o.unit_definition || o.topic_definition);
-    bySection[section[0]].total++;
-    if (hasOutline) bySection[section[0]].withOutline++;
+
+    bySection[section].total++;
+    if (hasOutline) bySection[section].withOutline++;
   }
   const pct = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 100) : 0);
   return SECTION_KEYS.filter((key) => bySection[key].total > 0).map((key) => ({

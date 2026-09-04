@@ -1,21 +1,9 @@
-GRADE REQUIRED ENDPOINTS
+for the relationship between parent and child it been created manually and this is the endpoint 
 
-1. GET GRADE REPORT FOR A CLASS
-Important Query Options: session, term, grade or class
-Optional Query Options: sort or filter by any of the field
+PUT -> {{BASE_URL}}/api/stakeholders/{{parent_stakeholders_id}}
 
-Expected object type for each student in the array:
+body 
 
-interface StudentReport {
-  id: string; //report/grade ID
-  name: string; // student's full name
-  student_id: string; //student'ID
-  academic_grade: string;  // e.g. A or B or C
-  report_status: "published" | "unpublished" | "withheld";
-  date_generated: string;
-  time_generated: string;
-  file: report.pdf //automatically generated from the BE
+{
+    "children": ["child_stakeholder_id", "child_stakeholder_id"]
 }
-
-2. PUBLISH GRADE/UNPUBLISH GRADE FOR A STUDENT OR FOR A CLASS IN GENERAL
-3. DOWNLOAD ALL RESULTS IN CSV FORMAT

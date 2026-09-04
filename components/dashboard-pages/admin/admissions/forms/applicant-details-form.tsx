@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { useGetSchoolsQuery } from "@/services/schools/schools";
 import { InputField, SelectField } from "@/components/ui/input-field";
@@ -16,6 +16,14 @@ import {
 } from "@/components/ui/select";
 import type { ApplicantDetailsState } from "./admission-form-state";
 import DatePickerIcon from "@/components/ui/date-picker";
+import { School } from "@/services/schools/schools-type";
+import { selectClasses } from "@/store/slices/schoolSlice";
+import {
+  useGetStakeholdersQuery,
+  useGetStudentByQueryParamQuery,
+} from "@/services/stakeholders/stakeholders";
+import { useAppSelector } from "@/store/hooks";
+import { selectUser } from "@/store/slices/authSlice";
 
 export function ApplicantDetailsForm({
   value,
@@ -28,17 +36,31 @@ export function ApplicantDetailsForm({
   onNext: () => void;
   onCancel: () => void;
 }) {
+  const user = useAppSelector(selectUser);
   const formData = value;
   const setFormData = onChange;
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const { data: schoolsData, isLoading: isLoadingSchools } =
     useGetSchoolsQuery();
+  const { data: stakeholder } = useGetStudentByQueryParamQuery(user?.id ?? "", {
+    skip: !user?.id,
+  });
+
+  console.log("This Stakeholder: ", stakeholder?.data);
+
   const schools = schoolsData?.data || [];
+  console.log("form data", formData); //START FROM HERE TOMORROW
   const dateValue = formData.date ? new Date(formData.date) : undefined;
   const setDateValue = (d: React.SetStateAction<Date | undefined>) => {
     const next = typeof d === "function" ? d(dateValue) : d;
     setFormData({ ...formData, date: next ? format(next, "yyyy-MM-dd") : "" });
   };
+
+  const selectedSch = useMemo(() => {
+    if (!formData.schoolId) return;
+    const chosen_sch = schools.filter((sch) => sch.id === formData.schoolId)[0];
+    return chosen_sch;
+  }, [formData]);
 
   return (
     <div className="space-y-6">
@@ -153,36 +175,16 @@ export function ApplicantDetailsForm({
               <SelectValue placeholder="Select class you are applying for" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="js1">Junior Secondary 1 (JS1)</SelectItem>
-              <SelectItem value="js2">Junior Secondary 2 (JS2)</SelectItem>
-              <SelectItem value="js3">Junior Secondary 3 (JS3)</SelectItem>
-              <SelectItem value="ss1">Senior Secondary 1 (SS1)</SelectItem>
-              <SelectItem value="ss2">Senior Secondary 2 (SS2)</SelectItem>
-              <SelectItem value="ss3">Senior Secondary 3 (SS3)</SelectItem>
+              {selectedSch?.classes.map((cls, index) => {
+                return (
+                  <SelectItem key={index} value={cls}>
+                    {cls}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>
-
-        <InputField
-          id="parentName"
-          label="Parent Name"
-          placeholder="E.g., Bello Aisha Fatimah"
-          value={formData.parentName}
-          onChange={(e) =>
-            setFormData({ ...formData, parentName: e.target.value })
-          }
-        />
-
-        <InputField
-          id="parentEmail"
-          label="Parent Email"
-          type="email"
-          placeholder="E.g., parent@example.com"
-          value={formData.parentEmail}
-          onChange={(e) =>
-            setFormData({ ...formData, parentEmail: e.target.value })
-          }
-        />
 
         <InputField
           id="phoneNumber"
