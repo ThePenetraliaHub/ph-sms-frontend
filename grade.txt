@@ -1,9 +1,44 @@
-for the relationship between parent and child it been created manually and this is the endpoint 
+//GET SUBJECT RESULT FOR A STUDENT
+subject_name: string;
+result_id: string;
+assignedTeacher: {
+    name: string;
+    id: string;
+},
+avg_score: number || string;
+score?: number || string;
+latest_grade: number || string;
 
-PUT -> {{BASE_URL}}/api/stakeholders/{{parent_stakeholders_id}}
+//GET REPORT/RESULT FOR STUDENT (DOCUMENT)
+doc_name: string;
+id: string;
+academic_term: string;
+url: string;
+status: "approved" | "pending" | "rejected" //any1
 
-body 
+//DOWNLOAD REPORT FOR THE ABOVE
 
-{
-    "children": ["child_stakeholder_id", "child_stakeholder_id"]
-}
+GET ATTENDANCE REPORT FOR STUDENT
+id: string;
+date: string;
+markedBy: {
+    name: string;
+    id: string;
+},
+status: string;
+notes: string;
+
+GET PAYMENT FEES/ALL TRANSACTIONS
+  student_id: string;
+  student_info: {
+    full_name: string;
+    id: string;
+    email: string;
+    class: string;
+  }
+  fee_id/id: string;
+  amount: number;
+  status: "pending" | "success" | "failed;
+  title: string;
+  description: string;
+  paid_on: string; 

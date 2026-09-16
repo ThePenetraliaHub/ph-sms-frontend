@@ -163,9 +163,9 @@ export default function Page() {
   return (
     <div className="space-y-6">
       <div className="bg-background rounded-md mb-6 p-6">
-        <h2 className="text-2xl font-bold text-gray-800">All Guardians List</h2>
+        <h2 className="text-2xl font-bold text-gray-800">All Parents/Guardians List</h2>
         <p className="text-gray-600 mt-1">
-          Manage Guardians Records and Ward Association
+          Manage Parents/Guardians Records and Ward Association
         </p>
       </div>
 
@@ -174,7 +174,7 @@ export default function Page() {
           <div className="h-12 w-1 bg-orange-500 rounded"></div>
           <div>
             <h3 className="text-2xl font-bold text-gray-800">
-              Total Guardians: {isLoading ? "Loading..." : all_parents.length}
+              Total Parents/Guardians: {isLoading ? "Loading..." : all_parents.length}
             </h3>
           </div>
         </div>
@@ -183,12 +183,12 @@ export default function Page() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-semibold">All Parents</CardTitle>
+            <CardTitle className="text-lg font-semibold">All Parents/Guardians</CardTitle>
             <Button
               onClick={() => push("/admin/guardians/add")}
               className="h-10"
             >
-              + Add New Guardian
+              + Add New Parent/Guardian
             </Button>
           </div>
         </CardHeader>

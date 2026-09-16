@@ -8,10 +8,7 @@ import { DataTable, TableColumn } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { usePagination } from "@/hooks/use-pagination";
 import { useGetAllExamResultsQuery } from "@/services/results/results";
-import type {
-  ExamResult,
-  SubjectResult,
-} from "@/services/results/result-types";
+import type { SubjectResult } from "@/services/results/result-types";
 import {
   useGetStakeholderByIdQuery,
   useGetStudentByQueryParamQuery,
@@ -19,6 +16,15 @@ import {
 import { useAppSelector } from "@/store/hooks";
 import { selectUser } from "@/store/slices/authSlice";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useGetClassQuery } from "@/services/schools/schools";
+import { useGetAllAttendanceQuery } from "@/services/attendance/attendance";
 
 interface SubjectPerformance {
   subject: string;
@@ -41,20 +47,62 @@ interface Attendance {
   notes?: string;
 }
 
+interface Ward {
+  id: string;
+  full_name: string;
+}
+
 export default function GradesReportCardPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const user = useAppSelector(selectUser);
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+  const [selectedWardId, setSelectedWardId] = useState<string>("");
   const { data: currParent, isLoading: isFetchingCurrParent } =
     useGetStudentByQueryParamQuery(user?.id ?? "");
 
-  console.log("Current Parent: ", currParent);
+  //get child stakeholder info
+  const { data: ward_stakeholder, isLoading: isFetchingWard } =
+    useGetStakeholderByIdQuery(selectedWardId ?? "", {
+      skip: !selectedWardId.trim(),
+    });
 
+  //assign child's class to a variable
+  const ward_class = useMemo(() => {
+    if (!ward_stakeholder?.data) return;
+    return ward_stakeholder?.data.class_assigned ?? "";
+  }, [ward_stakeholder]);
+
+  //get child class-details
+  const { data: assigned_class_data, isLoading: isFetchingWardClass } =
+    useGetClassQuery(
+      {
+        id: user?.school_id ?? "",
+        class_name: ward_class ?? "",
+      },
+      { skip: !user?.school_id?.trim() || !ward_class?.trim() },
+    );
+
+  console.log("Ward Assigned Class Data: ", assigned_class_data?.data);
+
+  const { data: attendances } = useGetAllAttendanceQuery();
+  console.log("Attendance Data: ", attendances?.data);
+
+  //list of attached kids
+  const wards: Ward[] = useMemo(() => {
+    if (!currParent?.data[0].children_details) return [] as Ward[];
+    const children: Ward[] = currParent.data[0].children_details.map(
+      (child) => ({
+        id: child.id,
+        full_name: child.full_name ?? "",
+      }),
+    );
+    return children;
+  }, [currParent]);
+
+  //DELETE ALL THESE
   const { data: resultsData } = useGetAllExamResultsQuery({ _all: true });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const examResults = resultsData?.data ?? [];
-
-  console.log("Exam Results", examResults);
 
   const allSubjectPerformances = useMemo(() => {
     const bySubject = new Map<
@@ -112,8 +160,6 @@ export default function GradesReportCardPage() {
       },
     );
   }, [examResults]);
-
-  console.log("All Subject Performance", allSubjectPerformances);
 
   const allReportCards = useMemo(() => {
     return examResults.map((er) => ({
@@ -311,6 +357,39 @@ export default function GradesReportCardPage() {
           official reports.
         </p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <div className="space-y-1.5">
+            <CardTitle className="text-lg font-semibold text-gray-800">
+              Child's Records
+            </CardTitle>
+            <p className="text-sm text-gray-600">
+              Select which child's record to show
+            </p>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Select
+            disabled={isFetchingCurrParent}
+            value={selectedWardId}
+            onValueChange={setSelectedWardId}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select ward" />
+            </SelectTrigger>
+            <SelectContent>
+              {wards.map((ward) => {
+                return (
+                  <SelectItem key={ward.id} value={ward.id}>
+                    {ward.full_name}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <MetricCard
