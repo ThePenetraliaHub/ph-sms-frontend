@@ -14,6 +14,7 @@ import {
   type CreateBulkInvoicePayload,
   type CreateBulkInvoiceResponse,
   type TransactionMetrics,
+  ChildrenPaymentRecordsResponse,
 } from "./transaction-types";
 import { calculateBudgetSummary } from "./transaction-selectors";
 import type { ApiResponse, ApiDeleteResponse } from "../shared-types";
@@ -149,6 +150,17 @@ export const transactionsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [{ type: "Transaction", id: "LIST" }, "Stakeholder"],
     }),
+
+    getChildrenPaymentRecords: build.query<
+      ChildrenPaymentRecordsResponse,
+      { student_id?: string; status?: "success" | "failed" | "pending" } | void
+    >({
+      query: (params) => ({
+        url: `${BASE}/payments/parent`,
+        params: params ?? [],
+      }),
+      providesTags: ["Transaction"],
+    }),
   }),
 });
 
@@ -160,9 +172,10 @@ export const {
   useCreateTransactionMutation,
   useUpdateTransactionMutation,
   useDeleteTransactionMutation,
-  useInitializePaymentMutation, //
+  useInitializePaymentMutation,
   useVerifyPaymentMutation,
   useTransferMoneyMutation,
   useGetBudgetSummaryQuery,
   useCreateBulkInvoiceMutation,
+  useGetChildrenPaymentRecordsQuery,
 } = transactionsApi;

@@ -188,3 +188,17 @@ export interface InitializePaymentData extends Transaction {
 }
 
 export type InitializePaymentResponse = ApiResponse<InitializePaymentData>;
+
+export type ChildrenPaymentRecordsData = {
+  payments: any[];
+  summary: {
+    failed_payments: number;
+    pending_payments: number;
+    successful_payments: number;
+    total_amount: number;
+    total_payments: number;
+  };
+};
+
+export type ChildrenPaymentRecordsResponse =
+  ApiResponse<ChildrenPaymentRecordsData>;

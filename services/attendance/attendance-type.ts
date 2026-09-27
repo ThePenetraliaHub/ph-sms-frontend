@@ -119,3 +119,36 @@ export interface AttendanceQueryParams extends BaseQueryParams {
   class_name?: string;
   session?: string;
 }
+
+export type AttendanceRecords = {
+  id: string;
+  date: string;
+  markedBy: {
+    name: string;
+    id: string;
+  };
+  status: "present" | "absent" | "late" | "excused";
+  notes: string;
+  class_name: string;
+  session: string;
+};
+
+export type AttendanceReportData = {
+  records: AttendanceRecords[];
+  student: {
+    admission_number: string;
+    class_assigned: string;
+    full_name: string;
+    id: string;
+  };
+  summary: {
+    absent: number;
+    attendance_percentage: number;
+    excused: number;
+    late: number;
+    present: number;
+    total_days: number;
+  };
+};
+
+export type AttendanceReportResponse = ApiResponse<AttendanceReportData>;

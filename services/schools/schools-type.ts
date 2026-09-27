@@ -507,18 +507,39 @@ export interface Class {
   cbt_exams: CbtExam[];
 }
 
+export interface FeeItem {
+  itemName: string;
+  itemPrice: number;
+}
+
 export interface FeeStructurePayload {
   feeName: string;
   applicableTerm: string;
   applicableClass: string;
-  items: { itemName: string; itemPrice: number }[];
+  items: FeeItem[];
   dueDate: string;
   school_id: string;
   assignToAll: boolean;
   session: string;
 }
 
-export type FeeStructureResponse = ApiListResponse<any>;
+interface FeeStructureData {
+  fee_structure: {
+    id: string;
+    fee_name: string;
+    applicable_term: string;
+    applicable_class: string;
+    items: FeeItem[];
+    total_amount: number;
+    due_date: string;
+    is_active: boolean;
+  };
+  assigned_students_count: number;
+  total_amount: number;
+  items: FeeItem[];
+}
+
+export type FeeStructureResponse = ApiListResponse<FeeStructureData>;
 
 interface ChangeResultAccessData {
   action: "block" | "unblock" | "auto";
@@ -539,3 +560,57 @@ interface ResultAccessData {
   total_owed: number;
 }
 export type CheckResultAccessStatusResponse = ApiResponse<ResultAccessData>;
+
+export type ViewStudentFeeStructure = {
+  id: string;
+  student_id: string;
+  student_name: string;
+  student_admission_number: string;
+  student_class: string;
+  fee_structure_id: string;
+  fee_name: string;
+  fee_items: FeeItem[];
+  term: string;
+  session: string;
+  class_name: string;
+  total_amount: string | number;
+  amount_paid: string | number;
+  amount_owed: string | number;
+  discount: string | number;
+  payment_history: {
+    amount: number;
+    payment_method: string;
+    reference: string;
+    date: string;
+  }[];
+  last_payment_date: string;
+  status: string;
+  due_date: string;
+  is_overdue: boolean;
+  block_result_access: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ViewStudentFeesData = {
+  student: {
+    id: string;
+    full_name: string;
+    admission_number: string;
+    class_assigned: string;
+    school_id: string;
+    school_name: string;
+  };
+  summary: {
+    total_fees: number;
+    total_paid: number;
+    total_owed: number;
+    total_discount: number;
+    status: string;
+    has_outstanding: boolean;
+    block_result_access: boolean;
+    total_fee_records: number;
+  };
+  fees: ViewStudentFeeStructure[];
+};
+export type ViewStudentFeesResponse = ApiResponse<ViewStudentFeesData>;

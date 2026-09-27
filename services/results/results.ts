@@ -20,6 +20,8 @@ import type {
   ReportResponse,
   PublishGradeReportResponse,
   ClassReport,
+  StudentSubjectResultResponse,
+  StudentReportDataResponse,
 } from "./result-types";
 import { computeResultMetrics } from "./result-metrics";
 
@@ -206,6 +208,36 @@ export const resultsApi = baseApi.injectEndpoints({
       }),
       providesTags: ["ExamResult"],
     }),
+
+    //for parents
+    getStudentSubjectResults: build.query<
+      StudentSubjectResultResponse,
+      { student_id: string; term?: string; session?: string }
+    >({
+      query: ({ student_id, term, session }) => ({
+        url: `${BASE}/student/${student_id}/subjects`,
+        method: "GET",
+        params: { term, session },
+      }),
+      providesTags: (res, err, { student_id }) => [
+        { type: "ExamResult", id: student_id },
+      ],
+    }),
+
+    //for parents
+    getAllStudentReportDocuments: build.query<
+      StudentReportDataResponse,
+      { student_id: string }
+    >({
+      query: ({ student_id }) => ({
+        url: `${BASE}/student/${student_id}/reports`,
+        method: "GET",
+        params: { status: "approved" },
+      }),
+      providesTags: (res, err, { student_id }) => [
+        { type: "ExamResult", id: student_id },
+      ],
+    }),
   }),
 });
 
@@ -224,6 +256,8 @@ export const {
   usePublishSelectedResultsMutation,
   useUnpublishSelectedResultsMutation,
   useGetFilteredGradeReportsQuery,
+  useGetStudentSubjectResultsQuery,
+  useGetAllStudentReportDocumentsQuery,
 } = resultsApi;
 
 export const useGetAllExamResultsQuery = useGetAllResultsQuery;

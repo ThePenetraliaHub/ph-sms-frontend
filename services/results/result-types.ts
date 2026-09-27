@@ -225,3 +225,68 @@ export type ClassReport = {
   message: string;
   data: any;
 };
+
+export type StudentSubjectResult = {
+  id: string;
+  result_id: string;
+  subject_name: string;
+  assignedTeacher: {
+    name: string;
+    id: string;
+  };
+  avg_score: number;
+  score: number;
+  latest_grade: "A" | "B" | "C" | "D" | "E" | "F";
+  class_score: number;
+  exam_score: number;
+  first_ca: number;
+  second_ca: number;
+  remarks: string;
+  term: string;
+  session: string;
+  class_name: string;
+};
+
+export type StudentSubjectResultData = {
+  student: {
+    admission_number: string;
+    class_assigned: string;
+    full_name: string;
+    id: string;
+  };
+  subject_results: StudentSubjectResult[];
+  total_subjects: number;
+};
+export type StudentSubjectResultResponse =
+  ApiResponse<StudentSubjectResultData>;
+
+export type StudentReport = {
+  id: string;
+  student_id: string;
+  student_name: string;
+  student_admission_number: string;
+  doc_name: string;
+  academic_term: string;
+  session: string;
+  class_name: string;
+  file: string;
+  file_url: string;
+  file_name: string;
+  file_size: number;
+  file_type: "PDF" | "DOCX" | "DOC" | "PNG" | "JPEG" | "JPG" | "XLSX";
+  status: "approved" | "declined" | "pending" | "rejected";
+  created_at: string;
+  updated_at: string;
+};
+
+export type StudentReportData = {
+  reports: StudentReport[];
+  student: {
+    admission_number: string;
+    class_assigned: string;
+    full_name: string;
+    id: string;
+  };
+  total: number;
+};
+export type StudentReportDataResponse = ApiResponse<StudentReportData>;

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useMemo } from "react";
+import { Suspense, useState, useMemo, useEffect } from "react";
 import { useAppSelector } from "@/store/hooks";
 import { toast } from "sonner";
 import { selectUser } from "@/store/slices/authSlice";
@@ -22,10 +22,20 @@ import {
 import { InitiatePaymentPayload } from "@/services/payment/payment-types";
 import { useInitializePaymentMutation } from "@/services/payment/payment";
 import { ConfirmPaymentModal } from "@/components/dashboard-pages/parent/fees-payment-portal/confirm-payment-modal";
+import { useViewStudentFeesQuery } from "@/services/schools/schools";
+import { ViewStudentFeesData } from "@/services/schools/schools-type";
+import { useGetChildrenPaymentRecordsQuery } from "@/services/transactions/transactions";
+import { Value } from "@radix-ui/react-select";
 
 type Ward = {
   id: string;
   full_name: string;
+};
+
+type Metric = {
+  title: string;
+  value: string | number;
+  subtitle?: string;
 };
 
 export type PaymentInfo = {
@@ -87,42 +97,11 @@ const dumFeesPay: FeesPaymentHistory[] = [
 interface OutstandingFees {
   id: string;
   amount: number;
-  status: "pending" | "success" | "failed";
-  title: string;
-  description: string;
+  status: "paid" | "unpaid";
+  fee_name: string;
   created_at: string;
-  due_on: string;
+  due_date: string;
 }
-
-const dumOutFees: OutstandingFees[] = [
-  {
-    id: "feesId1",
-    amount: 30000.0,
-    status: "pending",
-    title: "Test Title 1",
-    description: "Test Description 1",
-    due_on: "2026-09-01",
-    created_at: "2026-09-16",
-  },
-  {
-    id: "feesId2",
-    amount: 40000.0,
-    status: "pending",
-    title: "Test Title 2",
-    description: "Test Description 2",
-    due_on: "2026-09-01",
-    created_at: "2026-09-16",
-  },
-  {
-    id: "feesId3",
-    amount: 50000.0,
-    status: "pending",
-    title: "Test Title 3",
-    description: "Test Description 3",
-    due_on: "2026-09-01",
-    created_at: "2026-09-16",
-  },
-];
 
 // const CURRENCY = "₦";
 // const formatAmount = (n: number | string) =>
@@ -160,6 +139,71 @@ function FeePaymentManagementContent() {
     return children;
   }, [parent]);
 
+  //fetch student fees
+  const { data: studentFeesData, isLoading: isFetchingStudentFees } =
+    useViewStudentFeesQuery(
+      { student_id: selWardId ?? "" },
+      { skip: !selWardId || !selWardId?.trim() },
+    );
+
+  const student_fee_records: ViewStudentFeesData | null = useMemo(() => {
+    if (!studentFeesData?.data) return null;
+    return studentFeesData?.data;
+  }, [studentFeesData]);
+
+  const studentOutstandingFess: OutstandingFees[] = useMemo(() => {
+    if (!studentFeesData) return [] as OutstandingFees[];
+    const studentFees: OutstandingFees[] = studentFeesData.data.fees.map(
+      (fee) => ({
+        id: fee.id,
+        amount: Number(fee.total_amount ?? 0) || Number(fee.amount_owed ?? 0),
+        status: fee.status as "paid" | "unpaid",
+        fee_name: fee.fee_name,
+        created_at: fee.created_at,
+        due_date: fee.due_date,
+      }),
+    );
+    return studentFees;
+  }, [studentFeesData]);
+
+  //fetch payment records
+  const { data: payment_records, isLoading: isFetchingRecords } =
+    useGetChildrenPaymentRecordsQuery();
+
+  // console.log("Payment Records: ", payment_records);
+  const paymentRecords: any[] = useMemo(() => {
+    if (!payment_records) return [];
+    return payment_records?.data.payments;
+  }, [payment_records]);
+
+  const metrics: Metric[] = [
+    {
+      title: "Total Payments",
+      value: payment_records?.data.summary?.total_payments ?? "-",
+      subtitle: "Number of payments made to the school's accounts",
+    },
+    {
+      title: "Total Amount",
+      value: payment_records?.data.summary?.total_amount ?? "-",
+      subtitle: "Total amounts made to the school's accounts",
+    },
+    {
+      title: "Successful Payments",
+      value: payment_records?.data.summary?.successful_payments ?? "-",
+      subtitle: "Total number of successful payments completed.",
+    },
+    {
+      title: "Pending Payments",
+      value: payment_records?.data.summary?.pending_payments ?? "-",
+      subtitle: "Total number of pending payments.",
+    },
+    {
+      title: "Failed Payments",
+      value: payment_records?.data.summary?.failed_payments ?? "-",
+      subtitle: "Total number of failed payments.",
+    },
+  ];
+
   const initiatePayment = async (
     amount: number,
     fee_ids: string[],
@@ -181,64 +225,46 @@ function FeePaymentManagementContent() {
 
     try {
       const { data } = await initializePayment(payload).unwrap();
-      console.log("initialize flow res", data);
-      setAuthUrl(data.transaction.authorization_url ?? undefined);
-      setPaymentInfo((prev) => ({
-        ...prev,
-        full_name: data.transaction.student_name ?? "",
-        adm_number: data.transaction.student_admission_number ?? "",
-        payment_reference_no: data.transaction.reference ?? "",
-        fee_type: title,
-        school: data.transaction.school_name ?? "",
-        amount: Number(data.transaction.amount) ?? "",
-      }));
-      setConfirmMod(true);
+      setAuthUrl(data.authorization_url ?? undefined);
+      // setPaymentInfo((prev) => ({
+      //   ...prev,
+      //   full_name: data.transaction.student_name ?? "",
+      //   adm_number: data.transaction.student_admission_number ?? "",
+      //   payment_reference_no: data.transaction.reference ?? "",
+      //   fee_type: title,
+      //   school: data.transaction.school_name ?? "",
+      //   amount: Number(data.transaction.amount) ?? "",
+      // }));
+      // setConfirmMod(true);
     } catch {}
-  };
-
-  const isValidPaystackUrl = (value: string): boolean => {
-    try {
-      const url = new URL(value);
-      return (
-        (url.protocol === "https:" || url.protocol === "http:") &&
-        url.hostname === "paystack.com"
-      );
-    } catch {
-      return false;
-    }
   };
 
   const proceedToPay = () => {
     if (!authUrl) return toast.error("Failed to complete payment");
-    //validate url, tailored to paystack
-    const isValidUrl = isValidPaystackUrl(authUrl);
-    if (!isValidUrl) return toast.error("Unresolved hostname");
     window.location.href = authUrl;
   };
 
   const outstandingFeesColumns: TableColumn<OutstandingFees>[] = [
     {
-      key: "description",
-      title: "Description",
-      render: (v) => (
-        <span className="font-medium text-gray-800">{v as string}</span>
-      ),
+      key: "fee_name",
+      title: "Fee Name",
+      render: (v) => <span className="font-medium">{v as string}</span>,
     },
     {
-      key: "title",
-      title: "Title",
-      render: (v) => (
-        <span className="font-medium text-gray-800">{v as string}</span>
+      key: "amount",
+      title: "Amount",
+      render: (v, r) => (
+        <span className="font-semibold">₦{r.amount.toLocaleString()}.00</span>
       ),
     },
-    { key: "amount", title: "Amount" },
-    { key: "due_on", title: "Due Date" },
+    { key: "created_at", title: "Created At" },
+    { key: "due_date", title: "Due Date" },
     {
       key: "status",
       title: "Status",
       render: (v, r) => (
         <span
-          className={`text-sm font-medium capitalize ${r.status === "success" ? "text-green-600" : r.status === "pending" ? "text-yellow-600" : "text-destructive"}`}
+          className={`text-sm font-medium capitalize ${r.status === "paid" ? "text-green-600" : "text-destructive"}`}
         >
           {v as string}
         </span>
@@ -253,7 +279,7 @@ function FeePaymentManagementContent() {
             disabled={isInitializing}
             variant="link"
             className="h-auto p-0 text-main-blue disabled:opacity-50 transition ease-in-out delay-100"
-            onClick={() => initiatePayment(row.amount, [row.id], row.title)}
+            onClick={() => initiatePayment(row.amount, [row.id], row.fee_name)}
           >
             Pay Now
           </Button>
@@ -300,6 +326,11 @@ function FeePaymentManagementContent() {
     },
   ];
 
+  useEffect(() => {
+    if (!authUrl) return;
+    proceedToPay();
+  }, [authUrl]);
+
   return (
     <div className="space-y-4">
       <div className="bg-background rounded-md p-6">
@@ -313,15 +344,18 @@ function FeePaymentManagementContent() {
       </div>
 
       <div className="space-y-4">
-        <div className="grid grid-col-1 lg:grid-cols-2 2xl:grid-cols-2 gap-3">
-          <MetricCard
-            title="Total Outstanding Balance"
-            // value={formatAmount(totalOutstanding)}
-            value={0}
-            // trend={totalOutstanding > 0 ? "up" : undefined}
-            trend={"up"}
-          />
-          <MetricCard key={""} title="Last Payment" value={"—"} subtitle={""} />
+        <div className="grid grid-col-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          {metrics.map((summary, index) => {
+            return (
+              <MetricCard
+                key={index}
+                title={summary.title}
+                subtitle={summary.subtitle}
+                value={summary.value}
+                // trend={"up"}
+              />
+            );
+          })}
         </div>
         <Card>
           <CardHeader>
@@ -358,72 +392,77 @@ function FeePaymentManagementContent() {
         <div className="flex items-end">
           <Button
             variant="outline"
-            // onClick={() => handlePayNow()}
+            onClick={() => setPayModalOpen(true)}
             className="w-full h-11"
-            disabled={true}
+            // disabled={true}
           >
             <Icon icon={CheckmarkCircle01FreeIcons} size={18} />
-            Verify Payment Status
+            Check Payment Status
           </Button>
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-800">
-            Outstanding Fees for Student -
-          </CardTitle>
-          <p className="text-sm text-gray-600">
-            ⚠️ Kindly note that you'll be redirected to an external site to
-            complete your payment.
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="border rounded-lg overflow-hidden">
-            <DataTable
-              columns={outstandingFeesColumns}
-              data={dumOutFees}
-              emptyMessage={"No outstanding payments record yet"}
-              showActionsColumn={false}
-            />
+      {/* main content */}
+      <div>
+        {!selWardId ? (
+          <div className="h-50 w-full text-muted-foreground justify-center flex items-center">
+            <p>Select a child to begin.</p>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* PAYMENT HISTORY */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-800">
-            Payment History
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="border rounded-lg overflow-hidden">
-            <DataTable
-              columns={paymentColumns}
-              data={dumFeesPay}
-              emptyMessage={"No fee payments record yet"}
-              showActionsColumn={false}
-            />
+        ) : isFetchingStudentFees || isFetchingRecords ? (
+          <div className="h-50 w-full text-muted-foreground justify-center flex items-center">
+            <p>Loading...</p>
           </div>
-          {/* {hasMore && (
-                <div className="flex justify-center mt-4">
-                  <Button variant="outline" onClick={loadMore}>
-                    Load More
-                  </Button>
+        ) : (
+          <div className="space-y-4">
+            {/* OUTSTANDING FEES */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-gray-800">
+                  Outstanding Fees for{" "}
+                  {student_fee_records
+                    ? student_fee_records.student.full_name
+                    : "Student"}
+                </CardTitle>
+                <p className="text-sm text-gray-600">
+                  ⚠️ Kindly note that you'll be redirected to an external site
+                  to complete your payment.
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="border rounded-lg overflow-hidden">
+                  <DataTable
+                    columns={outstandingFeesColumns}
+                    data={studentOutstandingFess}
+                    emptyMessage={"No outstanding payments record yet"}
+                    showActionsColumn={false}
+                  />
                 </div>
-              )} */}
-        </CardContent>
-      </Card>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+        {/* PAYMENT HISTORY */}
+        <Card className="mt-5">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold text-gray-800">
+              Payment History
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="border rounded-lg overflow-hidden">
+              <DataTable
+                columns={paymentColumns}
+                data={paymentRecords}
+                isLoading={isFetchingRecords}
+                emptyMessage={"No fee payments record yet"}
+                showActionsColumn={false}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-      <PayFeesModal
-        open={payModalOpen}
-        onOpenChange={setPayModalOpen}
-        wards={[]}
-        schoolId={""}
-        prefillAmount={0}
-        feesType={""}
-      />
+      <PayFeesModal open={payModalOpen} onOpenChange={setPayModalOpen} />
 
       <ConfirmPaymentModal
         paymentInfo={paymentInfo}

@@ -129,6 +129,13 @@ export function SetFeeStructureModal({
     return true;
   };
 
+  const handleClose = (open: boolean) => {
+    if (!open) {
+      setFormData(initialData);
+    }
+    onOpenChange(open);
+  };
+
   const handleSubmit = async () => {
     const schoolId = user?.school_id;
     const {
@@ -164,20 +171,12 @@ export function SetFeeStructureModal({
     };
 
     try {
-      const res = await createFeeStructure(payload).unwrap();
-      console.log("Response: ", res);
-      // setFormData(initialData);
-      // onOpenChange(false);
+      const { message, status } = await createFeeStructure(payload).unwrap();
+      if (status) toast.success(message ? message : "Fee created successfully");
+      handleClose(false);
     } catch (err) {
       console.error(err);
     }
-  };
-
-  const handleClose = (open: boolean) => {
-    if (!open) {
-      setFormData(initialData);
-    }
-    onOpenChange(open);
   };
 
   return (

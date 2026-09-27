@@ -7,12 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable, TableColumn } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { usePagination } from "@/hooks/use-pagination";
-import { useGetAllExamResultsQuery } from "@/services/results/results";
-import type { SubjectResult } from "@/services/results/result-types";
 import {
-  useGetStakeholderByIdQuery,
-  useGetStudentByQueryParamQuery,
-} from "@/services/stakeholders/stakeholders";
+  useGetAllStudentReportDocumentsQuery,
+  useGetStudentSubjectResultsQuery,
+} from "@/services/results/results";
+import { useGetParentByUserIdQuery } from "@/services/stakeholders/stakeholders";
 import { useAppSelector } from "@/store/hooks";
 import { selectUser } from "@/store/slices/authSlice";
 import { toast } from "sonner";
@@ -23,29 +22,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useGetClassQuery } from "@/services/schools/schools";
-import { useGetAllAttendanceQuery } from "@/services/attendance/attendance";
-
-interface SubjectPerformance {
-  subject: string;
-  assignedTeacher: string;
-  termAverageScore: string;
-  latestGrade: string;
-}
-
-interface ReportCard {
-  documentName: string;
-  academicPeriod: string;
-  status: string;
-  id?: string;
-}
-
-interface Attendance {
-  date: string;
-  teacher: string;
-  status: "present" | "absent";
-  notes?: string;
-}
+import { useGetStudentAttendanceReportQuery } from "@/services/attendance/attendance";
+import { AttendanceRecords } from "@/services/attendance/attendance-type";
+import { format } from "date-fns";
+import {
+  StudentReport,
+  StudentSubjectResult,
+} from "@/services/results/result-types";
 
 interface Ward {
   id: string;
@@ -58,184 +41,151 @@ export default function GradesReportCardPage() {
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [selectedWardId, setSelectedWardId] = useState<string>("");
   const { data: currParent, isLoading: isFetchingCurrParent } =
-    useGetStudentByQueryParamQuery(user?.id ?? "");
-
-  //get child stakeholder info
-  const { data: ward_stakeholder, isLoading: isFetchingWard } =
-    useGetStakeholderByIdQuery(selectedWardId ?? "", {
-      skip: !selectedWardId.trim(),
-    });
-
-  //assign child's class to a variable
-  const ward_class = useMemo(() => {
-    if (!ward_stakeholder?.data) return;
-    return ward_stakeholder?.data.class_assigned ?? "";
-  }, [ward_stakeholder]);
-
-  //get child class-details
-  const { data: assigned_class_data, isLoading: isFetchingWardClass } =
-    useGetClassQuery(
-      {
-        id: user?.school_id ?? "",
-        class_name: ward_class ?? "",
-      },
-      { skip: !user?.school_id?.trim() || !ward_class?.trim() },
-    );
-
-  console.log("Ward Assigned Class Data: ", assigned_class_data?.data);
-
-  const { data: attendances } = useGetAllAttendanceQuery();
-  console.log("Attendance Data: ", attendances?.data);
+    useGetParentByUserIdQuery(user?.id ?? "");
 
   //list of attached kids
   const wards: Ward[] = useMemo(() => {
-    if (!currParent?.data[0].children_details) return [] as Ward[];
-    const children: Ward[] = currParent.data[0].children_details.map(
-      (child) => ({
-        id: child.id,
-        full_name: child.full_name ?? "",
-      }),
-    );
+    if (!currParent?.data.children_details) return [] as Ward[];
+    const children: Ward[] = currParent.data.children_details.map((child) => ({
+      id: child.id,
+      full_name: child.full_name ?? "",
+    }));
     return children;
   }, [currParent]);
 
-  //DELETE ALL THESE
-  const { data: resultsData } = useGetAllExamResultsQuery({ _all: true });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const examResults = resultsData?.data ?? [];
-
-  const allSubjectPerformances = useMemo(() => {
-    const bySubject = new Map<
-      string,
-      { teacher: string; scores: number[]; grades: string[] }
-    >();
-    const sorted = [...examResults].sort(
-      (a, b) =>
-        new Date(b.created_at ?? 0).getTime() -
-        new Date(a.created_at ?? 0).getTime(),
-    );
-    for (const er of sorted) {
-      for (const sr of er.subject_results ?? []) {
-        const sub = (sr as SubjectResult).subject ?? "Unknown";
-        if (!bySubject.has(sub)) {
-          bySubject.set(sub, {
-            teacher: (
-              sr as SubjectResult & {
-                teacher?: { first_name?: string; last_name?: string };
-              }
-            ).teacher
-              ? `${(sr as SubjectResult & { teacher?: { first_name?: string; last_name?: string; user?: { username?: string } } }).teacher?.user?.username ?? ""} ${(sr as SubjectResult & { teacher?: { first_name?: string; last_name?: string } }).teacher?.last_name ?? ""}`.trim() ||
-                "N/A"
-              : "N/A",
-            scores: [],
-            grades: [],
-          });
-        }
-        const entry = bySubject.get(sub)!;
-        const total = (sr as SubjectResult).total_score;
-        if (typeof total === "number" && !isNaN(total))
-          entry.scores.push(total);
-        const grade = (sr as SubjectResult).grade;
-        if (grade) entry.grades.push(grade);
-      }
-    }
-    return Array.from(bySubject.entries()).map(
-      ([subject, { teacher, scores, grades }]) => {
-        const avg =
-          scores.length > 0
-            ? scores.reduce((a, b) => a + b, 0) / scores.length
-            : 0;
-        const pct = Math.round(avg);
-        return {
-          subject,
-          assignedTeacher: teacher,
-          termAverageScore: `${pct}%`,
-          latestGrade:
-            scores[0] != null
-              ? `${scores[0]}%`
-              : grades[0]
-                ? `${grades[0]}`
-                : "N/A",
-        };
-      },
-    );
-  }, [examResults]);
-
-  const allReportCards = useMemo(() => {
-    return examResults.map((er) => ({
-      id: er.id,
-      documentName: `Term ${er.term ?? "?"} Report Card`,
-      academicPeriod: `${er.session ?? ""} Term ${er.term ?? ""}`.trim(),
-      status: "Finalized",
-    }));
-  }, [examResults]);
-
-  const overallAverage = useMemo(() => {
-    if (allSubjectPerformances.length === 0) return 0;
-    const sum = allSubjectPerformances.reduce(
-      (acc, s) => acc + parseFloat(s.termAverageScore.replace("%", "")) || 0,
-      0,
-    );
-    return Math.round(sum / allSubjectPerformances.length);
-  }, [allSubjectPerformances]);
-
-  const lowestSubject = useMemo(() => {
-    if (allSubjectPerformances.length === 0) return null;
-    return allSubjectPerformances.reduce((lowest, current) => {
-      const curr = parseFloat(current.termAverageScore.replace("%", "")) || 0;
-      const low = parseFloat(lowest.termAverageScore.replace("%", "")) || 0;
-      return curr < low ? current : lowest;
-    });
-  }, [allSubjectPerformances]);
-
+  //subject results
   const {
-    displayedData: subjectPerformances,
-    hasMore: hasMoreSubjects,
-    loadMore: loadMoreSubjects,
-  } = usePagination({
-    data: allSubjectPerformances,
-    initialItemsPerPage: 4,
-    itemsPerPage: 4,
-  });
+    data: subjectResults,
+    isLoading: isFetchingSubjectResults,
+    isError: isSubjectResultsErr,
+  } = useGetStudentSubjectResultsQuery(
+    { student_id: selectedWardId },
+    {
+      skip: !selectedWardId,
+    },
+  );
 
+  const wardSubjectResults: StudentSubjectResult[] = useMemo(() => {
+    if (!subjectResults?.data) return [] as StudentSubjectResult[];
+    return subjectResults?.data.subject_results;
+  }, [subjectResults]);
+
+  //report cards
   const {
-    displayedData: reportCards,
-    hasMore: hasMoreReportCards,
-    loadMore: loadMoreReportCards,
-  } = usePagination({
-    data: allReportCards,
-    initialItemsPerPage: 2,
-    itemsPerPage: 2,
-  });
+    data: studentReports,
+    isLoading: isFetchingStudentReports,
+    isError: isStudentResultErr,
+  } = useGetAllStudentReportDocumentsQuery(
+    { student_id: selectedWardId },
+    {
+      skip: !selectedWardId,
+    },
+  );
+
+  const wardReports: StudentReport[] = useMemo(() => {
+    if (!studentReports?.data) return [] as StudentReport[];
+    return studentReports.data.reports;
+  }, [studentReports]);
+
+  //attendance reports
+  const {
+    data: attendanceReport,
+    isLoading: isFetchingAttendanceReport,
+    isError: attendanceReportErr,
+  } = useGetStudentAttendanceReportQuery(
+    { student_id: selectedWardId },
+    {
+      skip: !selectedWardId,
+    },
+  );
+
+  const wardAttendanceRecords: AttendanceRecords[] = useMemo(() => {
+    if (!attendanceReport?.data) return [] as AttendanceRecords[];
+    return attendanceReport?.data.records;
+  }, [attendanceReport]);
+
+  const isLoading =
+    isFetchingAttendanceReport ||
+    isFetchingStudentReports ||
+    isFetchingSubjectResults;
+
+  // const {
+  //   displayedData: subjectPerformances,
+  //   hasMore: hasMoreSubjects,
+  //   loadMore: loadMoreSubjects,
+  // } = usePagination({
+  //   data: allSubjectPerformances,
+  //   initialItemsPerPage: 4,
+  //   itemsPerPage: 4,
+  // });
+
+  // const {
+  //   displayedData: reportCards,
+  //   hasMore: hasMoreReportCards,
+  //   loadMore: loadMoreReportCards,
+  // } = usePagination({
+  //   data: allReportCards,
+  //   initialItemsPerPage: 2,
+  //   itemsPerPage: 2,
+  // });
 
   const handleViewDetails = (subject: string) => {
     setSelectedSubject(subject);
     setModalOpen(true);
   };
 
-  const handleDownloadPDF = (reportCard: ReportCard) => {
-    console.log("Download PDF for:", reportCard.documentName);
+  const handleDownloadPDF = (fileUrl: string) => {
+    console.log("Download PDF for:", fileUrl);
   };
 
-  const subjectColumns: TableColumn<SubjectPerformance>[] = [
+  const subjectColumns: TableColumn<StudentSubjectResult>[] = [
     {
-      key: "subject",
-      title: "Subjects",
+      key: "subject_name",
+      title: "Subject",
       render: (value) => (
         <span className="font-medium text-gray-800">{value as string}</span>
       ),
     },
     {
+      key: "session",
+      title: "Session",
+    },
+    {
+      key: "term",
+      title: "Term",
+    },
+    {
+      key: "class_name",
+      title: "Class",
+    },
+    {
       key: "assignedTeacher",
-      title: "Assigned Teacher",
+      title: "Teacher",
+      render: (value, row) => (
+        <span className="font-medium text-gray-800">
+          {row.assignedTeacher.name}
+        </span>
+      ),
     },
     {
-      key: "termAverageScore",
-      title: "Term Average Score",
+      key: "avg_score",
+      title: "Avg. Score",
     },
     {
-      key: "latestGrade",
+      key: "class_score",
+      title: "CA Score",
+    },
+    {
+      key: "exam_score",
+      title: "Exam Score",
+    },
+    {
+      key: "latest_grade",
       title: "Latest Grade",
+    },
+    {
+      key: "remarks",
+      title: "Remarks",
     },
     {
       key: "action",
@@ -245,7 +195,7 @@ export default function GradesReportCardPage() {
           <Button
             variant="link"
             className="h-auto p-0 text-main-blue"
-            onClick={() => handleViewDetails(row.subject)}
+            onClick={() => handleViewDetails(row.subject_name)}
           >
             View Details
           </Button>
@@ -254,27 +204,48 @@ export default function GradesReportCardPage() {
     },
   ];
 
-  const reportCardColumns: TableColumn<ReportCard>[] = [
+  const reportCardColumns: TableColumn<StudentReport>[] = [
     {
-      key: "documentName",
+      key: "doc_name",
       title: "Document Name",
       render: (value) => (
         <span className="font-medium text-gray-800">{value as string}</span>
       ),
     },
     {
-      key: "academicPeriod",
-      title: "Academic Period",
+      key: "academic_term",
+      title: "Academic Term",
+    },
+    {
+      key: "session",
+      title: "Academic Session",
+    },
+    {
+      key: "class_name",
+      title: "Class",
     },
     {
       key: "status",
       title: "Status",
-      render: (value) => {
-        const status = value as string;
+      render: (value, row) => {
+        const status = row.status;
         return (
-          <span className="text-sm font-medium text-green-600">{status}</span>
+          <span
+            className={`text-sm font-medium ${row.status === "approved" ? "text-green-600" : row.status === "pending" ? "text-yellow-600" : "text-destructive"}`}
+          >
+            {status}
+          </span>
         );
       },
+    },
+    {
+      key: "updated_at",
+      title: "Date",
+      render: (value) => (
+        <span className="font-medium text-gray-800">
+          {format(value as string, "MMM dd, yyyy")}
+        </span>
+      ),
     },
     {
       key: "action",
@@ -284,7 +255,7 @@ export default function GradesReportCardPage() {
           <Button
             variant="link"
             className="h-auto p-0 text-main-blue"
-            onClick={() => handleDownloadPDF(row)}
+            onClick={() => handleDownloadPDF(row.file_url)}
           >
             Download PDF
           </Button>
@@ -293,28 +264,50 @@ export default function GradesReportCardPage() {
     },
   ];
 
-  const attendanceColumns: TableColumn<Attendance>[] = [
+  const attendanceColumns: TableColumn<AttendanceRecords>[] = [
     {
       key: "date",
       title: "Date",
       render: (value) => (
-        <span className="font-medium text-gray-800">{value as string}</span>
+        <span className="font-medium text-gray-800">
+          {format(value as string, "MMM dd, yyyy")}
+        </span>
       ),
     },
     {
-      key: "teacher",
-      title: "Marked By",
-      render: (value) => (
-        <span className="font-medium text-gray-800">{value as string}</span>
+      key: "session",
+      title: "Session",
+      render: (value) => {
+        return <span className="text-sm font-medium">{value as string}</span>;
+      },
+    },
+    {
+      key: "class_name",
+      title: "Class",
+      render: (value) => {
+        return <span className="text-sm font-medium">{value as string}</span>;
+      },
+    },
+    {
+      key: "markedBy",
+      title: "Teacher",
+      render: (value, row) => (
+        <span className="font-medium text-gray-800">
+          {row.markedBy.name ?? "N/A"}
+        </span>
       ),
     },
     {
       key: "status",
-      title: "Status",
-      render: (value) => {
-        const status = value as string;
+      title: "Att. Status",
+      render: (v, r) => {
+        const status = r.status;
         return (
-          <span className="text-sm font-medium text-green-600">{status}</span>
+          <span
+            className={`text-sm font-medium ${status === "present" ? "text-green-600" : "text-destructive"}`}
+          >
+            {status}
+          </span>
         );
       },
     },
@@ -322,27 +315,24 @@ export default function GradesReportCardPage() {
       key: "notes",
       title: "Notes",
       render: (value) => {
-        const status = value as string;
-        return (
-          <span className="text-sm font-medium text-green-600">{status}</span>
-        );
+        return <span className="text-sm font-medium">{value as string}</span>;
       },
     },
-    {
-      key: "action",
-      title: "Action",
-      render: (value, row) => {
-        return (
-          <Button
-            variant="link"
-            className="h-auto p-0 text-main-blue"
-            onClick={() => toast.error("Btn clicked!")}
-          >
-            Download PDF
-          </Button>
-        );
-      },
-    },
+    // {
+    //   key: "action",
+    //   title: "Action",
+    //   render: (value, row) => {
+    //     return (
+    //       <Button
+    //         variant="link"
+    //         className="h-auto p-0 text-main-blue"
+    //         onClick={() => toast.error("Btn clicked!")}
+    //       >
+    //         Download PDF
+    //       </Button>
+    //     );
+    //   },
+    // },
   ];
 
   return (
@@ -392,117 +382,171 @@ export default function GradesReportCardPage() {
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <MetricCard
-          title="Current Term Performance"
-          value={overallAverage > 0 ? `${overallAverage}%` : "—"}
-          trend="up"
-        />
-        <MetricCard title="Attendance Rate (Term)" value="—" trend="up" />
-        <MetricCard
-          title="Lowest Term Performance"
-          value={
-            lowestSubject
-              ? `${lowestSubject.subject}: ${lowestSubject.termAverageScore}`
-              : "—"
-          }
-          trend="up"
-        />
+        <MetricCard title="Current Term Performance" value={"-"} trend="up" />
+        <MetricCard title="Attendance Rate (Term)" value={"-"} trend="up" />
+        <MetricCard title="Lowest Term Performance" value={"-"} trend="up" />
       </div>
 
-      {/* Subject specifics current averages */}
-      <Card>
-        <CardHeader>
-          <div>
-            <CardTitle className="text-lg font-semibold text-gray-800 mb-2">
-              Subject-Specific Current Averages
-            </CardTitle>
-            <p className="text-sm text-gray-600">
-              This simplified table shows the running average for each subject,
-              allowing the parent to track progress week-to-week without waiting
-              for the official report card.
-            </p>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="border rounded-lg overflow-hidden">
-            <DataTable
-              columns={subjectColumns}
-              data={subjectPerformances}
-              showActionsColumn={false}
-            />
-          </div>
-          {hasMoreSubjects && (
+      {/* main content */}
+      {!selectedWardId ? (
+        <div className="h-50 w-full text-muted-foreground justify-center flex items-center">
+          <p>Select a child to begin.</p>
+        </div>
+      ) : isLoading ? (
+        <div className="h-50 w-full text-muted-foreground justify-center flex items-center">
+          <p>Loading...</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {/* Subject specifics current averages */}
+          <Card>
+            <CardHeader>
+              <div>
+                <CardTitle className="text-lg font-semibold text-gray-800 mb-2">
+                  Subject-Specific Current Averages
+                </CardTitle>
+                <p className="text-sm text-gray-600">
+                  This simplified table shows the running average for each
+                  subject, allowing the parent to track progress week-to-week
+                  without waiting for the official report card.
+                </p>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="border rounded-lg overflow-hidden">
+                <DataTable
+                  columns={subjectColumns}
+                  data={wardSubjectResults}
+                  isLoading={isFetchingSubjectResults}
+                  emptyMessage={
+                    isSubjectResultsErr
+                      ? "Failed to fetch subject results"
+                      : "No subject results records yet."
+                  }
+                  showActionsColumn={false}
+                />
+              </div>
+              {/* {hasMoreSubjects && (
             <div className="flex justify-center mt-4">
               <Button variant="outline" onClick={loadMoreSubjects}>
                 Load More
               </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          )} */}
+            </CardContent>
+          </Card>
 
-      {/* official report card access */}
-      <Card>
-        <CardHeader>
-          <div>
-            <CardTitle className="text-lg font-semibold text-gray-800 mb-2">
-              Official Report Card Access
-            </CardTitle>
-            <p className="text-sm text-gray-600">
-              This table serves as the archive for all finalized, official
-              report cards, which are typically generated at the end of a term
-              or year.
-            </p>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="border rounded-lg overflow-hidden">
-            <DataTable
-              columns={reportCardColumns}
-              data={reportCards}
-              showActionsColumn={false}
-            />
-          </div>
-          {hasMoreReportCards && (
+          {/* official report card access */}
+          <Card>
+            <CardHeader>
+              <div>
+                <CardTitle className="text-lg font-semibold text-gray-800 mb-2">
+                  Official Report Card Access
+                </CardTitle>
+                <p className="text-sm text-gray-600">
+                  This table serves as the archive for all finalized, official
+                  report cards, which are typically generated at the end of a
+                  term or year.
+                </p>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="border rounded-lg overflow-hidden">
+                <DataTable
+                  columns={reportCardColumns}
+                  data={wardReports}
+                  isLoading={isFetchingStudentReports}
+                  emptyMessage={
+                    isStudentResultErr
+                      ? "Failed to fetch ward's records."
+                      : "No records found."
+                  }
+                  showActionsColumn={false}
+                />
+              </div>
+              {/* {hasMoreReportCards && (
             <div className="flex justify-center mt-4">
               <Button variant="outline" onClick={loadMoreReportCards}>
                 Load More
               </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          )} */}
+            </CardContent>
+          </Card>
 
-      {/* attendance reports */}
-      <Card>
-        <CardHeader>
-          <div>
-            <CardTitle className="text-lg font-semibold text-gray-800 mb-2">
-              Attendance Reports
-            </CardTitle>
-            <p className="text-sm text-gray-600">
-              This table serves as the archive for the attendance records for
-              your wards across terms and sessions.
-            </p>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="border rounded-lg overflow-hidden">
-            <DataTable
-              columns={attendanceColumns}
-              data={[]}
-              showActionsColumn={false}
-            />
-          </div>
-          {hasMoreReportCards && (
+          {/* attendance reports */}
+          <Card>
+            <CardHeader>
+              <div>
+                <CardTitle className="text-lg font-semibold text-gray-800 mb-2">
+                  Attendance Reports/Summary
+                </CardTitle>
+                <p className="text-sm text-gray-600">
+                  This table serves as the archive for the attendance records
+                  for your wards across terms and sessions.
+                </p>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {/* attendance summary */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <MetricCard
+                  title="Days Present"
+                  value={attendanceReport?.data.summary.present ?? "-"}
+                  trend="up"
+                />
+                <MetricCard
+                  title="Days Absent"
+                  value={attendanceReport?.data.summary.absent ?? "-"}
+                  trend="up"
+                />
+                <MetricCard
+                  title="Days Excused"
+                  value={attendanceReport?.data.summary.excused ?? "-"}
+                  trend="up"
+                />
+                <MetricCard
+                  title="Days Late"
+                  value={attendanceReport?.data.summary.late ?? "-"}
+                  trend="up"
+                />
+                <MetricCard
+                  title="Attendance Percentage"
+                  value={
+                    attendanceReport?.data.summary.attendance_percentage ?? "-"
+                  }
+                  trend="up"
+                />
+                <MetricCard
+                  title="Total Days"
+                  value={attendanceReport?.data.summary.total_days ?? "-"}
+                  trend="up"
+                />
+              </div>
+              <div className="border rounded-lg overflow-hidden mt-10">
+                <DataTable
+                  columns={attendanceColumns}
+                  data={wardAttendanceRecords}
+                  isLoading={isFetchingAttendanceReport}
+                  emptyMessage={
+                    attendanceReportErr
+                      ? "Failed to fetch attendance records."
+                      : "No attendance record yet."
+                  }
+                  showActionsColumn={false}
+                />
+              </div>
+              {/* {hasMoreReportCards && (
             <div className="flex justify-center mt-4">
               <Button variant="outline" onClick={loadMoreReportCards}>
                 Load More
               </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          )} */}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {selectedSubject && (
         <DetailedGradeViewModal

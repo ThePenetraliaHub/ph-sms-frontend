@@ -7,6 +7,7 @@ import type {
   AttendanceQueryParams,
   MarkAttendanceRequest,
   MarkAttendanceResponse,
+  AttendanceReportResponse,
 } from "./attendance-type";
 
 const BASE = "/attendances";
@@ -79,6 +80,21 @@ export const attendanceApi = baseApi.injectEndpoints({
       query: (id) => ({ url: `${BASE}/${id}`, method: "DELETE" }),
       invalidatesTags: ["Attendance"],
     }),
+
+    //for parents
+    getStudentAttendanceReport: build.query<
+      AttendanceReportResponse,
+      { student_id: string; date_from?: string }
+    >({
+      query: ({ student_id, date_from }) => ({
+        url: `${BASE}/student/${student_id}/report`,
+        method: "GET",
+        params: { date_from },
+      }),
+      providesTags: (res, err, { student_id }) => [
+        { type: "Attendance", id: student_id },
+      ],
+    }),
   }),
 });
 
@@ -92,4 +108,5 @@ export const {
   useUpdateAttendanceMutation,
   useDeleteAttendanceMutation,
   useMarkBulkAttendanceMutation,
+  useGetStudentAttendanceReportQuery,
 } = attendanceApi;
