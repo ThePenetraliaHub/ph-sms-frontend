@@ -22,6 +22,7 @@ import type { Grade } from "@/services/grades/grades-type";
 import { useGetStudentByQueryParamQuery } from "@/services/stakeholders/stakeholders";
 import { useGetUserRequestsQuery } from "@/services/user-requests/user-requests";
 import { useGetAllExamResultsQuery } from "@/services/results/results";
+import { useGetClassQuery } from "@/services/schools/schools";
 
 function getCbtExamsList(data: unknown): CbtExam[] {
   if (!data || typeof data !== "object") return [];
@@ -40,69 +41,51 @@ function getCbtExamsList(data: unknown): CbtExam[] {
   return [];
 }
 
+//assignment name, subject, total marks, due date, status, actn
+
 export default function AssignmentsPage() {
   const router = useRouter();
   const user = useAppSelector(selectUser);
-  // const { data: student, isLoading: fetchingStudentAttachment } =
-  //   useGetStudentByQueryParamQuery(user?.id ?? "");
-  // const studentData = student?.data[0];
 
-  //FOR ASSIGNMENT
-  const { data: userRequests } = useGetUserRequestsQuery();
-  const personalRequests = userRequests?.data.filter((request) => {
-    return request.creator_id === user?.id;
-  });
-  // console.log(personalRequests); //FOR ASSIGNMENTS
+  //get stakeholder
+  const { data: stakeholder, isLoading: isFetchingStudent } =
+    useGetStudentByQueryParamQuery(user?.id ?? "", { skip: !user?.id });
 
-  //FOR QUIZZES
-  const { data: results } = useGetAllExamResultsQuery();
-  console.log(results?.data);
+  const my_class = useMemo(() => {
+    if (!stakeholder?.data) return;
+    return stakeholder.data[0].class_assigned;
+  }, [stakeholder]);
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  //get sk class-details
+  const { data: assigned_class_data, isLoading: isFetchingClass } =
+    useGetClassQuery(
+      {
+        id: user?.school_id ?? "",
+        class_name: my_class ?? "",
+      },
+      { skip: !user?.school_id?.trim() || !my_class?.trim() },
+    );
 
-  const { data: cbtExamsData } = useGetCbtExamsQuery(
-    { _all: true },
-    { skip: !user?.id },
-  );
+  const myClassExams: CbtExam[] = useMemo(() => {
+    if (!assigned_class_data) return [] as CbtExam[];
+    return assigned_class_data?.data.cbt_exams;
+  }, [assigned_class_data]);
 
-  const cbtExams = useMemo(() => getCbtExamsList(cbtExamsData), [cbtExamsData]);
+  console.log("My Class Details: ", myClassExams);
 
-  const nextUpcomingCbtExam = useMemo(() => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const upcoming = cbtExams
-      .filter((exam) => {
-        if (exam.completed) return false;
-        if (!exam.schedule_date) return true;
-        const d = parseISO(exam.schedule_date);
-        const examDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-        return examDate.getTime() >= today.getTime();
-      })
-      .sort((a, b) => {
-        if (!a.schedule_date) return 1;
-        if (!b.schedule_date) return -1;
-        return (
-          parseISO(a.schedule_date).getTime() -
-          parseISO(b.schedule_date).getTime()
-        );
-      })[0];
-    return upcoming ?? null;
-  }, [cbtExams]);
+  const isLoading = isFetchingClass || isFetchingStudent;
 
-  const handleViewFeedback = (row: any) => {
-    // setSelectedAssignment({});
-    setFeedbackModalOpen(true);
-  };
-
-  const handleAcknowledge = () => {
-    setFeedbackModalOpen(false);
-  };
-
-  const columns: TableColumn<any>[] = [
+  const columns: TableColumn<CbtExam>[] = [
     {
-      key: "assignmentName",
-      title: "Assignment Name",
+      key: "title",
+      title: "Exam",
+      render: (value) => (
+        <span className="font-medium text-gray-800">{value as string}</span>
+      ),
+    },
+    {
+      key: "category",
+      title: "Category",
       render: (value) => (
         <span className="font-medium text-gray-800">{value as string}</span>
       ),
@@ -112,12 +95,20 @@ export default function AssignmentsPage() {
       title: "Subject",
     },
     {
-      key: "totalMarks",
+      key: "total_marks_available",
       title: "Total Marks",
     },
     {
-      key: "dueDateTime",
-      title: "Due Date/Time",
+      key: "duration",
+      title: "Duration",
+    },
+    {
+      key: "max_attempt",
+      title: "Max Attempt",
+    },
+    {
+      key: "schedule_date",
+      title: "Scheduled Date",
     },
     {
       key: "status",
@@ -141,14 +132,15 @@ export default function AssignmentsPage() {
       key: "action",
       title: "Action",
       render: (value, row) => {
-        if (row.actionLabel === "View Feedback") {
+        if (row.id === "View Feedback") {
           return (
             <Button
               variant="link"
               className="h-auto p-0 text-main-blue"
-              onClick={() => handleViewFeedback(row)}
+              // onClick={() => handleViewFeedback(row)}
+              onClick={() => {}}
             >
-              {row.actionLabel}
+              {/* {row.actionLabel} */}
             </Button>
           );
         }
@@ -160,7 +152,7 @@ export default function AssignmentsPage() {
               row.id ? router.push(`/student/quiz/${row.id}`) : undefined
             }
           >
-            {row.actionLabel}
+            {/* {row.actionLabel} */}
           </Button>
         );
       },
@@ -196,16 +188,17 @@ export default function AssignmentsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {true && (
           <UpcomingQuizCard
-            quiz={
-              nextUpcomingCbtExam && {
-                id: nextUpcomingCbtExam.id,
-                title: nextUpcomingCbtExam.title ?? "Quiz",
-                subject: nextUpcomingCbtExam.subject ?? undefined,
-                schedule_date: nextUpcomingCbtExam.schedule_date ?? undefined,
-                schedule_time: nextUpcomingCbtExam.schedule_time ?? undefined,
-                duration: nextUpcomingCbtExam.duration ?? undefined,
-              }
-            }
+            // quiz={
+            //   nextUpcomingCbtExam && {
+            //     id: nextUpcomingCbtExam.id,
+            //     title: nextUpcomingCbtExam.title ?? "Quiz",
+            //     subject: nextUpcomingCbtExam.subject ?? undefined,
+            //     schedule_date: nextUpcomingCbtExam.schedule_date ?? undefined,
+            //     schedule_time: nextUpcomingCbtExam.schedule_time ?? undefined,
+            //     duration: nextUpcomingCbtExam.duration ?? undefined,
+            //   }
+            // }
+            quiz={null}
             onAction={() => {
               // if (nextUpcomingCbtExam?.id) {
               //   router.push(`/student/quiz/${nextUpcomingCbtExam.id}`);
@@ -219,7 +212,7 @@ export default function AssignmentsPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <CardTitle className="text-lg font-semibold text-gray-800">
               Assignments & Quizzes Management Table
             </CardTitle>
@@ -234,8 +227,10 @@ export default function AssignmentsPage() {
                   type="search"
                   placeholder="Text Input (e.g., Physics, Essay)"
                   className="pl-10 w-64"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  // value={searchQuery}
+                  value={""}
+                  // onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={() => {}}
                 />
               </div>
               <Button variant="outline" className="gap-2">

@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { getApiErrorMessage } from "@/lib/format-api-error";
-import { useVerifyPaymentMutation } from "@/services/payment/payment";
+import { useVerifyFeePaymentMutation } from "@/services/payment/payment";
 import { CheckCircle2, InfoIcon, XCircle } from "lucide-react";
 
 interface PayFeesModalProps {
@@ -21,7 +20,7 @@ export function PayFeesModal({ open, onOpenChange }: PayFeesModalProps) {
     "success" | "pending" | "failed" | undefined
   >();
 
-  const [verifyPayment, { isLoading }] = useVerifyPaymentMutation();
+  const [verifyPayment, { isLoading }] = useVerifyFeePaymentMutation();
 
   const handleClose = (isOpen: boolean) => {
     if (!isOpen) {
@@ -39,18 +38,18 @@ export function PayFeesModal({ open, onOpenChange }: PayFeesModalProps) {
     try {
       const { data, message } = await verifyPayment(payload).unwrap();
       if (data.payment.status) setPaymentStatus(data.payment.status);
-      toast.success(message ? message : "Payment status retrieved successfully")
+      toast.success(
+        message ? message : "Payment status retrieved successfully",
+      );
       // handleClose(false);
-    } catch (err: unknown) {
-      // toast.error(getApiErrorMessage(err, "Failed to initialize payment"));
-    }
+    } catch {}
   };
 
   useEffect(() => {
     if (!paymentStatus) return;
     const interval = setInterval(() => {
       if (paymentStatus) setPaymentStatus(undefined);
-    }, 3000);
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [paymentStatus]);

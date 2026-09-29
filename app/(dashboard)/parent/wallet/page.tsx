@@ -18,7 +18,7 @@ import {
   type WalletTransactionRow,
 } from "@/lib/student-wallet-utils";
 import type { Transaction as ApiTransaction } from "@/services/transactions/transaction-types";
-import type { StakeholderChildDetails } from "@/services/stakeholders/stakeholder-types";
+import type { SkChildDetails } from "@/services/stakeholders/stakeholder-types";
 
 export default function WalletPage() {
   const user = useAppSelector(selectUser);
@@ -29,14 +29,10 @@ export default function WalletPage() {
     skip: !user?.id,
   });
   const parent = parentData?.data ?? null;
-  const wards: StakeholderChildDetails[] = parent?.children_details ?? [];
+  const wards: SkChildDetails[] = parent?.children_details ?? [];
   const primaryWard = wards[0] ?? null;
-  const wardUserId = primaryWard?.user_id ?? null;
-  const wardName = primaryWard?.user
-    ? [primaryWard.user.first_name, primaryWard.user.last_name]
-        .filter(Boolean)
-        .join(" ") || "Ward"
-    : "Ward";
+  const wardUserId = primaryWard?.id ?? null;
+  const wardName = primaryWard?.full_name;
 
   const { data: wardWalletData, refetch: refetchWardWallet } =
     useGetWalletBalanceQuery(wardUserId ?? undefined, { skip: !wardUserId });

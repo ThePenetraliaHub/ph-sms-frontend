@@ -56,11 +56,9 @@ export function PersonalDetailsView({ stakeholder }: PersonalDetailsViewProps) {
     }
     if (stakeholder?.emergency_contact) {
       const contact = stakeholder.emergency_contact;
-      const name = contact.user
-        ? `${contact.user.first_name} ${contact.user.last_name}`.trim()
-        : "Unknown";
-      const phone = contact.user?.phone_number || "";
-      const relationship = contact.relationship_to_student || "";
+      const name = contact ? contact : "Unknown"
+      const phone = contact;
+      const relationship = contact || "";
       return `${name}${relationship ? ` (${relationship})` : ""}${phone ? ` - ${phone}` : ""}`;
     }
     return "—";

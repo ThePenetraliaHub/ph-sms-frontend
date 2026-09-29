@@ -45,11 +45,9 @@ function formatName(s: Stakeholders): string {
 }
 
 function snapshotToRow(s: FeeAgeingStudentSnapshot): Student {
-  const primary = s.primary_contact?.user;
-  const primaryName = primary
-    ? `${primary.first_name || ""} ${primary.last_name || ""}`.trim()
-    : s.parent_name || "—";
-  const phone = s.emergency_contact_and_phone || primary?.phone_number || "—";
+  const primary = s.primary_contact;
+  const primaryName = primary || s.parent_name || "—";
+  const phone = s.emergency_contact_and_phone || "—";
 
   return {
     id: s.id,

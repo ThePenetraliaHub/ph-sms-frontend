@@ -96,7 +96,7 @@ export const schoolsApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: ["School"],
+      invalidatesTags: ["Stakeholder"],
     }),
 
     checkResultAccess: build.query<

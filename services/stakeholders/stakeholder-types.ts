@@ -6,13 +6,13 @@ import { ApiResponse } from "../shared-types";
 import { Notifications } from "../shared";
 import { Bank } from "../schools/schools-type";
 
-export interface StakeholderChildDetails {
-  id: string;
-  user_id: string;
-  school_id?: string;
-  user?: { first_name?: string; last_name?: string };
-  class_assigned?: string | null;
-}
+// export interface StakeholderChildDetails {
+//   id: string;
+//   user_id: string;
+//   school_id?: string;
+//   user?: { first_name?: string; last_name?: string };
+//   class_assigned?: string | null;
+// }
 
 export interface SkChildDetails {
   fee_summary: {

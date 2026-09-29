@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useMemo, useEffect } from "react";
+import { Suspense, useState, useMemo } from "react";
 import { useAppSelector } from "@/store/hooks";
 import { toast } from "sonner";
 import { selectUser } from "@/store/slices/authSlice";
@@ -20,12 +20,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { InitiatePaymentPayload } from "@/services/payment/payment-types";
-import { useInitializePaymentMutation } from "@/services/payment/payment";
+import { useInitializeFeesPaymentMutation } from "@/services/payment/payment";
 import { ConfirmPaymentModal } from "@/components/dashboard-pages/parent/fees-payment-portal/confirm-payment-modal";
 import { useViewStudentFeesQuery } from "@/services/schools/schools";
 import { ViewStudentFeesData } from "@/services/schools/schools-type";
 import { useGetChildrenPaymentRecordsQuery } from "@/services/transactions/transactions";
-import { Value } from "@radix-ui/react-select";
+import { ParentPaymentRecords } from "@/services/transactions/transaction-types";
+import { format } from "date-fns";
 
 type Ward = {
   id: string;
@@ -58,42 +59,6 @@ const testInitialPayData: PaymentInfo = {
   amount: 0,
 };
 
-interface FeesPaymentHistory {
-  id: string;
-  description: string;
-  paymentDate: string;
-  amountPaid: number;
-  receiptUrl: string;
-  status: "success" | "failed";
-}
-
-const dumFeesPay: FeesPaymentHistory[] = [
-  {
-    id: "wr453ffetdhhf67",
-    description: "Payment for Children's notebook",
-    paymentDate: "2026-09-09",
-    amountPaid: 200000.0,
-    receiptUrl: "https://test-receipt.com",
-    status: "success",
-  },
-  {
-    id: "544trgfhhd7d55fkgkvnfyr",
-    description: "Library Fees",
-    paymentDate: "2026-09-13",
-    amountPaid: 30000.0,
-    receiptUrl: "https://test-receipt.com",
-    status: "success",
-  },
-  {
-    id: "09i7kyjhhdndbcarrevdf6",
-    description: "Medical Fees",
-    paymentDate: "2026-09-09",
-    amountPaid: 400000.0,
-    receiptUrl: "https://test-receipt.com",
-    status: "failed",
-  },
-];
-
 interface OutstandingFees {
   id: string;
   amount: number;
@@ -103,9 +68,9 @@ interface OutstandingFees {
   due_date: string;
 }
 
-// const CURRENCY = "₦";
-// const formatAmount = (n: number | string) =>
-//   `${CURRENCY}${Number(n).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
+interface PaymentRecords extends ParentPaymentRecords {
+  fee_name: string;
+}
 
 function FeePaymentManagementContent() {
   const user = useAppSelector(selectUser);
@@ -118,7 +83,7 @@ function FeePaymentManagementContent() {
 
   //initialize payment
   const [initializePayment, { isLoading: isInitializing }] =
-    useInitializePaymentMutation();
+    useInitializeFeesPaymentMutation();
 
   //fetch parent
   const { data: parentData, isLoading: isFetchingParentData } =
@@ -170,10 +135,15 @@ function FeePaymentManagementContent() {
   const { data: payment_records, isLoading: isFetchingRecords } =
     useGetChildrenPaymentRecordsQuery();
 
-  // console.log("Payment Records: ", payment_records);
-  const paymentRecords: any[] = useMemo(() => {
-    if (!payment_records) return [];
-    return payment_records?.data.payments;
+  const paymentRecords: PaymentRecords[] = useMemo(() => {
+    if (!payment_records) return [] as PaymentRecords[];
+    const modifiedArr: PaymentRecords[] = payment_records.data.payments.map(
+      (record) => ({
+        ...record,
+        fee_name: record.fee_details.map((item) => item.fee_name).join(", "),
+      }),
+    );
+    return modifiedArr;
   }, [payment_records]);
 
   const metrics: Metric[] = [
@@ -225,17 +195,17 @@ function FeePaymentManagementContent() {
 
     try {
       const { data } = await initializePayment(payload).unwrap();
-      setAuthUrl(data.authorization_url ?? undefined);
-      // setPaymentInfo((prev) => ({
-      //   ...prev,
-      //   full_name: data.transaction.student_name ?? "",
-      //   adm_number: data.transaction.student_admission_number ?? "",
-      //   payment_reference_no: data.transaction.reference ?? "",
-      //   fee_type: title,
-      //   school: data.transaction.school_name ?? "",
-      //   amount: Number(data.transaction.amount) ?? "",
-      // }));
-      // setConfirmMod(true);
+      setAuthUrl(data.transaction.authorization_url ?? undefined);
+      setPaymentInfo((prev) => ({
+        ...prev,
+        full_name: data.transaction.student_name ?? "",
+        adm_number: data.transaction.student_admission_number ?? "",
+        payment_reference_no: data.transaction.reference ?? "",
+        fee_type: title,
+        school: data.transaction.school_name ?? "",
+        amount: Number(data.transaction.amount) ?? "",
+      }));
+      setConfirmMod(true);
     } catch {}
   };
 
@@ -276,60 +246,78 @@ function FeePaymentManagementContent() {
       render: (_v, row) => {
         return (
           <Button
-            disabled={isInitializing}
+            disabled={isInitializing || row.status === "paid"}
             variant="link"
-            className="h-auto p-0 text-main-blue disabled:opacity-50 transition ease-in-out delay-100"
+            className="h-auto p-0 text-main-blue disabled:opacity-50 transition ease-in-out delay-100 disabled:cursor-not-allowed"
             onClick={() => initiatePayment(row.amount, [row.id], row.fee_name)}
           >
-            Pay Now
+            {row.status === "paid" ? "-" : "Pay Now"}
           </Button>
         );
       },
     },
   ];
 
-  const paymentColumns: TableColumn<FeesPaymentHistory>[] = [
+  const paymentColumns: TableColumn<PaymentRecords>[] = [
     {
-      key: "description",
-      title: "Description",
-      render: (v) => (
-        <span className="font-medium text-gray-800">{v as string}</span>
+      key: "fee_name",
+      title: "Fees",
+      render: (v) => <p className="font-medium text-gray-800">{v as string}</p>,
+    },
+    { key: "student_name", title: "Student" },
+    { key: "reference", title: "Reference No." },
+    {
+      key: "amount",
+      title: "Amount",
+      render: (v, r) => (
+        <span className="text-sm font-medium capitalize">
+          {r.amount ? `₦${r.amount.toLocaleString()}.00` : "₦0.00"}
+        </span>
       ),
     },
-    { key: "paymentDate", title: "Date" },
-    { key: "amountPaid", title: "Amount" },
     {
       key: "status",
       title: "Status",
       render: (v, r) => (
         <span
-          className={`text-sm font-medium capitalize ${r.status === "success" ? "text-green-600" : "text-destructive"}`}
+          className={`font-medium capitalize ${r.status === "success" ? "text-green-600" : r.status === "pending" ? "text-yellow-600" : "text-destructive"}`}
         >
           {v as string}
         </span>
       ),
     },
     {
-      key: "action",
-      title: "Action",
-      render: (value, row) => {
-        return (
-          <Button
-            variant="link"
-            className="h-auto p-0 text-main-blue"
-            onClick={() => toast.success("Download successful ✅")}
-          >
-            Download Receipt
-          </Button>
-        );
-      },
+      key: "payment_method",
+      title: "Pay Method",
+      render: (v, row) => (
+        <span className="capitalize text-gray-800">{v as string}</span>
+      ),
     },
+    {
+      key: "paid_at",
+      title: "Paid On",
+      render: (v, row) => (
+        <span className="text-gray-800">
+          {format(v as string, "MMM dd, yyyy")}
+        </span>
+      ),
+    },
+    // {
+    //   key: "action",
+    //   title: "Action",
+    //   render: (value, row) => {
+    //     return (
+    //       <Button
+    //         variant="link"
+    //         className="h-auto p-0 text-main-blue"
+    //         onClick={() => toast.success("Download successful ✅")}
+    //       >
+    //         Download Receipt
+    //       </Button>
+    //     );
+    //   },
+    // },
   ];
-
-  useEffect(() => {
-    if (!authUrl) return;
-    proceedToPay();
-  }, [authUrl]);
 
   return (
     <div className="space-y-4">

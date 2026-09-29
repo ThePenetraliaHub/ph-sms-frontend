@@ -7,6 +7,7 @@ import { MetricCard } from "@/components/dashboard-pages/admin/admissions/compon
 import { CourseCard } from "@/components/dashboard-pages/student/my-courses/course-card";
 import { useGetClassQuery } from "@/services/schools/schools";
 import { useGetStudentByQueryParamQuery } from "@/services/stakeholders/stakeholders";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export interface Course {
   courseCode: string;
@@ -82,12 +83,26 @@ export default function MyCoursesPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <MetricCard
           title="Total Enrolled Subjects"
-          value={my_class_details ? `${my_class_details?.subjects?.length} Subject(s)` : "..."}
+          value={
+            my_class_details
+              ? `${my_class_details?.subjects?.length} Subject(s)`
+              : "-"
+          }
           trend="up"
         />
-        <MetricCard title="Average Course Progress" value="..." trend="up" />
-        <MetricCard title="Total New Resources" value="..." trend="up" />
+        <MetricCard title="Average Course Progress" value={0} trend="up" />
+        <MetricCard title="Total New Resources" value={0} trend="up" />
       </div>
+
+      {/* if not assigned to a class yet */}
+      {!isLoading && !my_class && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Dear {stakeholder?.data[0].full_name},</CardTitle>
+          </CardHeader>
+          <CardContent>You haven't been assigned to a class yet.</CardContent>
+        </Card>
+      )}
 
       {/* Course Cards Grid */}
       {isLoading ? (

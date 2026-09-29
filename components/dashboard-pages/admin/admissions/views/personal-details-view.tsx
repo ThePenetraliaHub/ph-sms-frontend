@@ -14,10 +14,10 @@ export function PersonalDetailsView({ stakeholder }: PersonalDetailsViewProps) {
     : "—";
   const age = stakeholder.age ? `(Age ${stakeholder.age})` : "";
   const primaryContact = stakeholder.primary_contact
-    ? `${stakeholder.primary_contact.user.first_name} ${stakeholder.primary_contact.user.last_name}`
+    ? `${stakeholder.primary_contact} ${stakeholder.primary_contact}`
     : stakeholder.parent_name || "—";
   const emergencyContact = stakeholder.emergency_contact
-    ? `${stakeholder.emergency_contact.user.first_name} ${stakeholder.emergency_contact.user.last_name}${stakeholder.emergency_contact_and_phone ? ` - ${stakeholder.emergency_contact_and_phone}` : ""}`
+    ? `${stakeholder.emergency_contact} ${stakeholder.emergency_contact}${stakeholder.emergency_contact_and_phone ? ` - ${stakeholder.emergency_contact_and_phone}` : ""}`
     : stakeholder.emergency_contact_and_phone || "—";
 
   const rows = [

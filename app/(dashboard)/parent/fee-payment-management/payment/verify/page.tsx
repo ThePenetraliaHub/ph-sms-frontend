@@ -7,12 +7,13 @@ import {
   Loader2,
   LoaderIcon,
   LucideContact2,
+  TriangleAlert,
   XCircle,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { JSX, useEffect, useState } from "react";
 
-type Step = "loading" | "error" | "success";
+type Step = "loading" | "error" | "success" | "pending";
 
 export default function Page() {
   const searchParams = useSearchParams();
@@ -48,6 +49,26 @@ export default function Page() {
             </div>
           </div>
         );
+      case "pending":
+        return (
+          <div className="bg-background rounded-md p-6 space-y-7">
+            <div className="space-y-2 w-full">
+              <div className="flex flex-row items-center gap-x-2">
+                <TriangleAlert className="text-yellow-700" size={25} />
+                <h1 className="text-gray-800 text-2xl font-bold">
+                  Your payment is currently pending.
+                </h1>
+              </div>
+              <p className="text-gray-600 text-sm sm:text-base w-[60%]">
+                Your payment status is still pending. Please check back after
+                sometime.
+              </p>
+            </div>
+            <Button onClick={() => goBack()} className="w-full lg:w-50">
+              Back to Payments <ArrowRight />
+            </Button>
+          </div>
+        );
       case "success":
         return (
           <div className="bg-background rounded-md p-6 space-y-7">
@@ -63,7 +84,7 @@ export default function Page() {
                 the button below to return to fees portal.{" "}
               </p>
             </div>
-            <Button onClick={() => goBack()} className="w-full">
+            <Button onClick={() => goBack()} className="w-full lg:w-50">
               Continue <ArrowRight />
             </Button>
           </div>
@@ -84,7 +105,10 @@ export default function Page() {
               </p>
             </div>
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
-              <Button onClick={() => verifyPayment()} className="w-full">
+              <Button
+                onClick={() => verifyPayment()}
+                className="w-full lg:w-[47%]"
+              >
                 Try Again <ArrowRight />
               </Button>
               <Button
@@ -106,10 +130,10 @@ export default function Page() {
     if (!reference) return;
     if (step !== "loading") setStep("loading");
     try {
-      const res = await fetchPaymentStatus({ reference }).unwrap();
-      //   console.log("Response: ", res);
-      //if paid, set steps to success else, set to error
-      setStep(null);
+      const { data } = await fetchPaymentStatus({ reference }).unwrap();
+      if (data.status === "success") setStep("success");
+      if (data.status === "failed") setStep("error");
+      if (data.status === "pending") setStep("pending");
     } catch {
       setStep("error");
     }
@@ -124,7 +148,6 @@ export default function Page() {
   }, [reference]);
 
   if (status === "checking") {
-    //do something
     return <p className="text-center text-muted-foreground">Loading...</p>;
   }
 

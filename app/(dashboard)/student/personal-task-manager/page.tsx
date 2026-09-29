@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { MetricCard } from "@/components/dashboard-pages/admin/admissions/components/metric-card";
 import { PersonalTaskList } from "@/components/dashboard-pages/student/dashboard/personal-task-list";
 import { TaskCreationModal } from "@/components/dashboard-pages/student/dashboard/task-creation-modal";
@@ -16,7 +16,10 @@ import {
   useCreateUserRequestMutation,
   useGetUserRequestsQuery,
 } from "@/services/user-requests/user-requests";
-import { CreateUserRequestRequest } from "@/services/user-requests/user-request-types";
+import {
+  CreateUserRequestRequest,
+  UserRequest,
+} from "@/services/user-requests/user-request-types";
 // import { useMemo } from "react";
 
 export interface PersonalTasks {
@@ -42,24 +45,30 @@ export default function PersonalTaskManagerPage() {
     error,
   } = useGetUserRequestsQuery();
   const allRequests = userRequests?.data;
-  const filtered = allRequests?.filter(
-    (request) => request.creator_id === currStudent?.user_id,
-  );
-  const personalTasks: PersonalTasks[] = filtered
-    ? filtered?.map((item) => {
-        return {
-          id: item.id,
-          taskName: item.description,
-          taskType: `${item.title.slice(0, 1).toUpperCase()}${item.title.slice(1)}`,
-          deadline: item.end_date,
-          status: item.status === null ? "Pending" : item.status,
-          _raw: "",
-        };
-      })
-    : [];
+  const filtered: UserRequest[] = useMemo(() => {
+    if (!allRequests) return [] as UserRequest[];
+    const myRequests = allRequests.filter(
+      (request) => request.creator_id === currStudent?.user.id,
+    );
+    return myRequests;
+  }, [allRequests]);
+  const personalTasks: PersonalTasks[] = filtered.map((item) => {
+    return {
+      id: item.id,
+      taskName: item.description,
+      taskType: `${item.title.slice(0, 1).toUpperCase()}${item.title.slice(1)}`,
+      deadline: item.end_date,
+      status: item.status === null ? "Pending" : item.status,
+      _raw: "",
+    };
+  });
 
   const tasksDueCount: number = personalTasks.filter(
     (item) => item.status === "Pending",
+  ).length;
+
+  const tasksCompleted: number = personalTasks.filter(
+    (item) => item.status === "Completed",
   ).length;
 
   const [createUserRequest, { isLoading }] = useCreateUserRequestMutation();
@@ -83,6 +92,7 @@ export default function PersonalTaskManagerPage() {
       };
       const res = await createUserRequest(payload).unwrap();
       if (res.status) toast.success("Personal Task created successfully");
+      setModalOpen(false);
     } catch (err) {
       console.error("ERROR: ", err);
       return;
@@ -108,8 +118,8 @@ export default function PersonalTaskManagerPage() {
           trend="up"
         />
         <MetricCard
-          title="Completion Rate (Last 7 Days)"
-          value={`1% Success`}
+          title="Completion Rate (%)"
+          value={`${tasksCompleted}%`}
           trend="up"
         />
       </div>

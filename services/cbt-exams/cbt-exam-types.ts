@@ -43,7 +43,7 @@ export interface CbtExam {
   max_attempt: number | null;
   display_result: string | null;
   is_deleted: boolean;
-  status: null;
+  status: string | null;
   creator: User;
   updated_by: string | null;
   user: string | null;

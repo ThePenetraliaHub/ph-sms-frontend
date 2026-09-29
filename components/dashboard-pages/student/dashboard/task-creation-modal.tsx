@@ -49,7 +49,7 @@ export function TaskCreationModal({
     setTaskName("");
     setTaskType("study");
     setDeadline(undefined);
-    onOpenChange(false);
+    // onOpenChange(false);
   };
 
   const handleCancel = () => {
@@ -97,7 +97,7 @@ export function TaskCreationModal({
             onValueChange={(v) => setTaskType(v as string)}
           >
             <SelectTrigger id="taskType" className="w-full">
-              <SelectValue placeholder="Text Input (e.g., Study / Personal)" />
+              <SelectValue className="capitalize" placeholder="Text Input (e.g., Study / Personal)" />
             </SelectTrigger>
             <SelectContent>
               {["study", "personal", "leisure", "others"].map((opt, index) => (

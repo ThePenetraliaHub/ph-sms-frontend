@@ -189,8 +189,30 @@ export interface InitializePaymentData extends Transaction {
 
 export type InitializePaymentResponse = ApiResponse<InitializePaymentData>;
 
+export type ParentPaymentRecords = {
+  amount: number;
+  created_at: string;
+  currency: string;
+  expires_at: string;
+  fee_details: {
+    amount: number;
+    fee_name: string;
+    id: string;
+    status: "paid" | "unpaid";
+  }[];
+  fee_ids: string[];
+  id: string;
+  paid_at: string;
+  payment_method: string;
+  reference: string;
+  status: "success" | "failed" | "pending";
+  student_id: string;
+  student_name: string;
+  transaction_id: string;
+};
+
 export type ChildrenPaymentRecordsData = {
-  payments: any[];
+  payments: ParentPaymentRecords[];
   summary: {
     failed_payments: number;
     pending_payments: number;

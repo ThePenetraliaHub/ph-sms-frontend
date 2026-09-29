@@ -20,18 +20,17 @@ export function PersonalDetailsView({ stakeholder }: PersonalDetailsViewProps) {
     ? format(new Date(stakeholder.user.date_of_birth), "MMMM d, yyyy")
     : "—";
   const age = stakeholder.age ? `(Age: ${stakeholder.age})` : "";
-  const primaryContact = stakeholder.primary_contact
-    ? `${stakeholder.primary_contact.user.first_name} ${stakeholder.primary_contact.user.last_name}`
-    : stakeholder.parent_name || "—";
+  const primaryContact =
+    stakeholder.primary_contact || stakeholder.parent_name || "—";
   const primaryEmail =
-    stakeholder.primary_contact?.user.email || stakeholder.user.email || "—";
+    stakeholder.user.email || stakeholder.primary_contact || "—";
   const primaryPhone = (() => {
-    const u = stakeholder.primary_contact?.user ?? stakeholder.user;
+    const u = stakeholder.primary_contact ?? stakeholder.user;
     const r = u as unknown as Record<string, unknown>;
     return (r?.phone ?? r?.phone_number ?? "—") as string;
   })();
   const emergencyContact = stakeholder.emergency_contact
-    ? `${stakeholder.emergency_contact.user.first_name} ${stakeholder.emergency_contact.user.last_name}${stakeholder.emergency_contact_and_phone ? ` - ${stakeholder.emergency_contact_and_phone}` : ""}`
+    ? `${stakeholder.emergency_contact} ${stakeholder.emergency_contact_and_phone ? ` - ${stakeholder.emergency_contact_and_phone}` : ""}`
     : stakeholder.emergency_contact_and_phone || "—";
   const address =
     (stakeholder.user as unknown as Record<string, unknown>)?.address ?? "—";

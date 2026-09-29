@@ -17,13 +17,13 @@ import { useFundWalletMutation } from "@/services/wallet/wallet";
 import { getApiErrorMessage } from "@/lib/format-api-error";
 import { useAppSelector } from "@/store/hooks";
 import { selectUser } from "@/store/slices/authSlice";
-import type { StakeholderChildDetails } from "@/services/stakeholders/stakeholder-types";
+import type { SkChildDetails } from "@/services/stakeholders/stakeholder-types";
 
 interface TopUpWalletModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** For parents: wards to top up. For teachers/self: omit or pass empty array. */
-  wards?: StakeholderChildDetails[];
+  wards?: any;
   /** For self top-up (e.g. teacher): receiver is current user. Ignored when wards has items. */
   receiverId?: string;
   currentBalance?: string;
@@ -43,7 +43,7 @@ export function TopUpWalletModal({
   const selfReceiverId = receiverId ?? user?.id ?? "";
 
   const [wardUserId, setWardUserId] = useState<string>(
-    wards[0]?.user_id ?? selfReceiverId,
+    wards[0]?.id ?? selfReceiverId,
   );
   const [amount, setAmount] = useState("");
   const [fundWallet, { isLoading }] = useFundWalletMutation();
@@ -51,7 +51,7 @@ export function TopUpWalletModal({
   useEffect(() => {
     if (open) {
       if (wards.length > 0) {
-        setWardUserId(wards[0].user_id);
+        setWardUserId(wards[0].id);
       } else {
         setWardUserId(selfReceiverId);
       }
@@ -93,11 +93,9 @@ export function TopUpWalletModal({
     }
   };
 
-  const wardLabel = (w: StakeholderChildDetails) => {
-    const name = w.user
-      ? [w.user.first_name, w.user.last_name].filter(Boolean).join(" ")
-      : "Student";
-    return w.class_assigned ? `${name} (${w.class_assigned})` : name;
+  const wardLabel = (w: any) => {
+    const name = w ? w.full_name : "Student";
+    return w.full_name ? `${name} (${w.full_name})` : name;
   };
 
   return (
@@ -151,9 +149,9 @@ export function TopUpWalletModal({
                 <SelectValue placeholder="Choose student" />
               </SelectTrigger>
               <SelectContent>
-                {wards.map((w) => (
-                  <SelectItem key={w.id} value={w.user_id}>
-                    {wardLabel(w)}
+                {wards.map((w: any) => (
+                  <SelectItem key={w.id} value={w.id}>
+                    {wardLabel(w.user?.first_name ?? "")}
                   </SelectItem>
                 ))}
               </SelectContent>

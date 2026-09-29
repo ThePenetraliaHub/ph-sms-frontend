@@ -1,7 +1,6 @@
 "use client";
 
-// import { useState, useMemo } from "react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useGetStudentByQueryParamQuery } from "@/services/stakeholders/stakeholders";
 import { useAppSelector } from "@/store/hooks";
 import { selectUser } from "@/store/slices/authSlice";
@@ -10,31 +9,14 @@ import { DetailedGradeViewModal } from "@/components/dashboard-pages/student/my-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable, TableColumn } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
-// import { useGetGradesQuery } from "@/services/shared";
-// import type { Grade } from "@/services/grades/grades-type";
-
-//review this block
-interface SubjectPerformance {
-  subject: string;
-  courseId: string;
-  assignedTeacher: string;
-  termAverageScore: string;
-  latestGrade: string;
-  remarks: string;
-  score: number;
-  maxScore: number;
-  assignmentName: string;
-}
+import { useGetStudentSubjectResultsQuery } from "@/services/results/results";
+import { StudentSubjectResult } from "@/services/results/result-types";
 
 export default function MyGradesPage() {
   const user = useAppSelector(selectUser);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
-
-  // const { data: gradesData, isLoading: gradesLoading } = useGetGradesQuery(
-  //   user?.id ? { studentId: user.id } : undefined,
-  // );
 
   const {
     data: res,
@@ -44,6 +26,23 @@ export default function MyGradesPage() {
 
   const student = res?.data[0];
 
+  //subject results
+  const {
+    data: subjectResults,
+    isLoading: isFetchingSubjectResults,
+    isError: isSubjectResultsErr,
+  } = useGetStudentSubjectResultsQuery(
+    { student_id: student?.id ?? "" },
+    {
+      skip: !student?.id,
+    },
+  );
+
+  const myGrades: StudentSubjectResult[] = useMemo(() => {
+    if (!subjectResults?.data) return [] as StudentSubjectResult[];
+    return subjectResults?.data.subject_results;
+  }, [subjectResults]);
+
   const handleViewDetails = (subject: string, courseId: string) => {
     setSelectedSubject(subject);
     setSelectedCourseId(courseId);
@@ -51,39 +50,68 @@ export default function MyGradesPage() {
   };
 
   //review this block
-  const studentGrades = student?.grade?.map((grade) => {
-    return {
-      subject: grade.subject,
-      courseId: grade.courseId,
-      assignedTeacher: grade.assignedTeacher,
-      termAverageScore: grade.teamAverageScore,
-      latestGrade: grade.latestGrade,
-      remarks: grade.remarks,
-      score: grade.score,
-      maxScore: grade.maxScore,
-      assignmentName: grade.assignmentName,
-    };
-  });
+  // const studentGrades = student?.grade?.map((grade) => {
+  //   return {
+  //     subject: grade.subject,
+  //     courseId: grade.courseId,
+  //     assignedTeacher: grade.assignedTeacher,
+  //     termAverageScore: grade.teamAverageScore,
+  //     latestGrade: grade.latestGrade,
+  //     remarks: grade.remarks,
+  //     score: grade.score,
+  //     maxScore: grade.maxScore,
+  //     assignmentName: grade.assignmentName,
+  //   };
+  // });
 
-  const columns: TableColumn<SubjectPerformance>[] = [
+  const subjectColumns: TableColumn<StudentSubjectResult>[] = [
     {
-      key: "subject",
-      title: "Subjects",
+      key: "subject_name",
+      title: "Subject",
       render: (value) => (
         <span className="font-medium text-gray-800">{value as string}</span>
       ),
     },
     {
+      key: "session",
+      title: "Session",
+    },
+    {
+      key: "term",
+      title: "Term",
+    },
+    {
+      key: "class_name",
+      title: "Class",
+    },
+    {
       key: "assignedTeacher",
-      title: "Assigned Teacher",
+      title: "Teacher",
+      render: (value, row) => (
+        <span className="font-medium text-gray-800">
+          {row.assignedTeacher.name}
+        </span>
+      ),
     },
     {
-      key: "termAverageScore",
-      title: "Term Average Score",
+      key: "avg_score",
+      title: "Avg. Score",
     },
     {
-      key: "latestGrade",
+      key: "class_score",
+      title: "CA Score",
+    },
+    {
+      key: "exam_score",
+      title: "Exam Score",
+    },
+    {
+      key: "latest_grade",
       title: "Latest Grade",
+    },
+    {
+      key: "remarks",
+      title: "Remarks",
     },
     {
       key: "action",
@@ -93,7 +121,7 @@ export default function MyGradesPage() {
           <Button
             variant="link"
             className="h-auto p-0 text-main-blue"
-            onClick={() => handleViewDetails(row.subject, row.courseId)}
+            onClick={() => handleViewDetails(row.subject_name, "")}
           >
             View Details
           </Button>
@@ -147,11 +175,15 @@ export default function MyGradesPage() {
               </div>
             ) : (
               <DataTable
-                columns={columns}
-                data={
-                  studentGrades ? (studentGrades as SubjectPerformance[]) : []
-                }
+                columns={subjectColumns}
+                data={myGrades}
                 showActionsColumn={false}
+                isLoading={isFetchingSubjectResults}
+                emptyMessage={
+                  isSubjectResultsErr
+                    ? "Failed to get grade results"
+                    : "No grade results yet."
+                }
               />
             )}
           </div>
@@ -164,28 +196,7 @@ export default function MyGradesPage() {
           open={modalOpen}
           onOpenChange={setModalOpen}
           subject={selectedSubject}
-          assessments={
-            studentGrades
-              ?.filter((grade) => String(grade.courseId) === selectedCourseId)
-              .map((grade) => {
-                const name = String(grade.assignmentName ?? "N/A");
-                return {
-                  assessmentName: name,
-                  assessmentType: name.includes("Quiz")
-                    ? "Continuous Assessment (Quiz)"
-                    : name.includes("CA")
-                      ? "Continuous Assessment"
-                      : name.includes("Exam")
-                        ? "Examination"
-                        : "Assignment",
-                  totalMarks: Number(grade.maxScore) || 0,
-                  studentScore: Number(grade.score) || 0,
-                  teacherFeedback: String(
-                    grade.remarks ?? "No feedback available",
-                  ),
-                };
-              }) ?? []
-          }
+          assessments={[]}
         />
       )}
     </div>

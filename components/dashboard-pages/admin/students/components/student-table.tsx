@@ -50,6 +50,14 @@ export interface Student {
     phone_number: string;
     id: string;
   };
+  fee_summary: {
+    block_result_access: boolean;
+    fee_records: any[];
+    has_outstanding: boolean;
+    total_fees: number;
+    total_owed: number;
+    total_paid: number;
+  };
 }
 
 interface StudentTableProps {
@@ -67,6 +75,7 @@ export function StudentTable({
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [selStudId, setSelStudId] = useState<string>();
+  const [blockResultAccessStat, setBlockResultAccessStat] = useState<boolean>();
   const [showAssignParMod, setShowAssignParMod] = useState<boolean>(false);
   const [selectedStudent, setSelectedStudent] = useState<Student>();
 
@@ -90,16 +99,6 @@ export function StudentTable({
     return age.toString();
   }
 
-  //check result access
-  const {
-    data: studentsResultAccess,
-    isLoading: isFetchingResAccStat,
-    isError: isFetchingResAccStatErr,
-  } = useCheckResultAccessQuery(
-    { studentId: selStudId ?? "" },
-    { skip: !selStudId },
-  );
-
   //change result access status
   const [changeResultAccess, { isLoading: isChangingResultAccess }] =
     useChangeResultAccessMutation();
@@ -119,7 +118,7 @@ export function StudentTable({
         class_assigned: string | null;
         date_joined?: string;
         class?: { name?: string };
-        fee_summary?: {
+        fee_summary: {
           block_result_access: boolean;
           fee_records: any[];
           has_outstanding: boolean;
@@ -154,6 +153,14 @@ export function StudentTable({
           full_name: student.parent_info?.full_name ?? "N/A",
           phone_number: student.parent_info?.phone_number ?? "N/A",
           id: student.parent_info?.id ?? "N/A",
+        },
+        fee_summary: {
+          block_result_access: student.fee_summary?.block_result_access,
+          fee_records: [],
+          has_outstanding: student.fee_summary?.has_outstanding,
+          total_fees: student.fee_summary?.total_fees,
+          total_owed: student.fee_summary?.total_owed,
+          total_paid: student.fee_summary?.total_paid,
         },
       }),
     ) ?? [];
@@ -213,8 +220,7 @@ export function StudentTable({
   };
 
   const effectResultAccess = async (action: "block" | "auto" | "unblock") => {
-    // console.log(studentId);
-    if (isFetchingResAccStatErr) return toast.error("Update failed");
+    if (!selStudId) return;
     try {
       const res = await changeResultAccess({
         student_id: selStudId ?? "",
@@ -222,7 +228,11 @@ export function StudentTable({
       }).unwrap();
       toast.success(res.message ? res.message : "Result access status updated");
       if (selStudId) setSelStudId(undefined);
-    } catch {}
+    } catch {
+    } finally {
+      setBlockResultAccessStat(undefined);
+      setSelStudId(undefined);
+    }
   };
 
   const columns: TableColumn<Student>[] = [
@@ -269,6 +279,13 @@ export function StudentTable({
       title: "Outstanding Fees",
     },
     {
+      key: "fee_summary",
+      title: "Block Result Access",
+      render: (v, r) => (
+        <span>{r.fee_summary.block_result_access ? "Yes" : "No"}</span>
+      ),
+    },
+    {
       key: "status",
       title: "Status",
       render: (value) => (
@@ -307,9 +324,12 @@ export function StudentTable({
           },
           {
             separator: true,
-            disabled: () => isChangingResultAccess || isFetchingResAccStat,
+            disabled: () => isChangingResultAccess,
             label: "Block/Unblock Result",
-            onClick: (row) => setSelStudId(row.id),
+            onClick: (row) => {
+              setSelStudId(row.id);
+              setBlockResultAccessStat(row.fee_summary.block_result_access);
+            },
             icon: <Icon icon={StopCircleIcon} size={16} />,
           },
           {
@@ -380,21 +400,13 @@ export function StudentTable({
   ];
 
   useEffect(() => {
-    if (!studentsResultAccess) return;
     if (!selStudId) return;
-    //do something
-    const block_result_access: boolean =
-      studentsResultAccess.data.block_result_access;
-    const outstanding_status: boolean =
-      studentsResultAccess.data.has_outstanding;
-
-    const action: "block" | "unblock" = outstanding_status
-      ? "block"
-      : block_result_access
-        ? "unblock"
-        : "block";
+    if (blockResultAccessStat === undefined) return;
+    const action: "block" | "unblock" = blockResultAccessStat
+      ? "unblock"
+      : "block";
     effectResultAccess(action);
-  }, [studentsResultAccess]);
+  }, [selStudId]);
 
   return (
     <div className="space-y-4">

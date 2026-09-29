@@ -1,5 +1,6 @@
 import { baseApi } from "../baseApi";
 import {
+  FeePaymentStatusResponse,
   InitiatePaymentPayload,
   InitiatePaymentResponse,
   VerifyPaymentResponse,
@@ -10,7 +11,7 @@ const BASE = "/transactions/payments";
 export const paymentApi = baseApi.injectEndpoints({
   overrideExisting: true,
   endpoints: (build) => ({
-    initializePayment: build.mutation<
+    initializeFeesPayment: build.mutation<
       InitiatePaymentResponse,
       InitiatePaymentPayload
     >({
@@ -20,17 +21,21 @@ export const paymentApi = baseApi.injectEndpoints({
         body: data,
       }),
     }),
-    verifyPayment: build.mutation<VerifyPaymentResponse, { reference: string }>(
-      {
-        query: (body) => ({
-          url: `${BASE}/verify`,
-          method: "POST",
-          body,
-        }),
-        invalidatesTags: [{ type: "Transaction", id: "LIST" }],
-      },
-    ),
-    getPaymentStatus: build.query<any, { reference: string }>({
+    verifyFeePayment: build.mutation<
+      VerifyPaymentResponse,
+      { reference: string }
+    >({
+      query: (body) => ({
+        url: `${BASE}/verify`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: [{ type: "Transaction", id: "LIST" }],
+    }),
+    getPaymentStatus: build.query<
+      FeePaymentStatusResponse,
+      { reference: string }
+    >({
       query: ({ reference }) => ({
         url: `${BASE}/status`,
         method: "GET",
@@ -41,8 +46,8 @@ export const paymentApi = baseApi.injectEndpoints({
 });
 
 export const {
-  useInitializePaymentMutation,
-  useVerifyPaymentMutation,
+  useInitializeFeesPaymentMutation,
+  useVerifyFeePaymentMutation,
   useGetPaymentStatusQuery,
   useLazyGetPaymentStatusQuery,
 } = paymentApi;
