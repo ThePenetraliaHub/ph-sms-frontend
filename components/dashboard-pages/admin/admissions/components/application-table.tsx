@@ -40,6 +40,10 @@ export function ApplicationTable({
   const [updateStakeholder] = useUpdateStakeholderMutation();
   const [removeUser, { isLoading }] = useDeleteUserMutation();
 
+  const [admApplications, setAdmApplications] = useState<
+    AdmissionApplication[]
+  >(applications ?? []);
+
   const deleteUser = async (id: string) => {
     try {
       const res = await removeUser(id).unwrap();
@@ -68,6 +72,7 @@ export function ApplicationTable({
             ? { ...app, stage: newStage, statusLabel }
             : app,
         );
+        setAdmApplications(updatedApplications);
         onApplicationsChange(updatedApplications);
 
         toast.success(`Status changed to "${statusLabel}" successfully`);
@@ -90,7 +95,7 @@ export function ApplicationTable({
     }
   };
 
-  const filteredApplications = applications.filter(
+  const filteredApplications = admApplications.filter(
     (app) =>
       app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       app.id.toLowerCase().includes(searchQuery.toLowerCase()) ||

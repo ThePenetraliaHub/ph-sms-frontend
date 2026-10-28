@@ -52,7 +52,6 @@ export default function AddApplicantPage() {
     try {
       const formData = buildAdmissionFormData(formState, schoolId);
       const res = await register(formData).unwrap();
-      console.log(res);
       router.push("/admin/admissions");
     } catch (err) {
       console.error("Admission register failed:", err);
