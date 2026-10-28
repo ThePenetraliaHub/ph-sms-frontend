@@ -54,7 +54,6 @@ export function QuickActionsCard({ parent }: Props) {
       ? `${wardWallet.currency} ${Number(wardWallet.balance).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`
       : "₦0.00";
 
-  console.log("Parent: ", parent);
   return (
     <>
       <Card>
