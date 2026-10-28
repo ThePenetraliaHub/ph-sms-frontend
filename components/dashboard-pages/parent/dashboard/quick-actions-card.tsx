@@ -54,6 +54,7 @@ export function QuickActionsCard({ parent }: Props) {
       ? `${wardWallet.currency} ${Number(wardWallet.balance).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`
       : "₦0.00";
 
+  console.log("Parent: ", parent);
   return (
     <>
       <Card>
@@ -103,9 +104,7 @@ export function QuickActionsCard({ parent }: Props) {
       <OutstandingFeesModal
         open={outstandingFeesModalOpen}
         totalOutstanding={
-          parent?.school_fees?.total
-            ? parent.school_fees.total.toString()
-            : "₦ 0.00"
+          "₦ 0.00" //EDIT IN REAL VALUES LATER
         }
         // totalOutstanding="₦0.00"
         onOpenChange={setOutstandingFeesModalOpen}

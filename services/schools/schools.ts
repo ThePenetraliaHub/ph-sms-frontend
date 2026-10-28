@@ -14,6 +14,8 @@ import type {
   BlockUnblockResultAccessResponse,
   CheckResultAccessStatusResponse,
   ViewStudentFeesResponse,
+  RecordManualPaymentResponse,
+  RecordManualPaymentPayload,
 } from "./schools-type";
 
 const BASE = "/schools";
@@ -119,11 +121,36 @@ export const schoolsApi = baseApi.injectEndpoints({
       providesTags: (_, __, { student_id }) => [{ type: "School", student_id }],
     }),
 
-    // getTerm: build.query<Term | null, string>({
-    //   query: (id) => ({ url: `${BASE}/${id}` }),
-    //   transformResponse: (response: SchoolResponse): Term | null =>
-    //     response.data.term ?? null,
-    // }),
+    recordManualPayment: build.mutation<
+      RecordManualPaymentResponse,
+      RecordManualPaymentPayload
+    >({
+      query: (body) => ({
+        url: `${BASE}/fees/manual-payment`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: [{ type: "School", id: "LIST" }, "Stakeholder"],
+    }),
+
+    getFeeCollectionSummary: build.query<any, void>({
+      query: () => ({
+        url: `${BASE}/fees/collection-summary`,
+        method: "GET",
+        // params: { reference },
+      }),
+    }),
+
+    getOutstandingFees: build.query<
+      any,
+      { class_name?: string; only_overdue?: string }
+    >({
+      query: ({ class_name, only_overdue }) => ({
+        url: `${BASE}/fees/outstanding`,
+        method: "GET",
+        params: { class_name, only_overdue },
+      }),
+    }),
   }),
 });
 
@@ -132,7 +159,8 @@ export const {
   useGetSchoolByIdQuery,
   useGetDiscountRulesQuery,
   useGetClassesQuery,
-  // useGetTermQuery,
+  useRecordManualPaymentMutation,
+  useGetOutstandingFeesQuery,
   useCreateSchoolMutation,
   useUpdateSchoolMutation,
   useDeleteSchoolMutation,
@@ -141,4 +169,5 @@ export const {
   useChangeResultAccessMutation,
   useCheckResultAccessQuery,
   useViewStudentFeesQuery,
+  useGetFeeCollectionSummaryQuery,
 } = schoolsApi;

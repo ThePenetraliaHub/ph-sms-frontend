@@ -584,7 +584,7 @@ export type ViewStudentFeeStructure = {
     date: string;
   }[];
   last_payment_date: string;
-  status: string;
+  status: "paid" | "unpaid";
   due_date: string;
   is_overdue: boolean;
   block_result_access: boolean;
@@ -614,3 +614,18 @@ export type ViewStudentFeesData = {
   fees: ViewStudentFeeStructure[];
 };
 export type ViewStudentFeesResponse = ApiResponse<ViewStudentFeesData>;
+
+export type RecordManualPaymentPayload = {
+  student_id: string;
+  amount: number;
+  fee_ids: string[];
+  payment_method: string;
+  bank_name: string;
+  teller_number: string;
+  deposit_date: string;
+  notes?: string;
+};
+
+export type RecordManualPaymentData = any;
+
+export type RecordManualPaymentResponse = ApiResponse<RecordManualPaymentData>;

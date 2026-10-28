@@ -34,6 +34,7 @@ import type { TransactionFeeAgeingRow } from "@/services/transactions/transactio
 import { selectAllTransactionsData } from "@/services/transactions/transaction-selectors";
 import { useAppSelector } from "@/store/hooks";
 import { formattedAmount } from "@/common/helper";
+import { useGetFeeCollectionSummaryQuery } from "@/services/schools/schools";
 
 export default function FinancePage() {
   const router = useRouter();
@@ -50,6 +51,12 @@ export default function FinancePage() {
   useGetAllTransactionsQuery();
   const transactions = useAppSelector(selectAllTransactionsData);
   const { data: metrics } = useGetMetricsQuery();
+
+  console.log("Metrics: ", metrics);
+
+  const { data: fee_collection_summary } = useGetFeeCollectionSummaryQuery();
+
+  console.log("Fee collection summary: ", fee_collection_summary);
 
   const handleViewStudents = (row: TransactionFeeAgeingRow) => {
     setSelectedFeeAgeingRow(row);
