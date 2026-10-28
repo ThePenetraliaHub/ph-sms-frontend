@@ -13,6 +13,8 @@ import {
   subMonths,
 } from "date-fns";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { Dispatch, SetStateAction } from "react";
 
 interface CalendarEvent {
   id: string;
@@ -25,6 +27,7 @@ interface CalendarGridProps {
   events: CalendarEvent[];
   currentDate: Date;
   onDateChange: (date: Date) => void;
+  setSelectedDate: Dispatch<SetStateAction<Date | undefined>>
 }
 
 const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -41,6 +44,7 @@ export function CalendarGrid({
   events,
   currentDate,
   onDateChange,
+  setSelectedDate
 }: CalendarGridProps) {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -81,9 +85,10 @@ export function CalendarGrid({
 
           return (
             <div
+              onClick={() => setSelectedDate(day)}
               key={index}
               className={cn(
-                "min-h-[100px] border-r border-b p-2",
+                "min-h-[100px] cursor-pointer border-r border-b p-2",
                 !isCurrentMonth && "bg-gray-50",
                 isToday && "bg-red-50",
               )}

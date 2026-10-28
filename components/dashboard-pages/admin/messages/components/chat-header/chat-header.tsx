@@ -46,7 +46,7 @@ export function ChatHeader({
             variant="ghost"
             size="icon"
             onClick={onMembers}
-            className="h-9 w-9"
+            className="h-9 w-9 hidden" //EDITED
           >
             <Icon icon={UserMultiple02Icon} size={18} />
           </Button>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Dispatch, SetStateAction } from "react";
 import { CalendarGrid } from "../calendar-grid/calendar-grid";
 import { CalendarNavigation } from "../calendar-navigation/calendar-navigation";
 import { format } from "date-fns";
@@ -15,12 +16,14 @@ interface CalendarContainerProps {
   events: CalendarEvent[];
   currentDate: Date;
   onDateChange: (date: Date) => void;
+  setSelectedDate: Dispatch<SetStateAction<Date | undefined>>;
 }
 
 export function CalendarContainer({
   events,
   currentDate,
   onDateChange,
+  setSelectedDate,
 }: CalendarContainerProps) {
   return (
     <div className="space-y-4">
@@ -41,6 +44,7 @@ export function CalendarContainer({
         events={events}
         currentDate={currentDate}
         onDateChange={onDateChange}
+        setSelectedDate={setSelectedDate}
       />
     </div>
   );

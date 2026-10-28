@@ -6,7 +6,9 @@ import { SelectField } from "@/components/ui/input-field";
 import { SelectItem } from "@/components/ui/select";
 import { ChartConfig, ChartContainer } from "@/components/ui/chart";
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid, Cell } from "recharts";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 
 interface GradeDistributionChartProps {
   className?: string;
@@ -53,7 +55,7 @@ export function GradeDistributionChart({
   const [selectedClass, setSelectedClass] = useState("all");
 
   return (
-    <Card className={className}>
+    <Card className={`${className}`}>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-lg font-semibold text-gray-800">
           Grade Distribution
@@ -106,7 +108,9 @@ export function GradeDistributionChart({
             </Bar>
           </BarChart>
         </ChartContainer>
-        <Button variant={"outline"}>View Student Progress</Button>
+        <Link href="/admin/students" className="w-full">
+          <Button variant={"outline"} className="w-full">View Student's Page</Button>
+        </Link>
       </CardContent>
     </Card>
   );

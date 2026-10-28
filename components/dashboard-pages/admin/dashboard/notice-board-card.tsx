@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface Notice {
   title: string;
@@ -45,9 +46,11 @@ export function NoticeBoardCard({
               <p className="text-sm text-gray-600">{notice.description}</p>
             </div>
           ))}
-          <Button variant="outline" className="w-full">
-            View More
-          </Button>
+          <Link href="/admin/notice-board" className="w-full">
+            <Button variant={"outline"} className="w-full">
+              View More
+            </Button>
+          </Link>
         </div>
       </CardContent>
     </Card>

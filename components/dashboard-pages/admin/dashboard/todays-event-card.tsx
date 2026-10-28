@@ -39,18 +39,24 @@ export function TodaysEventCard({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {events.map((event, index) => (
-          <div key={index} className="flex items-start gap-3">
-            <div
-              className={`h-2 w-2 rounded-full ${event.color} mt-2 shrink-0`}
-            />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-800">{event.title}</p>
-              <p className="text-xs text-gray-600">{event.description}</p>
-              <p className="text-xs text-gray-500 mt-1">{event.time}</p>
+        {events.length === 0 ? (
+          <p>No events today.</p>
+        ) : (
+          events.map((event, index) => (
+            <div key={index} className="flex items-start gap-3">
+              <div
+                className={`h-2 w-2 rounded-full ${event.color} mt-2 shrink-0`}
+              />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-800">
+                  {event.title}
+                </p>
+                <p className="text-xs text-gray-600">{event.description}</p>
+                <p className="text-xs text-gray-500 mt-1">{event.time}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </CardContent>
     </Card>
   );

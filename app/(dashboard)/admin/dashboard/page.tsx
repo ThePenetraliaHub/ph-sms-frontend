@@ -108,7 +108,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <GradeDistributionChart className="lg:col-span-2" />
 
-        <div className="grid grid-rows-2 gap-4">
+        <div className="grid grid-rows-2 gap-4 xl:h-fit">
           <TodaysEventCard
             events={[].map((event: CalendarEvent) => ({
               title: event.title,
@@ -127,7 +127,7 @@ export default function AdminDashboard() {
           />
 
           <NoticeBoardCard
-            notices={today?.map((notification: Notification) => ({
+            notices={today?.slice(0,3).map((notification: Notification) => ({
               title: notification.title,
               time: notification.created_at
                 ? format(new Date(notification.created_at), "h:mm a")

@@ -1,28 +1,28 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { selectUser } from "@/store/slices/authSlice";
 import { MetricCard } from "@/components/dashboard-pages/admin/admissions/components/metric-card";
 import { UpcomingQuizCard } from "@/components/dashboard-pages/student/assignments/upcoming-quiz-card";
-import { NewGradeCard } from "@/components/dashboard-pages/student/assignments/new-grade-card";
-import { TeacherFeedbackModal } from "@/components/dashboard-pages/student/assignments/teacher-feedback-modal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable, TableColumn } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Icon } from "@/components/general/huge-icon";
-import { Search01Icon, FilterIcon } from "@hugeicons/core-free-icons";
-import { useGetCbtExamsQuery } from "@/services/cbt-exams/cbt-exams";
-import type { CbtExam } from "@/services/cbt-exams/cbt-exam-types";
-import { format, isAfter, isPast, parseISO } from "date-fns";
-
-import type { Grade } from "@/services/grades/grades-type";
+import { Search01Icon } from "@hugeicons/core-free-icons";
 import { useGetStudentByQueryParamQuery } from "@/services/stakeholders/stakeholders";
-import { useGetUserRequestsQuery } from "@/services/user-requests/user-requests";
-import { useGetAllExamResultsQuery } from "@/services/results/results";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { CbtExam } from "@/services/cbt-exams/cbt-exam-types";
 import { useGetClassQuery } from "@/services/schools/schools";
+import { toast } from "sonner";
 
 function getCbtExamsList(data: unknown): CbtExam[] {
   if (!data || typeof data !== "object") return [];
@@ -41,11 +41,14 @@ function getCbtExamsList(data: unknown): CbtExam[] {
   return [];
 }
 
+type Filter = "all" | "assignment" | "quiz";
+
 //assignment name, subject, total marks, due date, status, actn
 
 export default function AssignmentsPage() {
   const router = useRouter();
   const user = useAppSelector(selectUser);
+  const [filter, setFilter] = useState<Filter>("all");
 
   //get stakeholder
   const { data: stakeholder, isLoading: isFetchingStudent } =
@@ -159,6 +162,10 @@ export default function AssignmentsPage() {
     },
   ];
 
+  useEffect(() => {
+    toast.warning(`Filter set to ${filter}`);
+  }, [filter]);
+
   return (
     <div className="space-y-4">
       <div className="bg-background rounded-md p-6">
@@ -214,7 +221,7 @@ export default function AssignmentsPage() {
         <CardHeader>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <CardTitle className="text-lg font-semibold text-gray-800">
-              Assignments & Quizzes Management Table
+              Academic Tasks Management Table
             </CardTitle>
             <div className="flex items-center gap-2">
               <div className="relative">
@@ -233,16 +240,40 @@ export default function AssignmentsPage() {
                   onChange={() => {}}
                 />
               </div>
-              <Button variant="outline" className="gap-2">
+              {/* <Button variant="outline" className="gap-2">
                 <Icon icon={FilterIcon} size={18} />
                 Filter: All
-              </Button>
+              </Button> */}
+              <Select
+                value={filter}
+                onValueChange={(v) => setFilter(v as Filter)}
+              >
+                <SelectTrigger id="filter" className="w-full">
+                  <SelectValue
+                    className="capitalize"
+                    placeholder="Select Filter"
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {["assignment", "quiz", "all"].map((opt, index) => (
+                    <SelectItem key={index} value={opt}>
+                      Filter : {opt}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="border rounded-lg overflow-hidden">
-            <DataTable columns={columns} data={[]} showActionsColumn={false} />
+            <DataTable
+              columns={columns}
+              data={myClassExams}
+              showActionsColumn={false}
+              isLoading={isLoading}
+              emptyMessage={"No upcoming exams."}
+            />
           </div>
         </CardContent>
       </Card>

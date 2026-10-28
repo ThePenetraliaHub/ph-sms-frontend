@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -30,6 +30,8 @@ export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  //clicking on any day from the calender
+  const [selectedDate, setSelectedDate] = useState<Date>();
   const schoolId = user?.school_id ?? "";
   const dateFrom = useMemo(() => {
     const d = new Date(currentDate);
@@ -70,6 +72,11 @@ export default function CalendarPage() {
     }
   };
 
+  useEffect(() => {
+    if (!selectedDate) return;
+    setIsModalOpen(true);
+  }, [selectedDate]);
+
   return (
     <div className="space-y-6">
       <div className="bg-background rounded-md p-6">
@@ -92,6 +99,7 @@ export default function CalendarPage() {
                   events={calendarEvents}
                   currentDate={currentDate}
                   onDateChange={setCurrentDate}
+                  setSelectedDate={setSelectedDate}
                 />
               )}
             </CardContent>
@@ -128,6 +136,8 @@ export default function CalendarPage() {
         onOpenChange={setIsModalOpen}
         onSubmit={handleEventSubmit}
         defaultSchoolId={schoolId || undefined}
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
       />
     </div>
   );

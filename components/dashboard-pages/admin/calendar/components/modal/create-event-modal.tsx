@@ -20,7 +20,9 @@ interface CreateEventModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit?: (eventData: EventFormData) => void;
+  selectedDate?: Date;
   defaultSchoolId?: string;
+  setSelectedDate: Dispatch<SetStateAction<Date | undefined>>;
 }
 
 export interface EventFormData {
@@ -60,13 +62,14 @@ export function CreateEventModal({
   onOpenChange,
   onSubmit,
   defaultSchoolId,
+  selectedDate,
+  setSelectedDate,
 }: CreateEventModalProps) {
   const [openDatePicker, setOpenDatePicker] = useState<boolean>(false);
   const [formData, setFormData] = useState<EventFormData>({
     ...initialFormData,
     schoolId: defaultSchoolId ?? "",
   });
-
   const { data: schoolsData, isLoading: isLoadingSchools } =
     useGetSchoolsQuery();
   const schools = schoolsData?.data ?? [];
@@ -92,6 +95,7 @@ export function CreateEventModal({
   };
 
   const handleCancel = () => {
+    setSelectedDate(undefined);
     setFormData({
       ...initialFormData,
       schoolId: defaultSchoolId ?? "",
@@ -132,7 +136,7 @@ export function CreateEventModal({
   return (
     <ModalContainer
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleCancel}
       title="Create New School Event"
       size="5xl"
       maxHeight="90vh"
@@ -180,7 +184,7 @@ export function CreateEventModal({
             label="Date"
             open={openDatePicker}
             setOpen={setOpenDatePicker}
-            date={formData.date}
+            date={selectedDate ? selectedDate : formData.date}
             setDate={handleDateChange}
           />
 
