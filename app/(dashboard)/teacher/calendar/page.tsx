@@ -29,6 +29,7 @@ export default function CalendarPage() {
   const user = useAppSelector(selectUser);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>();
 
   const schoolId = user?.school_id ?? "";
   const dateFrom = useMemo(() => {
@@ -93,6 +94,7 @@ export default function CalendarPage() {
                   events={calendarEvents}
                   currentDate={currentDate}
                   onDateChange={setCurrentDate}
+                  setSelectedDate={() => {}}
                 />
               )}
             </CardContent>
@@ -129,6 +131,8 @@ export default function CalendarPage() {
         onOpenChange={setIsModalOpen}
         onSubmit={handleEventSubmit}
         defaultSchoolId={schoolId || undefined}
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
       />
     </div>
   );

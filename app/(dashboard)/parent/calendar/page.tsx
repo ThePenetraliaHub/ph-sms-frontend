@@ -68,6 +68,7 @@ export default function ParentCalendarPage() {
                   events={calendarEvents}
                   currentDate={currentDate}
                   onDateChange={setCurrentDate}
+                  setSelectedDate={() => {}}
                 />
               )}
             </CardContent>
